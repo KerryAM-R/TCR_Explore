@@ -1,0 +1,97 @@
+Sequence ID,V-DOMAIN Functionality,V-GENE and allele,J-GENE and allele,D-GENE and allele,JUNCTION frame,JUNCTION,JUNCTION (with frameshift),CDR3-IMGT,CDR3-IMGT (with frameshift),JUNCTION (AA),JUNCTION (AA) (with frameshift),clone_quality,comments
+CD8B-A2_A04.seq,productive,"BV29-1*01, BV29-1*02, BV29-1*03",BJ2-7*01,BD2*02,in-frame,TGCAGCGTTGAAGAAAGAGGGCAGGACTACGAGCAGTACTTC,NA,agcgttgaagaaagagggcaggactacgagcagtac,NA,CSVEERGQDYEQYF,NA,pass,NA
+CD8B-A4_B04.seq,unproductive,"BV13*01, BV13*02",BJ1-1*01,BD2*02,in-frame,TGTGCCAGCAGCACATCAATTGGTCGGGGCGGGAAGGGGAACACTGAAGCTTTCTTT,NA,gccagcagcacatcaattggtcggggcgggaaggggaacactgaagctttc,NA,CASSTSIGRGGKGNTEAFF,NA,NA,NA
+CD8B-A8_C04.seq,productive,"BV4-1*01, BV4-1*02",BJ2-7*01,BD2*02,in-frame,TGCGCCAGCAGCCAAGATAGGGCTAGCGGGAGCCTATCCTACGAGCAGTACTTC,NA,gccagcagccaagatagggctagcgggagcctatcctacgagcagtac,NA,CASSQDRASGSLSYEQYF,NA,pass,NA
+CD8B-A9_D04.seq,productive,"BV13*01, BV13*02",BJ2-5*01,BD2*01,in-frame,TGTGCCAGCAGCCTTGACGGACTACAAGAGACCCAGTACTTC,NA,gccagcagccttgacggactacaagagacccagtac,NA,CASSLDGLQETQYF,NA,pass,NA
+CD8B-B10_F04.seq,productive,BV27*01,BJ2-1*01,BD2*01,in-frame,TGTGCCAGCAGCCCGGGACTAGCGAGAAACAATGAGCAGTTCTTC,NA,gccagcagcccgggactagcgagaaacaatgagcagttc,NA,CASSPGLARNNEQFF,NA,pass,NA
+CD8B-B8_E04.seq,productive,"BV4-2*01, BV4-2*02",BJ2-2*01,BD1*01,in-frame,TGTGCCAGCAGCCAGTACACCCCAATGGTGACAGGGTCAAACGGGGAGCTGTTTTTT,NA,gccagcagccagtacaccccaatggtgacagggtcaaacggggagctgttt,NA,CASSQYTPMVTGSNGELFF,NA,pass,NA
+CD8B-C3_G04.seq,productive,BV28*01,BJ2-2*01,BD1*01,in-frame,TGTGCCAGCAGTTTTCTTCCAGGGAACACCGGGGAGCTGTTTTTT,NA,gccagcagttttcttccagggaacaccggggagctgttt,NA,CASSFLPGNTGELFF,NA,pass,NA
+CD8B-C5_H04.seq,productive,BV25-1*01,BJ2-7*01,BD1*01,in-frame,TGTGCCAGCAGTGTCGGGACAGGAGTTTACGAGCAGTACTTC,NA,gccagcagtgtcgggacaggagtttacgagcagtac,NA,CASSVGTGVYEQYF,NA,pass,NA
+CD8B-C9_A05.seq,productive,"BV12-3*01, BV12-4*01",BJ2-1*01,BD2*02,in-frame,TGTGCCAGCAGCTATAGCGGGAGGGCTGAGCAGTTCTTC,NA,gccagcagctatagcgggagggctgagcagttc,NA,CASSYSGRAEQFF,NA,pass,NA
+CD8B-D4_B05.seq,unproductive,BV18*01,BJ2-5*01,BD1*01,out-of-frame,TGTGCCAGCTCACCACTCGCCCAGCTTCGAGACCCAGTACTTC,tgtgccagctcaccactcgcccagcttc..gagacccagtacttc,gccagctcaccactcgcccagcttcgagacccagtac,gccagctcaccactcgcccagcttc..gagacccagtact,CASSPLAQLRDPVL,CASSPLAQL#ETQYF,pass,NA
+CD8B-D7_C05.seq,productive,"BV12-3*01, BV12-4*01",BJ1-5*01,BD1*01,in-frame,TGTGCCAGCAGTTTATTCAGGGCGAATGGGCCCCAGCATTTT,NA,gccagcagtttattcagggcgaatgggccccagcat,NA,CASSLFRANGPQHF,NA,pass,NA
+CD8B-D9_D05.seq,productive,BV9*01,BJ2-1*01,BD2*01,in-frame,TGTGCCAGCAGCGATGGGACTAGCTTGTCCTACAATGAGCAGTTCTTC,NA,gccagcagcgatgggactagcttgtcctacaatgagcagttc,NA,CASSDGTSLSYNEQFF,NA,fail,2nd TRAV unproductive
+CD8B-E10_G05.seq,productive,"BV29-1*01, BV29-1*02, BV29-1*03",BJ2-7*01,BD2*01,in-frame,TGCAGCGTTGCCGGGACTTCCAGCTACGAGCAGTACTTC,NA,agcgttgccgggacttccagctacgagcagtac,NA,CSVAGTSSYEQYF,NA,pass,NA
+CD8B-E4_E05.seq,productive,"BV4-1*01, BV4-1*02",BJ2-5*01,BD2*02,in-frame,TGCGCCAGCAGCCACCTAGCGGGAGCTCAAGAGACCCAGTACTTC,NA,gccagcagccacctagcgggagctcaagagacccagtac,NA,CASSHLAGAQETQYF,NA,fail,unable to resolve CDR3
+CD8B-E7_F05.seq,productive,BV6-1*01,BJ2-1*01,BD2*02,in-frame,TGTGCCAGCAGTGAAGCGGGAGACGGATACAATGAGCAGTTCTTC,NA,gccagcagtgaagcgggagacggatacaatgagcagttc,NA,CASSEAGDGYNEQFF,NA,pass,NA
+CD8B-F4_H05.seq,productive,BV28*01,BJ2-1*01,BD1*01,in-frame,TGTGCCAGCAGTGACCCGCGGGACAGGGGAAATGAGCAGTTCTTC,NA,gccagcagtgacccgcgggacaggggaaatgagcagttc,NA,CASSDPRDRGNEQFF,NA,pass,NA
+CD8B-F7_A06.seq,unproductive,BV9*01,BJ2-2*01,BD2*02,out-of-frame,ATTTCAGTGCCAGCAGTCCTGAGGGAGGCACCGGGGAGATGTTTTTT,atttcagtgccagcagtcctgagggaggcaccggggaga.tgtttttt,tcagtgccagcagtcctgagggaggcaccggggagatgttt,tcagtgccagcagtcctgagggaggcaccggggaga.tgtttt,ISVPAVLREAPGRCF,ISVPAVLREAPGR#FF,fail,MiXCR unable to align; two sequences - not clear which is giving the CDR3 and cannot resolve between the two sequences
+CD8B-F8_B06.seq,productive,BV7-9*01,BJ1-1*01,BD1*01,in-frame,TGTGCCAGCGGCAAGTTGTTCACTGAAGCTTTCTTT,NA,gccagcggcaagttgttcactgaagctttc,NA,CASGKLFTEAFF,NA,pass,NA
+CD8B-G10_E06.seq,productive,BV9*01,BJ1-3*01,BD1*01,in-frame,TGTGCCAGCAGCGTAGACGGGCGCTCTGGAAACACCATATATTTT,NA,gccagcagcgtagacgggcgctctggaaacaccatatat,NA,CASSVDGRSGNTIYF,NA,pass,NA
+CD8B-G5_C06.seq,productive,BV6-5*01,BJ2-7*01,BD1*01,in-frame,TGTGCCAGCAGTTACTCCCCGGGACAGGGAATCTACGAGCAGTACTTC,NA,gccagcagttactccccgggacagggaatctacgagcagtac,NA,CASSYSPGQGIYEQYF,NA,pass,NA
+CD8B-G8_D06.seq,productive,"BV13*01, BV13*02",BJ2-7*01,No BD,in-frame,TGTGCCAGCAGCTTACCCCCCCCCTACGAGCAGTACTTC,NA,gccagcagcttaccccccccctacgagcagtac,NA,CASSLPPPYEQYF,NA,pass,NA
+CD8B-H2_F06.seq,unproductive,"BV4-1*01, BV4-1*02",BJ1-1*01,BD1*01,in-frame,TGCGCCAGCAGCCTGCCCGTAGGGGGCACTGAAGCTTTCTTT,NA,gccagcagcctgcccgtagggggcactgaagctttc,NA,CASSLPVGGTEAFF,NA,pass,NA
+CD8B-H4_G06.seq,productive,BV9*01,BJ2-4*01,BD1*01,in-frame,TGTGCCAGCAGCGTAGATGGACGACCCAAGAACATTCAGTACTTC,NA,gccagcagcgtagatggacgacccaagaacattcagtac,NA,CASSVDGRPKNIQYF,NA,pass,NA
+CD8B-H9_H06.seq,productive,BV7-9*01,BJ1-5*01,BD1*01,in-frame,TGTGCCAGCAGCTTCGACACCAATCAGCCCCAGCATTTT,NA,gccagcagcttcgacaccaatcagccccagcat,NA,CASSFDTNQPQHF,NA,pass,NA
+IFNB-A5_A10.seq,productive,BV9*01,BJ2-7*01,BD2*02,in-frame,TGTGCCAGCAGCGTAGCGGCGGGACCAAACTACGAGCAGTACTTC,NA,gccagcagcgtagcggcgggaccaaactacgagcagtac,NA,CASSVAAGPNYEQYF,NA,pass,NA
+IFNB-A6_B10.seq,productive,"BV14*01, BV14*02",BJ2-7*01,BD1*01,in-frame,TGTGCCAGCAGCCAAGAGGGCAGGGGGCGGTACGAGCAGTACTTC,NA,gccagcagccaagagggcagggggcggtacgagcagtac,NA,CASSQEGRGRYEQYF,NA,pass,NA
+IFNB-A7_C10.seq,productive,BV6-6*03,BJ2-1*01,BD2*01,in-frame,TGTGCCAGCAGTTTTGGGCGGGGGGACTACAATGAGCAGTTCTTC,NA,gccagcagttttgggcggggggactacaatgagcagttc,NA,CASSFGRGDYNEQFF,NA,NA,NA
+IFNB-A8_D10.seq,productive,BV15*02,BJ2-7*01,BD1*01,in-frame,TGTGCCACCAGCAGAGACCGACAGGGTGTCTTCGAGCAGTACTTC,NA,gccaccagcagagaccgacagggtgtcttcgagcagtac,NA,CATSRDRQGVFEQYF,NA,pass,NA
+IFNB-C5_E10.seq,productive,BV15*02,BJ2-7*01,BD1*01,in-frame,TGTGCCACCAGCAGAGACCGACAGGGTGTCTTCGAGCAGTACTTC,NA,gccaccagcagagaccgacagggtgtcttcgagcagtac,NA,CATSRDRQGVFEQYF,NA,pass,NA
+IFNB-D10_C11.seq,productive,"BV5-4*01, BV5-4*02, BV5-4*03, BV5-4*04",BJ2-1*01,BD2*01,in-frame,TGTGCCAGCAGCCCCATGCCCTATGATGAGCAGTTCTTC,NA,gccagcagccccatgccctatgatgagcagttc,NA,CASSPMPYDEQFF,NA,pass,NA
+IFNB-D1_F10.seq,productive,BV15*02,BJ2-7*01,BD1*01,in-frame,TGTGCCACCAGCAGAGACCGACAGGGTGTCTTCGAGCAGTACTTC,NA,gccaccagcagagaccgacagggtgtcttcgagcagtac,NA,CATSRDRQGVFEQYF,NA,pass,NA
+IFNB-D4_G10.seq,productive,BV11-2*01,BJ2-1*01,BD2*01,in-frame,TGTGCCAGCAGCCAGGGACTAGCGGGTGACAATGAGCAGTTCTTC,NA,gccagcagccagggactagcgggtgacaatgagcagttc,NA,CASSQGLAGDNEQFF,NA,pass,NA
+IFNB-D5_H10.seq,productive,"BV24-1*01, BV24-1*02",BJ1-1*01,BD1*01,in-frame,TGTGCCACCAGTGAAACGGACGTCCTGCGGCCTGAAGCTTTCTTT,NA,gccaccagtgaaacggacgtcctgcggcctgaagctttc,NA,CATSETDVLRPEAFF,NA,pass,NA
+IFNB-D7_A11.seq,productive,BV6-5*01,BJ1-5*01,BD1*01,in-frame,TGTGCCAGCAGGGGGGGCCAAGGGCAGCCCCAGCATTTT,NA,gccagcagggggggccaagggcagccccagcat,NA,CASRGGQGQPQHF,NA,fail,unable to resolve CDR3
+IFNB-D9_B11.seq,productive,BV6-5*01,BJ1-1*01,BD1*01,in-frame,TGTGCCAGCAGTTCCGTGAGGGGAAGGGGGAACACTGAAGCTTTCTTT,NA,gccagcagttccgtgaggggaagggggaacactgaagctttc,NA,CASSSVRGRGNTEAFF,NA,pass,NA
+IFNB-E1_D11.seq,productive,"BV4-2*01, BV4-2*02",BJ1-2*01,BD1*01,in-frame,TGTGCCAGCAGCTCCACGACAGACCTCTATGGCTACACCTTC,NA,gccagcagctccacgacagacctctatggctacacc,NA,CASSSTTDLYGYTF,NA,pass,NA
+IFNB-E3_E11.seq,productive,BV28*01,BJ2-1*01,BD1*01,in-frame,TGTGCCAGCAGTCGACAGGGGTTATACTCCTACAATGAGCAGTTCTTC,NA,gccagcagtcgacaggggttatactcctacaatgagcagttc,NA,CASSRQGLYSYNEQFF,NA,pass,NA
+IFNB-E6_F11.seq,productive,"BV2*01, BV2*02, BV2*03",BJ1-1*01,BD1*01,in-frame,TGTGCCAGCAGTGAATTACAGAACACTGAAGCTTTCTTT,NA,gccagcagtgaattacagaacactgaagctttc,NA,CASSELQNTEAFF,NA,pass,NA
+IFNB-E7_G11.seq,productive,"BV12-3*01, BV12-4*01",BJ2-1*01,BD2*02,in-frame,TGTGCCAGCAGTCCGCTCCTTTGGGAGGGCCTCCATGAGCAGTTCTTC,NA,gccagcagtccgctcctttgggagggcctccatgagcagttc,NA,CASSPLLWEGLHEQFF,NA,pass,NA
+IFNB-E8_H11.seq,productive,BV27*01,BJ2-7*01,No BD,in-frame,TGTGCCAGCAGTTCTTCCTACGAGCAGTACTTC,NA,gccagcagttcttcctacgagcagtac,NA,CASSSSYEQYF,NA,pass,NA
+IFNB-G1_A12.seq,productive,"BV12-3*01, BV12-4*01",BJ2-1*01,BD2*02,in-frame,TGTGCCAGCAGCTATAGCGGGAGGGCTGAGCAGTTCTTC,NA,gccagcagctatagcgggagggctgagcagttc,NA,CASSYSGRAEQFF,NA,fail,MiXCR unable to align; messy with 2 sequences; unable to resolve
+IFNB-G9_B12.seq,productive,"BV24-1*01, BV24-1*02",BJ2-5*01,BD2*02,in-frame,TGTGCCACCAGTGATTGGAAGCGGGAGGCGCCACAAAGGGAGACCCAGTACTTC,NA,gccaccagtgattggaagcgggaggcgccacaaagggagacccagtac,NA,CATSDWKREAPQRETQYF,NA,pass,NA
+IFNB-H10_H12.seq,productive,"BV14*01, BV14*02",BJ2-7*01,BD1*01,in-frame,TGTGCCAGCAGCCAAGAGGGCAGGGGGCGGTACGAGCAGTACTTC,NA,gccagcagccaagagggcagggggcggtacgagcagtac,NA,CASSQEGRGRYEQYF,NA,pass,NA
+IFNB-H2_C12.seq,productive,BV15*02,BJ2-7*01,BD1*01,in-frame,TGTGCCACCAGCAGAGACCGACAGGGTGTCTTCGAGCAGTACTTC,NA,gccaccagcagagaccgacagggtgtcttcgagcagtac,NA,CATSRDRQGVFEQYF,NA,pass,NA
+IFNB-H4_D12.seq,productive,BV15*02,BJ2-7*01,BD1*01,in-frame,TGTGCCACCAGCAGAGACCGACAGGGTGTCTTCGAGCAGTACTTC,NA,gccaccagcagagaccgacagggtgtcttcgagcagtac,NA,CATSRDRQGVFEQYF,NA,pass,NA
+IFNB-H5_E12.seq,productive,BV9*01,BJ2-7*01,BD2*02,in-frame,TGTGCCAGCAGCGTAGCGGCGGGACCAAACTACGAGCAGTACTTC,NA,gccagcagcgtagcggcgggaccaaactacgagcagtac,NA,CASSVAAGPNYEQYF,NA,pass,NA
+IFNB-H6_F12.seq,productive,"BV14*01, BV14*02",BJ2-7*01,BD1*01,in-frame,TGTGCCAGCAGCCAAGAGGGCAGGGGGCGGTACGAGCAGTACTTC,NA,gccagcagccaagagggcagggggcggtacgagcagtac,NA,CASSQEGRGRYEQYF,NA,pass,NA
+IFNB-H7_G12.seq,productive,"BV14*01, BV14*02",BJ2-7*01,BD1*01,in-frame,TGTGCCAGCAGCCAAGAGGGCAGGGGGCGGTACGAGCAGTACTTC,NA,gccagcagccaagagggcagggggcggtacgagcagtac,NA,CASSQEGRGRYEQYF,NA,pass,NA
+CD8A-A2_A01.seq,productive,AV22*01,AJ9*01,No AD,in-frame,TGTGCTGTGGCCGATACTGGAGGCTTCAAAACTATCTTT,NA,gctgtggccgatactggaggcttcaaaactatc,NA,CAVADTGGFKTIF,NA,pass,NA
+CD8A-A4_B01.seq,productive,"AV26-1*01, AV26-1*02",AJ39*01,No AD,in-frame,TGCATCGTCACCCATAATGCAGGCAACATGCTCACCTTT,NA,atcgtcacccataatgcaggcaacatgctcacc,NA,CIVTHNAGNMLTF,NA,pass,NA
+CD8A-A8_C01.seq,unproductive,AV6*03 ,AJ27*01,No AD,in-frame,TGTGCTCTTCATAACACCAATGCAGGCAAATCAACCTTT,NA,gctcttcataacaccaatgcaggcaaatcaacc,NA,CALHNTNAGKSTF,NA,pass,NA
+CD8A-A9_D01.seq,productive,"AV8-2*01, AV8-2*02, AV8-2*03, AV8-4*01, AV8-4*03",AJ21*01,No AD,in-frame,TGTGCTGTGAGTGAGGGGAACTTCAACAAATTTTACTTT,NA,gctgtgagtgaggggaacttcaacaaattttac,NA,CAVSEGNFNKFYF,NA,pass,Mismatched TRV gene
+CD8A-B10_F01.seq,productive,AV6*03 ,AJ44*01,No AD,in-frame,TGTGCTCTAGGGGATACCGGCACTGCCAGTAAACTCACCTTT,NA,gctctaggggataccggcactgccagtaaactcacc,NA,CALGDTGTASKLTF,NA,pass,MiXCR unable to align
+CD8A-B8_E01.seq,productive,"AV26-1*01, AV26-1*02",AJ31*01,No AD,in-frame,TGCATCGTCAGAGTCGAGGCTAAGATGTTT,NA,atcgtcagagtcgaggctaagatg,NA,CIVRVEAKMF,NA,pass,NA
+CD8A-C3_G01.seq,productive,AV14/DV4*03,AJ40*01,No AD,in-frame,TGTGCAATGAGAGATACCTCAGGAACCTACAAATACATCTTT,NA,gcaatgagagatacctcaggaacctacaaatacatc,NA,CAMRDTSGTYKYIF,NA,pass,NA
+CD8A-C5_H01.seq,unproductive,"AV8-2*01, AV8-2*02, AV8-2*03, AV8-4*01, AV8-4*03",AJ26*01,No AD,in-frame,TGTGCCAAAAACTATGGTCAGAATTTTGTCTTT,NA,gccaaaaactatggtcagaattttgtc,NA,CAKNYGQNFVF,NA,pass,NA
+CD8A-C9_A02.seq,productive,AV29/DV5*04,AJ34*01,No AD,in-frame,TGTGCAGCAAGCACCGACAAGCTCATCTTT,NA,gcagcaagcaccgacaagctcatc,NA,CAASTDKLIF,NA,pass,NA
+CD8A-D4_B02.seq,productive,AV17*01,AJ47*02 (F),No AD,in-frame,TGTGCTACGGGCAGGATCATGGAATATGGAAACAAGCTGGTCTTT,NA,gctacgggcaggatcatggaatatggaaacaagctggtc,NA,CATGRIMEYGNKLVF,NA,pass,NA
+CD8A-D7_C02.seq,productive,AV29/DV5*04,AJ52*01,No AD,in-frame,TGTGCAGCAAGTGGGAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT,NA,gcagcaagtgggaatgctggtggtactagctatggaaagctgaca,NA,CAASGNAGGTSYGKLTF,NA,pass,NA
+CD8A-D9_D02.seq,unproductive,AV14/DV4*03,AJ34*01,No AD,out-of-frame,CCACCTACCTCTGTGCAATGGCTGATTATAACACCGACAAGCTCATCTTT,ccacctacctctgtgcaatggctga.ttataacaccgacaagctcatcttt,cctacctctgtgcaatggctgattataacaccgacaagctcatc,cctacctctgtgcaatggctga.ttataacaccgacaagctcatct,PPTSVQWLIITPTSSS,PPTSVQWL#YNTDKLIF,fail,unable to resolve CDR3
+CD8A-E10_G02.seq,productive,"AV26-1*01, AV26-1*02",AJ15*01,No AD,in-frame,TGCATCGTCAGACTCATAAACCAGGCAGGAACTGCTCTGATCTTT,NA,atcgtcagactcataaaccaggcaggaactgctctgatc,NA,CIVRLINQAGTALIF,NA,pass,NA
+CD8A-E4_E02.seq,unproductive,"AV13-2*01, AV13-2*02",AJ22*01,No AD,out-of-frame,TGTGCAGAGCCCAATTTCTTCTGGTTCTGCAAGGCAACTGACCTTT,tgtgcagagccc..aatttcttctggttctgcaaggcaactgaccttt,gcagagcccaatttcttctggttctgcaaggcaactgacc,gcagagccc..aatttcttctggttctgcaaggcaactgacct,CAEPNFFWFCKATDL,CAEP#ISSGSARQLTF,pass,NA
+CD8A-E7_F02.seq,unproductive,AV1-2*01,AJ33*01,No AD,in-frame,TGTGCTGTGAGAGATAGCAAATATCAGTTAATTTGG,NA,gctgtgagagatagcaaatatcagttaatt,NA,CAVRDSKYQLIW,NA,pass,NA
+CD8A-F4_H02.seq,productive,AV22*01,AJ40*01,No AD,in-frame,TGTGCTGTTCCTCAAGCCTCAGGAACCTACAAATACATCTTT,NA,gctgttcctcaagcctcaggaacctacaaatacatc,NA,CAVPQASGTYKYIF,NA,fail,unable to resolve CDR3; 2 seqeunces
+CD8A-F7_A03.seq,unproductive,"AV12-2*01, AV12-2*02, AV12-2*03",AJ34*01,No AD,in-frame,TGTGTGGTGAACTTGGGGGGAAACAAGCTGGTCTTT,NA,gtggtgaacttggggggaaacaagctggtc,NA,CVVNLGGNKLVF,NA,pass,NA
+CD8A-F8_B03.seq,productive,AV17*01,AJ30*01,No AD,in-frame,TGTGCTACGGACGCCGGAGATGACAAGATCATCTTT,NA,gctacggacgccggagatgacaagatcatc,NA,CATDAGDDKIIF,NA,fail,short read
+CD8A-G10_E03.seq,productive,AV17*01,AJ30*01,No AD,in-frame,TGTGCTACGGCCCCGAACAGAGATGACAAGATCATCTTT,NA,gctacggccccgaacagagatgacaagatcatc,NA,CATAPNRDDKIIF,NA,fail,2nd sequence TRAV38; 2 sequences
+CD8A-G5_C03.seq,productive,AV1-2*01,AJ33*01,No AD,in-frame,TGTGCTGTCTTGGATAGCAACTATCAGTTAATCTGG,NA,gctgtcttggatagcaactatcagttaatc,NA,CAVLDSNYQLIW,NA,pass,NA
+CD8A-G8_D03.seq,productive,"AV26-1*01, AV26-1*02",AJ43*01,No AD,in-frame,TGCATCGTCAGAGGCGACAATAACAATGACATGCGCTTT,NA,atcgtcagaggcgacaataacaatgacatgcgc,NA,CIVRGDNNNDMRF,NA,pass,MiXCR unable to align; CDR3 matches clone IFNA-A8_D07.seq but mismatched TRV gene
+CD8A-H2_F03.seq,productive,"AV13-2*01, AV13-2*02",AJ5*01,No AD,in-frame,TGTGCAGAGAATATGGACACGGGCAGGAGAGCACTTACTTTT,NA,gcagagaatatggacacgggcaggagagcacttact,NA,CAENMDTGRRALTF,NA,pass,NA
+CD8A-H4_G03.seq,unproductive,"AV9-2*01, AV9-2*02, AV9-2*03, AV9-2*04",AJ34*01,No AD,in-frame,TGTGCTCTAGGTATATCTTATAACACCGACAATCTCATCTTT,NA,gctctaggtatatcttataacaccgacaatctcatc,NA,CALGISYNTDNLIF,NA,pass,NA
+CD8A-H9_H03.seq,productive,AV14/DV4*03,AJ31*01,No AD,in-frame,TGTGCAATGAGACCTTCTAGGAATAACAATGCCAGACTCATGTTT,NA,gcaatgagaccttctaggaataacaatgccagactcatg,NA,CAMRPSRNNNARLMF,NA,pass,NA
+IFNA-A5_A07.seq,productive,AV19*01,AJ32*02,No AD,in-frame,TGTGCTCTGAGTGAGGCTAGTGGTGCTACAAACAAGCTCATCTTT,NA,gctctgagtgaggctagtggtgctacaaacaagctcatc,NA,CALSEASGATNKLIF,NA,pass,NA
+IFNA-A6_B07.seq,productive,AV1-1*01,AJ22*01,No AD,in-frame,TGCGCTGTGTTGGCCCCCGGTTCTGCAAGGCAACTGACCTTT,NA,gctgtgttggcccccggttctgcaaggcaactgacc,NA,CAVLAPGSARQLTF,NA,pass,NA
+IFNA-A7_C07.seq,productive,AV4*01,AJ13*02,No AD,in-frame,TGCCTCGTGGCTATGAATTCTGGGGGTTACCAGAAAGTTACCTTT,NA,ctcgtggctatgaattctgggggttaccagaaagttacc,NA,CLVAMNSGGYQKVTF,NA,pass,NA
+IFNA-A8_D07.seq,productive,"AV8-2*01, AV8-2*02, AV8-2*03, AV8-4*01, AV8-4*04",AJ4*01,No AD,in-frame,TGTGTTGTGAGTGTGTTTTGGGGTGGCTACAATAAGCTGACTTTT,NA,gttgtgagtgtgttttggggtggctacaataagctgact,NA,CVVSVFWGGYNKLTF,NA,pass,NA
+IFNA-C5_E07.seq,productive,"AV8-2*01, AV8-2*02, AV8-2*03, AV8-4*01, AV8-4*04",AJ4*01,No AD,in-frame,TGTTTTGTGAGTGTGTTTTGGGGTGGCTACAATAAGCTGACTTTT,NA,tttgtgagtgtgttttggggtggctacaataagctgact,NA,CFVSVFWGGYNKLTF,NA,pass,NA
+IFNA-D10_C08.seq,unproductive,"AV12-2*02, AV12-2*03",AJ49*01,No AD,in-frame,TGTGCCGTGAACACCGGTAACCAGTTCTATTTT,NA,gccgtgaacaccggtaaccagttctat,NA,CAVNTGNQFYF,NA,pass,NA
+IFNA-D1_F07.seq,productive,"AV8-2*01, AV8-2*02, AV8-2*03",AJ4*01,No AD,in-frame,TGTGTTGTGAGTGTGTTTTCTGGTGGCTACAATAAGCTGATTTTT,NA,gttgtgagtgtgttttctggtggctacaataagctgatt,NA,CVVSVFSGGYNKLIF,NA,pass,NA
+IFNA-D4_G07.seq,productive,AV5*01,AJ4*01,No AD,in-frame,TGTGCAGAGAGTCCTCCCGATGGCTACAATAAGCTGATTTTT,NA,gcagagagtcctcccgatggctacaataagctgatt,NA,CAESPPDGYNKLIF,NA,pass,NA
+IFNA-D5_H07.seq,productive,AV4*01,AJ21*01,No AD,in-frame,TGCCTCGTGGGCCCTTACAACTTCAACAAATTTTACTTT,NA,ctcgtgggcccttacaacttcaacaaattttac,NA,CLVGPYNFNKFYF,NA,pass,NA
+IFNA-D7_A08.seq,productive,AV29/DV5*04,AJ49*01,No AD,in-frame,TGTGCAGCGGTCCTCCCCTTATCGAACACCGGTAACCAGTTCTATTTT,NA,gcagcggtcctccccttatcgaacaccggtaaccagttctat,NA,CAAVLPLSNTGNQFYF,NA,pass,NA
+IFNA-D9_B08.seq,productive,AV8-6*01,AJ49*01,No AD,in-frame,TGTGCTGTGAGATCGAACACCGGTAACCAGTTCTATTTT,NA,gctgtgagatcgaacaccggtaaccagttctat,NA,CAVRSNTGNQFYF,NA,pass,NA
+IFNA-E1_D08.seq,unproductive,AV20*04,AJ6*01,No AD,out-of-frame,TGTGCTGTGTTCAGGAGGAAGCTACATACCTACATTT,tgtgctgtgt..tcaggaggaagctacatacctacattt,gctgtgttcaggaggaagctacatacctaca,gctgtgt..tcaggaggaagctacatacctacat,CAVFRRKLHTYI,CAV#SGGSYIPTF,pass,NA
+IFNA-E3_E08.seq,productive,"AV21*01, AV21*02",AJ26*01,No AD,in-frame,TGTGCTGTAGATAACTATGGTCAGAATTTTGTCTTT,NA,gctgtagataactatggtcagaattttgtc,NA,CAVDNYGQNFVF,NA,pass,NA
+IFNA-E6_F08.seq,unproductive,AV14/DV4*03,AJ49*01,No AD,in-frame,TGTGCAATCACTAACACCGGTAACCAGTTCTATTTT,NA,gcaatcactaacaccggtaaccagttctat,NA,CAITNTGNQFYF,NA,pass,NA
+IFNA-E7_G08.seq,productive,AV12-2*01,AJ48*01,No AD,in-frame,TGTGCCGTGAGGGATTCCTTTGGAAATGAGAAATTAACCTTT,NA,gccgtgagggattcctttggaaatgagaaattaacc,NA,CAVRDSFGNEKLTF,NA,pass,NA
+IFNA-E8_H08.seq,unproductive,"AV20*01, AV20*02, AV20*03, AV20*04",AJ30*01,No AD,out-of-frame,TGTGCTGTGGGAAGATCATCTTG,tgtgctgtgggaagatcatcttg.,gctgtgggaagatcatc,gctgtgggaagatcatctt,CAVGRSS,CAVGRSS#,pass,NA
+IFNA-G1_A09.seq,productive,AV29/DV5*04,AJ34*01,No AD,in-frame,TGTGCAGCAAGCACCGACAAGCTCATCTTT,NA,gcagcaagcaccgacaagctcatc,NA,CAASTDKLIF,NA,pass,NA
+IFNA-G9_B09.seq,No results,NA,NA,No AD,NA,NA,NA,NA,NA,NA,NA,pass,NA
+IFNA-H10_H09.seq,unproductive,AV1-1*01,AJ22*01,No AD,in-frame,TGCGCTGTGTTGGCCCCCGGTTCTGCAAGGCAACTGACCTTT,NA,gctgtgttggcccccggttctgcaaggcaactgacc,NA,CAVLAPGSARQLTF,NA,pass,NA
+IFNA-H2_C09.seq,productive,"AV8-2*01, AV8-2*02, AV8-2*03, AV8-4*01, AV8-4*04",AJ4*01,No AD,in-frame,TGTGTTGTGAGTGTGTTTTCTGGTGGCTACAATAAGCTGATTTTT,NA,gttgtgagtgtgttttctggtggctacaataagctgatt,NA,CVVSVFSGGYNKLIF,NA,pass,NA
+IFNA-H4_D09.seq,productive,"AV8-2*01, AV8-2*02, AV8-2*03, AV8-4*01, AV8-4*04",AJ4*01,No AD,in-frame,TGTGTTGTGAGTGTGTTTTGGGGTGGATACAATAAGCTGACTTTT,NA,gttgtgagtgtgttttggggtggatacaataagctgact,NA,CVVSVFWGGYNKLTF,NA,pass,NA
+IFNA-H5_E09.seq,unproductive,AV19*01,AJ32*02,No AD,in-frame,TGTGCTCTGAGTGAGGCTAGTGGTGCTACAAACAAGCTCATCTTT,NA,gctctgagtgaggctagtggtgctacaaacaagctcatc,NA,CALSEASGATNKLIF,NA,pass,NA
+IFNA-H6_F09.seq,productive,AV1-1*01,AJ22*01,No AD,in-frame,TGCGCTGTGTTGGCCCCCGGTTCTGCAAGGCAACTGACCTTT,NA,gctgtgttggcccccggttctgcaaggcaactgacc,NA,CAVLAPGSARQLTF,NA,pass,NA
+IFNA-H7_G09.seq,productive,AV1-1*01,AJ22*01,No AD,in-frame,TGCGCTGTGTTGGCCCCCGGTTCTGCAAGGCAACTGACCTTT,NA,gctgtgttggcccccggttctgcaaggcaactgacc,NA,CAVLAPGSARQLTF,NA,pass,NA

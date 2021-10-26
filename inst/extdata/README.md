@@ -1,5 +1,3 @@
-<img src="IMAGES/Logo.png" width="400">
-
 ### TCR_Explore Shiny R application
 
 TCR_explore was designed to aid in the processing and analysis of TCR repertiore for both alpha beta and gamma-delta chains
@@ -17,4 +15,3 @@ Graphical sections:
 - FACS index data
     + This section contains combining the paired TCR data from the QC section with the index sort data (FAC file)
     + Please see Workflow -> FACS index QC and plots for details 
-

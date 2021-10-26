@@ -1,0 +1,34 @@
+Package: TCR.Explore
+Version: 1.0
+Date: 2021-10-12
+Title: TCR_Explore: A shiny application for processing, analysing and figure generation of T cell receptor CDR3 repertoire data
+Description: This application was developed to aid in the quality control, figure generation and analysis of T cell receptor (TCR) repertoire data. 
+Author: Kerry A Mullan, Nicole Mifsud
+Maintainer: Kerry A Mullan  <kerry.mullan@monash.edu>
+Imports:
+  tidyverse,
+  ggplot2,
+  ggrepel,
+  shiny,
+  shinyBS,
+  gridExtra,
+  DT,
+  plyr,
+  dplyr,
+  reshape2,
+  treemap,
+  treemapify,
+  circlize,
+  VLF,
+  gplots,
+  MASS,
+  scales,
+  readxl,
+  vegan,
+  randomcoloR,
+  colourpicker
+Remotes:
+  jokergoo/ComplexHeatmap
+biocViews:
+  motifStack,
+  flowCore
