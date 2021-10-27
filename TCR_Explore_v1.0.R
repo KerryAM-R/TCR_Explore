@@ -115,23 +115,27 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                                                     selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own1")),
                                                     
                                                     fileInput('file_IMGT_afterQC', 'Chromatogram checked file (.csv)',
-                                                             accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                                    actionButton("update.QC","update summary table")
+                                                             accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
                                        ),
                                        mainPanel(
                                          tabsetPanel(
                                              tabPanel("IMGT create QC file",
                                                       
                                                     
-                                                      fluidRow(column(3, selectInput("sheet","Sheets inlcuded", choices = c("Summary+JUNCTION","Summary"))),
-                                                               column(3, selectInput("include.origin","include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'))),
+                                                      fluidRow(column(4, selectInput("sheet","Sheets inlcuded", choices = c("Summary+JUNCTION","Summary"))),
+                                                               column(4, selectInput("include.origin","include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'))),
                                              ),
                                                       tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
                                              div(DT::dataTableOutput("IMGT2_out")),
                                              downloadButton('downloadTABLE_IMGTonly','Download table')
                                              ),
                                              tabPanel("Paired chain file",
-                                                      selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
+                                                      fluidRow(
+                                                        column(4, selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd"))),
+                                                        column(4, selectInput("sheet2","Sheets inlcuded", choices = c("Summary+JUNCTION","Summary")))
+                                                      ),
+                                                      
+                                                      
                                                       tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
                                                       div(DT::dataTableOutput("chain_table_IMGT.QC1")),
                                                       p(" "),
@@ -761,6 +765,7 @@ server  <- function(input, output, session) {
     }
     else if (input$include.origin == "yes" && input$sheet == "Summary+JUNCTION") {
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","JUNCTION (with frameshift)","CDR3-IMGT (with frameshift)","Sequence")]
+      
       df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","3'V-REGION","P3'V","N-REGION","N1-REGION","P5'D","D-REGION", "P3'D","P5'D1","D1-REGION","P3'D1", "N2-REGION","P5'D2",    "D2-REGION","P3'D2",    "N3-REGION", "P5'D3","D3-REGION","P3'D3",    "N4-REGION","P5'J","5'J-REGION")]
       
       df_chain1 <- merge(df3,df4,by=c("Sequence number","Sequence ID"))
@@ -798,6 +803,7 @@ server  <- function(input, output, session) {
     }
     else if (input$include.origin == "no" && input$sheet == "Summary") {
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","Sequence", "AA JUNCTION" )]
+      
       df_chain1 <- df3
       df_chain1 <- as.data.frame(df_chain1)
       df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
@@ -832,8 +838,8 @@ server  <- function(input, output, session) {
       
     }
     else {
-      df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","Sequence", "AA JUNCTION" )]
-      
+      df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","Sequence", "AA JUNCTION")]
+      # names(df3)[11] <- "JUNCTION (AA)"
       
       # df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","3'V-REGION","P3'V","N-REGION","N1-REGION","P5'D","D-REGION", "P3'D","P5'D1","D1-REGION","P3'D1", "N2-REGION","P5'D2",    "D2-REGION","P3'D2",    "N3-REGION", "P5'D3","D3-REGION","P3'D3",    "N4-REGION","P5'J","5'J-REGION")]
       df_chain1 <- df3
@@ -903,116 +909,6 @@ server  <- function(input, output, session) {
     
   })
   
-  chain_merge_TSV <- reactive({
-    df1 <- input.data.IMGT_afterQC();
-    df1 <- as.data.frame(df1)
-    df <- subset(df1,df1$clone_quality=="pass")
-    df <- as.data.frame(df)
-    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..")]
-    
-    df.Vgene <- as.data.frame(do.call(rbind, strsplit(as.character(df2$V.GENE.and.allele), ",")))
-    df2$V.GENE <- df.Vgene$V1
-    y = dim(df2)[2]
-    y
-    df2$V.GENE <- gsub(" ","",df2$V.GENE)
-    df2$cloneCount <- 1
-    if (input$IMGT_chain2 =="ab") {
-      
-      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      head(df_name2)
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-      df_name3$V1 <- gsub("A","",df_name3$V1)
-      df_name3$V1 <- gsub("B","",df_name3$V1)
-      
-      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-      head(df_name5)
-      df2$ID <- df_name2$V1
-      
-      df2$Indiv.group <- df_name3$V1
-      df2$Indiv <-df_name5$V1
-      df2$group <- df_name5$V2
-      df2$clone <- df_name4$V2
-      names(df2)
-      
-      dim(df)
-      
-      chain1 <- df2[grep("A",df2$V.GENE),]
-      chain2 <- df2[grep("B",df2$V.GENE),]
-      # paste chain into name
-      chain1$ID <- gsub("A-","-",chain1$ID)
-      names(chain1)[1:y] <- paste(names(chain1)[1:y],"A",sep="_")
-      head(chain1)
-      chain2$ID <- gsub("B-","-",chain2$ID)
-      names(chain2)[1:y] <- paste(names(chain2)[1:y],"B",sep="_")
-      z = y+1
-      x <- names(chain2)[z:dim(chain2)[2]]
-      
-      merged_chain <- merge(chain1,chain2,by =x)
-      head(merged_chain)
-      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
-      names(merged_chain2)
-      dat <- merged_chain2
-      dat$AJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
-      dat$BJ <- paste(dat$V.GENE_B,".",dat$J.GENE.and.allele_B,sep="")
-      dat$AJ <- gsub("[*]0.","",dat$AJ)
-      dat$BJ <- gsub("[*]0.","",dat$BJ)
-      dat$AJ <- gsub("TR","",dat$AJ)
-      dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
-      dat$AJ_aCDR3 <- paste(dat$AJ,dat$JUNCTION..AA._A,sep="_")
-      dat$BJ_bCDR3 <- paste(dat$BJ,dat$JUNCTION..AA._B,sep="_")
-      dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
-      head(dat)
-      
-      dat
-      
-    }
-    else {
-      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      head(df_name2)
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-      df_name3$V1 <- gsub("G","",df_name3$V1)
-      df_name3$V1 <- gsub("D","",df_name3$V1)
-      
-      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-      head(df_name5)
-      df2$ID <- df_name2$V1
-      
-      df2$Indiv.group <- df_name3$V1
-      df2$Indiv <-df_name5$V1
-      df2$group <- df_name5$V2
-      df2$clone <- df_name4$V2
-      
-      chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
-      chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
-      chain1$ID <- gsub("G-","-",chain1$ID)
-      names(chain1)[1:y] <- paste(names(chain1)[1:y],"G",sep="_")
-      
-      chain2$ID <- gsub("D-","-",chain2$ID)
-      names(chain2)[1:y] <- paste(names(chain2)[1:y],"D",sep="_")
-      head(chain2)
-      
-      z = y+1
-      x <- names(chain2)[z:dim(chain2)[2]]
-      merged_chain <- merge(chain1,chain2,by =x)
-      head(merged_chain)
-      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_G","Sequence.ID_D","V.DOMAIN.Functionality_G","V.DOMAIN.Functionality_D","D.GENE.and.allele_G","JUNCTION.frame_G","JUNCTION.frame_D"))]
-      dat <- merged_chain2
-      dat$GJ <- paste(dat$V.GENE_G,".",dat$J.GENE.and.allele_G,sep="")
-      dat$DJ <- paste(dat$V.GENE_D,".",dat$J.GENE.and.allele_D,sep="")
-      dat$GJ <- gsub("[*]0.","",dat$GJ)
-      dat$DJ <- gsub("[*]0.","",dat$DJ)
-      dat$GJ <- gsub(", or GJ","/",dat$GJ)
-      dat$GJDJ <- paste(dat$GJ,".",dat$DJ,sep="")
-      dat$GJ_gCDR3 <- paste(dat$GJ,dat$JUNCTION..AA._G,sep="_")
-      dat$DJ_dCDR3 <- paste(dat$DJ,dat$JUNCTION..AA._D,sep="_")
-      dat$GJ_gCDR3_DJ_dCDR3 <- paste(dat$DJ_dCDR3,dat$GJ_gCDR3,sep=" & ")
-      dat
-    }
-    
-  })
-  
   chain_merge_IMGTonly <- reactive({
     df1 <- input.data.IMGT_afterQC();
     df1 <- as.data.frame(df1)
@@ -1026,7 +922,7 @@ server  <- function(input, output, session) {
     y
     df2$V.GENE <- gsub(" ","",df2$V.GENE)
     df2$cloneCount <- 1
-    if (input$IMGT_chain2 =="ab") {
+    if (input$IMGT_chain2 =="ab" & input$sheet2 == "Summary+JUNCTION") {
       
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
       head(df_name2)
@@ -1076,8 +972,60 @@ server  <- function(input, output, session) {
       
       dat
       
-      }
-    else {
+    }
+    
+    else if (input$IMGT_chain2 =="ab" & input$sheet2 == "Summary") {
+      
+      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
+      head(df_name2)
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+      df_name3$V1 <- gsub("A","",df_name3$V1)
+      df_name3$V1 <- gsub("B","",df_name3$V1)
+      
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name5)
+      df2$ID <- df_name2$V1
+      
+      df2$Indiv.group <- df_name3$V1
+      df2$Indiv <-df_name5$V1
+      df2$group <- df_name5$V2
+      df2$clone <- df_name4$V2
+      names(df2)
+      
+      dim(df)
+      
+      chain1 <- df2[grep("A",df2$V.GENE),]
+      chain2 <- df2[grep("B",df2$V.GENE),]
+      # paste chain into name
+      chain1$ID <- gsub("A-","-",chain1$ID)
+      names(chain1)[1:y] <- paste(names(chain1)[1:y],"A",sep="_")
+      head(chain1)
+      chain2$ID <- gsub("B-","-",chain2$ID)
+      names(chain2)[1:y] <- paste(names(chain2)[1:y],"B",sep="_")
+      z = y+1
+      x <- names(chain2)[z:dim(chain2)[2]]
+      
+      merged_chain <- merge(chain1,chain2,by =x)
+      head(merged_chain)
+      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
+      names(merged_chain2)
+      dat <- merged_chain2
+      dat$AJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
+      dat$BJ <- paste(dat$V.GENE_B,".",dat$J.GENE.and.allele_B,sep="")
+      dat$AJ <- gsub("[*]0.","",dat$AJ)
+      dat$BJ <- gsub("[*]0.","",dat$BJ)
+      dat$AJ <- gsub("TR","",dat$AJ)
+      dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
+      dat$AJ_aCDR3 <- paste(dat$AJ,dat$AA.JUNCTION_A,sep="_")
+      dat$BJ_bCDR3 <- paste(dat$BJ,dat$AA.JUNCTION_B,sep="_")
+      dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
+      head(dat)
+      dat
+      
+    }
+    
+    else if (input$IMGT_chain2 =="gd" & input$sheet2 == "Summary+JUNCTION") {
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
       head(df_name2)
       df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
@@ -1121,6 +1069,50 @@ server  <- function(input, output, session) {
       dat
     }
       
+    else  {
+      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
+      head(df_name2)
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+      df_name3$V1 <- gsub("G","",df_name3$V1)
+      df_name3$V1 <- gsub("D","",df_name3$V1)
+      
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name5)
+      df2$ID <- df_name2$V1
+      
+      df2$Indiv.group <- df_name3$V1
+      df2$Indiv <-df_name5$V1
+      df2$group <- df_name5$V2
+      df2$clone <- df_name4$V2
+      
+      chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
+      chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
+      chain1$ID <- gsub("G-","-",chain1$ID)
+      names(chain1)[1:y] <- paste(names(chain1)[1:y],"G",sep="_")
+      
+      chain2$ID <- gsub("D-","-",chain2$ID)
+      names(chain2)[1:y] <- paste(names(chain2)[1:y],"D",sep="_")
+      head(chain2)
+      
+      z = y+1
+      x <- names(chain2)[z:dim(chain2)[2]]
+      merged_chain <- merge(chain1,chain2,by =x)
+      head(merged_chain)
+      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_G","Sequence.ID_D","V.DOMAIN.Functionality_G","V.DOMAIN.Functionality_D","D.GENE.and.allele_G","JUNCTION.frame_G","JUNCTION.frame_D"))]
+      dat <- merged_chain2
+      dat$GJ <- paste(dat$V.GENE_G,".",dat$J.GENE.and.allele_G,sep="")
+      dat$DJ <- paste(dat$V.GENE_D,".",dat$J.GENE.and.allele_D,sep="")
+      dat$GJ <- gsub("[*]0.","",dat$GJ)
+      dat$DJ <- gsub("[*]0.","",dat$DJ)
+      dat$GJ <- gsub(", or GJ","/",dat$GJ)
+      dat$GJDJ <- paste(dat$GJ,".",dat$DJ,sep="")
+      dat$GJ_gCDR3 <- paste(dat$GJ,dat$AA.JUNCTION_G,sep="_")
+      dat$DJ_dCDR3 <- paste(dat$DJ,dat$AA.JUNCTION_D,sep="_")
+      dat$GJ_gCDR3_DJ_dCDR3 <- paste(dat$DJ_dCDR3,dat$GJ_gCDR3,sep=" & ")
+      dat
+    }
+    
   })
   
   TSV.file.chain <- reactive({
@@ -1130,16 +1122,16 @@ server  <- function(input, output, session) {
    
    
   if (input$IMGT_chain2 == "ab") {
-    df1 <-  df1[,c("id","group","Indiv","Sequence_A","Sequence_B")]
-    names(df1) <- c("id","epitope","subject","a_nucseq","b_nucseq")
-     df1
+    dat <-  dat[,c("id","group","Indiv","Sequence_A","Sequence_B")]
+    names(dat) <- c("id","epitope","subject","a_nucseq","b_nucseq")
+     dat
      
    }
    
    else {
-     df1 <-  df1[,c("id","group","Indiv","Sequence_G","Sequence_D")]
-     names(df1) <- c("id","epitope","subject","g_nucseq","d_nucseq")
-     df1
+     dat <-  dat[,c("id","group","Indiv","Sequence_G","Sequence_D")]
+     names(dat) <- c("id","epitope","subject","g_nucseq","d_nucseq")
+     dat
    }
 
   })
