@@ -513,6 +513,10 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                             column(3,selectInput("upset.select",label = h5("Select chain"), choices = "", selected = "")),
                             column(3,selectInput("upset.group.select",label = h5("Group column (max 31 groups)"), choices = "",selected= ""))),
                           
+                          selectInput("order.of.group",label = h5("Group column (max 31 groups)"), choices = "",selected= "", multiple = T, width = "1200px"),
+                          
+                          
+                          
                           tags$head(tags$style("#upset.datatable  {white-space: nowrap;  }")),
                           div(DT::dataTableOutput("upset.datatable")),
                           plotOutput("UpSet.plot", height = "600px"),
@@ -3609,10 +3613,21 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "upset.group.select",
-      choices=names(input.data2()),
+      choices=names(select_group()),
       selected = "group")
     
   })
+  
+  
+  observe({
+    updateSelectInput(
+      session,
+      "order.of.group",
+      choices=select_group(),
+      selected = c("CD8","IFN"))
+    
+  })
+  
   upset.parameters <- function () {
     df <- input.data2();
     
@@ -3641,7 +3656,10 @@ server  <- function(input, output, session) {
                                                           annotation_name_gp = gpar(fontfamily = 'serif')
                     ),
                     right_annotation = upset_right_annotation(df.x,
-                                                              annotation_name_gp = gpar(fontfamily = 'serif'))
+                                                              annotation_name_gp = gpar(fontfamily = 'serif')),
+                    
+                    set_order  = c(input$order.of.group)
+                    
     ), padding = unit(c(20, 20, 20, 20), "mm"))
     od = column_order(ht)
     cs = comb_size(df.x)
@@ -3649,6 +3667,9 @@ server  <- function(input, output, session) {
       grid.text(cs[od], x = seq_along(cs), y = unit(cs[od], "native") + unit(2, "pt"), 
                 default.units = "native", just = "bottom", gp = gpar(fontsize = 12, fontfamily = 'serif')
       ) })
+    
+    
+    
     
     
   }
