@@ -31,33 +31,33 @@ Nucleotide <- function (Nucleotide, seqlength)
 options(shiny.maxRequestSize=10*1024^2)
 
 ## volcano plots
-require("tidyverse")
-require("ggplot2") #Best plots
-require("ggrepel") #Avoid overlapping labels
-require("shiny")
-require("shinyBS")
-require("gridExtra")
-require("DT")
-require("plyr")
-require("dplyr")
-require("reshape2")
-require("treemap")
-require("treemapify")
-require("circlize")
-require("motifStack")
-require("VLF")
-require("gplots")
-require("MASS") # to access Animals data sets
-require("scales") # to access break formatting functions
-require("flowCore")
-library("readxl")
-require("RColorBrewer")
-require("vegan")
-require("ggheatmap")
-library("randomcoloR")
-library("colourpicker")
-require("ComplexHeatmap")
-
+# require("tidyverse")
+# require("ggplot2") #Best plots
+# require("ggrepel") #Avoid overlapping labels
+# require("shiny")
+# require("shinyBS")
+# require("gridExtra")
+# require("DT")
+# require("plyr")
+# require("dplyr")
+# require("reshape2")
+# require("treemap")
+# require("treemapify")
+# require("circlize")
+# require("motifStack")
+# require("VLF")
+# require("gplots")
+# require("MASS") # to access Animals data sets
+# require("scales") # to access break formatting functions
+# require("flowCore")
+# library("readxl")
+# require("RColorBrewer")
+# require("vegan")
+# require("ggheatmap")
+# library("randomcoloR")
+# library("colourpicker")
+# require("ComplexHeatmap")
+?vegan
 test_fun <- function()
 {
   for (i in 1:15) {
