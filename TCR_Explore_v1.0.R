@@ -3167,7 +3167,7 @@ server  <- function(input, output, session) {
   # FACS index data -----
   input.data_FACS <- reactive({switch(input$dataset3,"test-FACS" = test.data_FACS(), "own_FACS" = own.data_FACS())})
   test.data_FACS <- reactive({
-    read.FCS("../../Results_2020/Flow Cytometry/FACS Aria/AFKM200923_PBMC/Specimen_001_INX_PBMCs 4905 CBZ sort IFN 1_014.fcs")
+    read.FCS("test-data/Index/Specimen_001_INX_PBMCs 4905 CBZ sort IFN 1_014.fcs")
   })
   own.data_FACS <- reactive({
     input$file_FACS
