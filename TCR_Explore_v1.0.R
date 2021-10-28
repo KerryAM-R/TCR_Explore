@@ -122,8 +122,8 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                                              tabPanel("IMGT create QC file",
                                                       
                                                     
-                                                      fluidRow(column(4, selectInput("sheet","Sheets inlcuded", choices = c("Summary+JUNCTION","Summary"))),
-                                                               column(4, selectInput("include.origin","include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'))),
+                                                      fluidRow(column(4, selectInput("sheet","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
+                                                               column(4, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'))),
                                              ),
                                                       tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
                                              div(DT::dataTableOutput("IMGT2_out")),
@@ -132,7 +132,7 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                                              tabPanel("Paired chain file",
                                                       fluidRow(
                                                         column(4, selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd"))),
-                                                        column(4, selectInput("sheet2","Sheets inlcuded", choices = c("Summary+JUNCTION","Summary")))
+                                                        column(4, selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary")))
                                                       ),
                                                       
                                                       
@@ -739,6 +739,9 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('Musmus ','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('Musmus ','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('Musmus ','',df_chain1$`D-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('see comment','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('see comment','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('see comment','',df_chain1$`D-GENE and allele`)
@@ -777,6 +780,9 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('Musmus ','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('Musmus ','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('Musmus ','',df_chain1$`D-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('see comment','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('see comment','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('see comment','',df_chain1$`D-GENE and allele`)
@@ -813,6 +819,9 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('Musmus ','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('Musmus ','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('Musmus ','',df_chain1$`D-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('see comment','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('see comment','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('see comment','',df_chain1$`D-GENE and allele`)
@@ -851,6 +860,9 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('Musmus ','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('Musmus ','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('Musmus ','',df_chain1$`D-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('see comment','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('see comment','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('see comment','',df_chain1$`D-GENE and allele`)
