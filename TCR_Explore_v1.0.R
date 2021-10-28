@@ -461,8 +461,16 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                  
                  # UI Pie ----
                               tabPanel("Pie chart",
-                                       fluidRow(column(3,selectInput("pie_chain",label = h5("Colour by this group"),"")),
-                                                column(3,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","grey")))),
+                                       fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this group"),"")),
+                                                column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
+                                                column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
+                                                column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 3)),
+                                                column(2,  numericInput("size.circ",label = h5("Size of legend text"), value = 6))
+                                                
+                                                ),
+                                       
+                                       
+                                       
                                        fluidRow(column(3,
                                                        wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
                                                                  uiOutput('myPanel_pie'))),
@@ -2676,20 +2684,26 @@ server  <- function(input, output, session) {
     
     df <- as.data.frame(ddply(dat,(c(input$group_column,input$pie_chain)),numcolwise(sum)))
     names(df) <- c("group","chain","cloneCount")
+   
     palette <- cols
     a <- unique(df$chain)
     df$chain <- factor(df$chain,levels = a,labels=a)
+    df <- transform(df, percent = ave(cloneCount, group, FUN = prop.table))
     
-   vals9$pie <- ggplot(df, aes(x="", y=cloneCount, fill=chain)) +
+   vals9$pie <- ggplot(df, aes(x="", y=percent, fill=chain)) +
       geom_bar(width = 1, stat = "identity",aes(colour = "black")) +
       scale_fill_manual(values=palette) +
       scale_color_manual(values = "black") +
-      coord_polar("y", start=1) + facet_wrap(~group) +
+      coord_polar("y", start=0) + 
+      facet_wrap(~group,nrow = input$nrow.pie) +
       theme(axis.text = element_blank(),
             axis.ticks = element_blank(),
             panel.grid  = element_blank(),
             axis.title.y= element_blank(),
-            legend.position = "bottom") +
+            legend.position = input$cir.legend,
+            legend.text = element_text(size = input$size.circ),
+            legend.title = element_blank(),
+            axis.title = element_blank()) +
       guides(color = "none", size = "none")
    vals9$pie
     
