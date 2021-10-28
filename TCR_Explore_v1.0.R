@@ -120,8 +120,8 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                                        mainPanel(
                                          tabsetPanel(
                                              tabPanel("IMGT create QC file",
-                                                      
-                                                    
+                                                      h4("Fill in the 'clone_quality' column: pass or fail"), 
+                                                      h4("Add comments if desired"),
                                                       fluidRow(column(4, selectInput("sheet","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
                                                                column(4, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'))),
                                              ),
