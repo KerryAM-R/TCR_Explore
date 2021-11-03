@@ -24,7 +24,7 @@ require("muscle") # aligning sequences
 require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
- 
+
 test_fun <- function()
 {
   for (i in 1:15) {
@@ -291,14 +291,14 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                                          column(2,selectInput( "group_selected2",label = h5("Group"),"" )),
                                          column(2,selectInput( "chain1",label = h5("Chain one"),"" )),
                                          column(2,selectInput( "chain2",label = h5("Chain two"),"" )),
-                                        column(2, numericInput("chord.transparancy","Transparancy",value = 0.5, min=0,max=0.9)),
+                                        column(2,style = "margin-top: 15px;", numericInput("chord.transparancy","Transparancy",value = 0.5, min=0,max=0.9)),
                                          column(2,tableOutput("table_display")),
                                          
                                        ),
                                        fluidRow(
                                           column(3, selectInput("circ.lab",label = h5("Add label"),choices = c("yes","no"))),
                                           column(3,selectInput( "colour_cir",label = h5("Colour"),choices = c("rainbow","random","grey"))),  
-                                          column(3, numericInput("seed.numb.chord","Random colour generator",value = 123)),
+                                          column(3,style = "margin-top: 15px;", numericInput("seed.numb.chord","Random colour generator",value = 123)),
                                                 ),
                                        fluidRow(column(3,
                                                        wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 600px",
@@ -325,14 +325,25 @@ ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
                  # UI bar graphs ----- 
                               tabPanel("Chain bar graph",
                                        h5("Chain plot requires an unsummarised dataset"),
+                                       fluidRow(column(3,selectInput("count.percent",label = h5("Type of distribution"),choices=c("Indiviudal chains","cummulative frequency"))),
+                                                column(3,selectInput( "selected_group_chain",label = h5("Group"),"" )),
+                                                ),
+                                       h5("Indiviudal chains"),
                                        fluidRow(
-                                         column(2,selectInput( "variable_chain",label = h5("Select y-axis"),"" )),
-                                         column(2,selectInput( "graph_bar_type",label = h5("Select x-axis"),choices = c("count","percentage"))),
-                                         column(2,selectInput( "selected_group_chain",label = h5("Group"),"" )),
-                                         column(2,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black"))
-
+                                         column(3,selectInput( "variable_chain",label = h5("Select y-axis"),"" )),
+                                         column(3,selectInput( "graph_bar_type",label = h5("Select x-axis"),choices = c("count","percentage"))),
+                                         column(3,style = "margin-top: 10px;", numericInput("bar.numeric.size","Size of axis label", value = 12)),
+                                         column(3,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black")),
                                        ),
-                                       plotOutput("Chain1_usage",height="800px"),
+                                       h5("Cummulative frequency"),
+                                       fluidRow(
+                                          column(3,numericInput("numeric.adjust","Adjust # clones label",value=-1)),
+                                          column(3, colourInput("colour.numeric.bar","Colour numeric", value = "black")),
+                                          column(3, numericInput("label.size","Size of numeric label", value = 6)),
+                                          column(3, numericInput("label.size.axis","Size of axis label", value = 20)),
+                                                ),
+                                       
+                                       plotOutput("Chain1_usage",height="400px"),
                                        fluidRow(
                                          column(3,numericInput("width_chain.usage", "Width of PDF", value=10)),
                                          column(3,numericInput("height_chain.usage", "Height of PDF", value=8)),
@@ -2031,10 +2042,10 @@ server  <- function(input, output, session) {
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family="serif",size = 12),
-          axis.text.y = element_text(colour="black",family="serif",size = 12),
-          axis.text.x = element_text(colour="black",family="serif",angle=0,size = 12),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = 12),
+          axis.title.y = element_text(colour="black",family="serif",size = input$bar.numeric.size),
+          axis.text.y = element_text(colour="black",family="serif",size = input$bar.numeric.size),
+          axis.text.x = element_text(colour="black",family="serif",angle=0,size = input$bar.numeric.size),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = input$bar.numeric.size),
           legend.text = element_text(colour="black",family="serif")
         ) +
         coord_flip()
@@ -2070,12 +2081,66 @@ server  <- function(input, output, session) {
 
     
   }
+  
+  vals30 <- reactiveValues(bar.usage2=NULL)
+  
+  Chain2_usage <- function () {
+    df <- input.data2(); 
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df <- subset(df, get(input$group_column)==input$selected_group_chain)
+    
+    
+    df2 <- df[names(df) %in% c("cloneCount",input$variable_chain)]
+    df3 <- as.data.frame(ddply(df2,names(df2)[2],numcolwise(sum)))
+    df3$count2 <- 1
+    df3$percent <- df3$cloneCount/sum(df3$cloneCount)
+    df4 <- as.data.frame(ddply(df3,names(df3)[2],numcolwise(sum)))
+    df5 <- df4 %>% group_by(percent) %>% mutate(csum = cumsum(percent))
+
+      vals30$bar.usage2 <-  ggplot()+
+        geom_bar(aes(x=df3$cloneCount,y=df3$percent),stat="identity",fill=input$colour_bar.usage)+
+        geom_line(aes(x=df5$cloneCount,y=df5$csum))+
+        geom_point(aes(x=df5$cloneCount,y=df5$csum)) +
+        geom_text(aes(x=df5$cloneCount,y=df5$percent,label=df5$count2),vjust=input$numeric.adjust, family='serif',colour=input$colour.numeric.bar, size=input$label.size)+
+        xlab("Distinct CDR3")+
+        ylab("Frequency of repertoire")+
+        theme_bw()+
+        theme(
+          axis.title.y = element_text(colour="black",family="serif",size = input$label.size.axis),
+          axis.text.y = element_text(colour="black",family="serif",size = input$label.size.axis),
+          axis.text.x = element_text(colour="black",family="serif",angle=0,size = input$label.size.axis),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = input$label.size.axis),
+          legend.text = element_text(colour="black",family="serif")
+        ) 
+      vals30$bar.usage2
+      
+      
+      
+   
+    
+    
+    
+  }
+  
+  
   output$Chain1_usage <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    Chain1_usage()
+    if (input$count.percent=="Indiviudal chains") {
+      Chain1_usage()
+    }
+    
+    else {
+      Chain2_usage()
+      
+    }
+    
   }) 
   output$downloadPlot_chain.usage <- downloadHandler(
     filename = function() {
@@ -2083,7 +2148,14 @@ server  <- function(input, output, session) {
       paste("bar.plot_",gsub("/", "-", x), ".pdf", sep = "")
     }, content = function(file) {
       pdf(file, width=input$width_chain.usage,height=input$height_chain.usage, onefile = FALSE) # open the pdf device
-      print(Chain1_usage())
+      if (input$count.percent=="Indiviudal chains") {
+        print(Chain1_usage())
+      }
+      
+      else {
+        print(Chain2_usage())
+        
+      }
       dev.off()}, contentType = "application/pdf" )
   
   output$downloadPlotPNG_chain.usage <- downloadHandler(
@@ -2094,7 +2166,14 @@ server  <- function(input, output, session) {
     content = function(file) {
       
       png(file, width = input$width_png_chain.usage, height = input$height_png_chain.usage, res = input$resolution_PNG_chain.usage)
-      print(Chain1_usage())
+      if (input$count.percent=="Indiviudal chains") {
+        print(Chain1_usage())
+      }
+      
+      else {
+        print(Chain2_usage())
+        
+      }
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
   
