@@ -1841,7 +1841,8 @@ server  <- function(input, output, session) {
     
     
     if (input$graph_type == "histogram" & input$type.tree == "scTCR") {
-      df1 <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
+      df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+      df1 <- ddply(df,names(df.names) ,numcolwise(sum))
       df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
       df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
       vals4$bar.len <- ggplot(df1,aes(x=len1)) +
@@ -1864,8 +1865,13 @@ server  <- function(input, output, session) {
     }
     
     else if (input$graph_type == "density" & input$type.tree == "scTCR") {
-      df1 <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
-      df$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+      df <- as.data.frame(df)
+      head(df)
+      df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+      df1 <- ddply(df,names(df.names) ,numcolwise(sum))
+      names(df1)
+      
+      df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
       df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
       vals4$bar.len <- ggplot(df1,aes(x=len1)) +
         #geom_histogram(fill = input$hist_col, bins = input$bin) + 
@@ -1892,7 +1898,7 @@ server  <- function(input, output, session) {
     
     else if (input$graph_type == "histogram" & input$type.tree == "bulk") {
       df1 <- df
-      df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+      df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
       df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
       vals4$bar.len <- ggplot(df1,aes(x=len1)) +
         geom_histogram(fill = input$hist_col, bins = input$bin) + 
@@ -1916,7 +1922,7 @@ server  <- function(input, output, session) {
     
     else {
       df1 <- df
-      df$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+      df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
       df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
       vals4$bar.len <- ggplot(df1,aes(x=len1)) +
         #geom_histogram(fill = input$hist_col, bins = input$bin) + 
