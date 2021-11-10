@@ -3869,7 +3869,6 @@ server  <- function(input, output, session) {
       scale_color_manual(values=palette.complex) + 
       scale_shape_manual(values=shape.ggplot)+
       scale_size_manual(values=size.ggplot)+
-      scale_alpha_manual(values=alpha.ggplot)+
       geom_hline(yintercept = input$yintercept,colour=input$intercept.col)+
       geom_vline(xintercept = input$xintercept,colour=input$intercept.col)+
       annotation_logticks()  +
