@@ -80,7 +80,17 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png", height = 40, width = 60,style = "margin:-10px 10px"), position = "fixed-top",collapsible = TRUE,
+ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,style = "margin:-25px 10px"), position = "fixed-top",collapsible = TRUE,
+                 tags$head(
+                   tags$style(HTML(' .navbar {
+                          height: 80px;
+                          min-height:80px !important;
+                        }
+                      .navbar-nav > li > a, .navbar-brand {
+                            padding-top:30px !important; 
+                            padding-bottom:30px !important;
+                            height: 20px;
+                            }'))),
                  
                  navbarMenu("TCR_Explore workflow",
                  tabPanel("Overview",
@@ -240,7 +250,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 40, width = 60,styl
                           
                           sidebarLayout(
                             sidebarPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 700px; position:relative;", width=3,
-                                         tags$style(type="text/css", "body {padding-top: 70px; padding-left: 10px;}"),
+                                         tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
                                          #textInput(inputId = "lab1", label = "Group label of file 1",value = "Ex.vivo"),
                                          tags$head(tags$style(HTML(".shiny-notification {position:fixed;top: 50%;left: 30%;right: 30%;}"))),
                                          tags$head(tags$style(HTML('.progress-bar {background-color: purple;}'))),
@@ -653,7 +663,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 40, width = 60,styl
                  tabPanel("FACS Index data",
                           sidebarLayout(
                             sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 1000px; position:relative;", width=3,
-                                         
+                                         tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
                                          selectInput("dataset3", "FACS file:", choices = c("test-FACS", "own_FACS")),
                                          fileInput('file_FACS', 'Raw index FACS file',
                                                    accept=c('FACS files', '.fcs')),
