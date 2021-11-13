@@ -77,9 +77,12 @@ error_message_val1 <- "No data found"
 error_message_val2 <- "Uploading file"
 error_message_val3 <- "Upload clone file"
 error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
+
+
 # user interface  ----
-ui <- navbarPage("TCR_Explore", position = "fixed-top",collapsible = TRUE,
-                 navbarMenu("Workflow",
+ui <- navbarPage(title = tags$img(src = "Logo.png", height = 40, width = 60,style = "margin:-10px 10px"), position = "fixed-top",collapsible = TRUE,
+                 
+                 navbarMenu("TCR_Explore workflow",
                  tabPanel("Overview",
                           
                           fluidRow(includeMarkdown("README.md"))
