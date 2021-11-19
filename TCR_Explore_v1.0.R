@@ -747,7 +747,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                            column(2,selectInput("y.axis2",label = h5("Select y-axis"),"")),
                                            column(2,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
                                            column(3,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
-                                           column(3,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"))),
+                                           column(3,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"), selected = "random")),
                                          ),
 
                                          fluidRow(column(3,
