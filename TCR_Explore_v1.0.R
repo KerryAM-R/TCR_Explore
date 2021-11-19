@@ -142,7 +142,11 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own1")),
                                                     
                                                     fileInput('file_IMGT_afterQC', 'Chromatogram checked file (.csv)',
-                                                             accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
+                                                             accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                                    h5("option for paired and TCRdist outputs"),
+                                                   selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
+                                                    selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary"))
+                                                 
                                        ),
                                        mainPanel(
                                          tabsetPanel(
@@ -157,20 +161,26 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                              downloadButton('downloadTABLE_IMGTonly','Download table')
                                              ),
                                              tabPanel("Paired chain file",
-                                                      fluidRow(
-                                                        column(4, selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd"))),
-                                                        column(4, selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary")))
-                                                      ),
+
                                                       
                                                       
                                                       tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
                                                       div(DT::dataTableOutput("chain_table_IMGT.QC1")),
                                                       p(" "),
                                                       downloadButton('downloadTABLE.QC1','Download paired chain file'),
+                                                      
+                                                      
+                                             ),
+                                             tabPanel("TCRdist ouput file",
+                                                      textInput("tcr_lab","ID for TCRdist","human_tcr"),
+                                                      
+                                                      tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
+                                                      div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
+                                                      
+                                                      
                                                       h5(" "),
                                                       downloadButton('downloadTABLE.TSV','Download tsv file for TCRdist')
-                                                      
-                                             ) 
+                                                      )
                                        )
                                        )
                                      
@@ -739,10 +749,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                            column(3,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
                                            column(3,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"))),
                                          ),
-                                        
-                                         
-                                         
-                                         
+
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 300px",
                                                                    h4("Colour"),
@@ -1006,9 +1013,7 @@ server  <- function(input, output, session) {
       df_chain1
       
     }
-      
-      
-      
+
   })
   
   output$IMGT2_out <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
@@ -1248,24 +1253,34 @@ server  <- function(input, output, session) {
   
   TSV.file.chain <- reactive({
    dat <- chain_merge_IMGTonly()
-   dat$id <- paste0("human_tcr",1:dim(dat)[1]) 
+   dat$id <- paste0(input$tcr_lab,1:dim(dat)[1]) 
    
    
    
   if (input$IMGT_chain2 == "ab") {
     dat <-  dat[,c("id","group","Indiv","Sequence_A","Sequence_B")]
     names(dat) <- c("id","epitope","subject","a_nucseq","b_nucseq")
-     dat
+    dat$a_quals <- ""
+    dat$b_quals <- ""
+    dat 
      
    }
    
    else {
      dat <-  dat[,c("id","group","Indiv","Sequence_G","Sequence_D")]
      names(dat) <- c("id","epitope","subject","g_nucseq","d_nucseq")
+     dat$g_quals <- ""
+     dat$d_quals <- ""
      dat
    }
 
   })
+  
+  output$chain_table_IMGT.tcrdist <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
+    TSV.file.chain()
+  })
+  
+  
   
   output$chain_table_IMGT.QC1 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
     df1 <- input.data.IMGT_afterQC();
