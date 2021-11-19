@@ -3509,7 +3509,7 @@ server  <- function(input, output, session) {
   # colouring columns
   input.data_CSV1 <-  reactive({switch(input$dataset7,"test-csv"=test.data_csv1(),"own_csv" = own.data_CSV1())})
   test.data_csv1 <- reactive({
-    dataframe = read.csv("test-data/Index/DR4-780 TCR sequence data.csv",header = T)
+    dataframe = read.csv("test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",header = T)
   })
   own.data_CSV1 <- reactive({
     inFile_CSV1 <- input$file_FACS.csv1
@@ -3684,7 +3684,7 @@ server  <- function(input, output, session) {
   
   input.data_CSV2 <-  reactive({switch(input$dataset_index.2,"test-csv"=test.data_csv2(),"own_csv" = own.data_CSV2())})
   test.data_csv2<- reactive({
-    dataframe = read.csv("test-data/Index/colouring column2021.09.08.csv",header = T)
+    dataframe = read.csv("test-data/Index/colouring column2021.11.19.csv",header = T)
   })
   own.data_CSV2 <- reactive({
     inFile_CSV2 <- input$file_FACS.csv2
@@ -3696,31 +3696,41 @@ server  <- function(input, output, session) {
   })
   
   observe({
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
+    
     updateSelectInput(
       session,
       "x.axis2",
-      choices=names(input.data_CSV2()),
-      selected = "CD69")
+      choices=names(dat),
+      selected = "tetramer no 2 PE")
   })
   
   observe({
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
+    
+    
     updateSelectInput(
       session,
       "y.axis2",
-      choices=names(input.data_CSV2()),
-      selected = "CD38")
+      choices=names(dat),
+      selected = "tetramer no 1 APC")
   })
   
   observe({
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
     updateSelectInput(
       session,
       "group_complex_dot",
-      choices=names(input.data_CSV2()),
-      selected = "group")
+      choices=names(dat),
+      selected = "AJBJ")
   })
   
   cols.FACS.index <- reactive({
-    dat <- input.data_CSV2();
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
     
     validate(
       need(nrow(dat)>0,
@@ -3757,7 +3767,8 @@ server  <- function(input, output, session) {
   })
   
   shape.FACS.index <- reactive({
-    dat <- input.data_CSV2();
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
     
     validate(
       need(nrow(dat)>0,
@@ -3814,7 +3825,8 @@ server  <- function(input, output, session) {
 
   
   colors.FACS.index <- reactive({
-    dat <- input.data_CSV2();
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
     validate(
       need(nrow(dat)>0,
            "Upload file")
@@ -3828,7 +3840,8 @@ server  <- function(input, output, session) {
     })
   })
   shape.FACS.index2 <- reactive({
-    dat <- input.data_CSV2();
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
     validate(
       need(nrow(dat)>0,
            "Upload file")
@@ -3842,7 +3855,8 @@ server  <- function(input, output, session) {
     })
   })
   size.FACS.index2 <- reactive({
-    dat <- input.data_CSV2();
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
     validate(
       need(nrow(dat)>0,
            "Upload file")
@@ -3861,6 +3875,7 @@ server  <- function(input, output, session) {
   
   dot_plot.complex <- reactive({
     index <- input.data_CSV2();
+    names(index) <- gsub("\\.", " ", names(index))
     validate(
       need(nrow(index)>0,
            "Upload file")
