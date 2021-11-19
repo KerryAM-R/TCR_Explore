@@ -751,28 +751,29 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          ),
 
                                          fluidRow(column(3,
-                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 300px",
+                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
                                                                    h4("Colour"),
                                                                    uiOutput('myPanel.FACS.index'),
                                                                    )),
                                                   
                                                   column(3,
-                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 300px",
+                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
                                                                    h4("Shape"),
                                                                    uiOutput('myPanel.FACS.index.shape')
                                                                    
                                                          )),
                                                   
                                                   column(3,
-                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 300px",
+                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
                                                                    h4("Size"),
                                                                    uiOutput('myPanel.FACS.index.size')
                                                                    
                                                          )),
+                                                  column(3, tags$img(src = "shape.png", height = "300px"))
                                                   
                                                   
                                                   ),
-                                         fluidRow(column(9, plotOutput("dot_plot.complex2",height = "600px"))),
+                                         fluidRow(column(12, plotOutput("dot_plot.complex2",height = "600px"))),
                                            fluidRow(
                                            column(3,numericInput("width_complex.dotplot", "Width of PDF", value=10)),
                                            column(3,numericInput("height_complex.dotplot", "Height of PDF", value=8)),
@@ -3541,7 +3542,7 @@ server  <- function(input, output, session) {
       session,
       "group.col.dot",
       choices=names(input.data_CSV1()),
-      selected = "group")
+      selected = "Indiv")
   })
   
   observe({
@@ -3578,7 +3579,7 @@ server  <- function(input, output, session) {
       session,
       "string.data",
       choices=names(input.data_CSV1()),
-      selected = c("group","TRBV","CDR3b.Sequence","TRBJ","TRAV","CDR3a.Sequence", "TRAJ","AJ", "BJ","AJBJ")) 
+      selected = c("Indiv","TRBV","CDR3b.Sequence","TRBJ","TRAV","CDR3a.Sequence", "TRAJ","AJ", "BJ","AJBJ")) 
   }) 
   
   index.cleaning1 <- reactive({
