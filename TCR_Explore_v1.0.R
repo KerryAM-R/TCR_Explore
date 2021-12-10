@@ -690,11 +690,14 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          fluidRow(
                                            column(6, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
                                            column(6, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 ))),
-                                         
+                                         fluidRow(
+                                           column(4, colourInput("intercept.col",label = h5("Line colour"),value = "grey" )),
+                                           column(4, numericInput("min.y",label = h5("Min range (y-axis)"),value = 1 )),
+                                           column(4, numericInput("min.x",label = h5("min range (x-axis)"),value = 1 ))),                                        
                                          
                                          
                                         fluidRow(
-                                            column(4, colourInput("intercept.col",label = h5("Line colour"),value = "grey" )),
+
                                             column(4, numericInput("max.y",label = h5("Max range (y-axis)"),value = 5 )),
                                             column(4, numericInput("max.x",label = h5("Max range (x-axis)"),value = 5 ))),  
                                              
@@ -721,13 +724,16 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                               div(DT::dataTableOutput("FACS.CSV")),
                              # div(DT::dataTableOutput("merged.clone")),
                               div(DT::dataTableOutput("merged.index.clone")),
+                             
+                             textInput("name.colour2","Prefix of file name","ID.780_plate1.section1."),
                               downloadButton('downloadTABLE_FACS','Download table')
                               ),
   
                  # UI complex dotplot add columns if needed -----
                               tabPanel("Adding columns for colouring",
                               
-                                verbatimTextOutput("names.in.file"),
+                                
+                                
                                 selectInput("string.data","Select all columns except flurochrome columns","",multiple = T, width = "1200px"),
                                 fluidRow(
                                   column(2,selectInput("group.col.dot",label = h5("group"),"")),
@@ -739,6 +745,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                 ),
                                 div(DT::dataTableOutput("table.index.1")),
                                 verbatimTextOutput("NAMES.df"),
+                                
+                                textInput("name.colour","Prefix of file name","ID.780_"),
                                 downloadButton('downloadTABLE_cleaning','Download table')),
                  # UI complex dotplot -----
                                 tabPanel("Complex dotplot",
@@ -774,6 +782,9 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                   
                                                   ),
                                          fluidRow(column(12, plotOutput("dot_plot.complex2",height = "600px"))),
+                                         
+                                         textInput("name.colour3","Prefix of file name","ID.780_"),
+                                         
                                            fluidRow(
                                            column(3,numericInput("width_complex.dotplot", "Width of PDF", value=10)),
                                            column(3,numericInput("height_complex.dotplot", "Height of PDF", value=8)),
@@ -2559,6 +2570,8 @@ server  <- function(input, output, session) {
 
   chain_muscle <- reactive({
     df <- input.data2();
+    
+    
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -2570,11 +2583,24 @@ server  <- function(input, output, session) {
     df_unique <- df_unique[1:3]
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% "chain"])
     x <- AAStringSet(df_unique$chain)
-    aln <- muscle(x)
-    df1 <- as.data.frame(aln@unmasked)
-    df_unique$chain1 <- df1$x
-    df_unique
     
+    if (dim(df_unique)[1] < 201) {
+      aln <- muscle(x)
+      df1 <- as.data.frame(aln@unmasked)
+      df_unique$chain1 <- df1$x
+      df_unique
+      
+    }
+    else {
+      x <- as.data.frame(c(">200 sequences",
+                           "download summary table from length distribution",
+                           "Align sequences using muscle https://www.ebi.ac.uk/Tools/msa/muscle/",
+                           "upload"))
+      names(x) <- "error message"
+      x
+    } 
+    
+
   })
   
   output$Motif_align <- DT::renderDataTable( {
@@ -2666,6 +2692,7 @@ server  <- function(input, output, session) {
                    test_fun()
                  })
 
+    
     if (input$diff == "compare" && input$aa.nt.col=="ASN") {
       diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
       diffLogo(diffLogoObj)
@@ -3442,7 +3469,6 @@ server  <- function(input, output, session) {
     head(replace_ID)
     index_updated_ID <- merge(samp_index,replace_ID,by=c("XLoc","YLoc"))
     index_updated_ID
-    
   }
 
   output$merged.clone <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
@@ -3498,7 +3524,7 @@ server  <- function(input, output, session) {
   
   output$downloadTABLE_FACS <- downloadHandler(
     filename = function(){
-      paste("TCR_Explore_index.clonal.",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste(input$name.colour2,"TCR_Explore_index.clonal.",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
       write.csv(with.clone.data(),file, row.names = FALSE)
@@ -3506,10 +3532,10 @@ server  <- function(input, output, session) {
   )
   
   
-  # colouring columns
+  # colouring columns -----
   input.data_CSV1 <-  reactive({switch(input$dataset7,"test-csv"=test.data_csv1(),"own_csv" = own.data_CSV1())})
   test.data_csv1 <- reactive({
-    dataframe = read.csv("test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",header = T)
+    dataframe = read.csv("test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",header = T, fileEncoding = "UTF-8")
   })
   own.data_CSV1 <- reactive({
     inFile_CSV1 <- input$file_FACS.csv1
@@ -3668,7 +3694,7 @@ server  <- function(input, output, session) {
 
   output$downloadTABLE_cleaning <- downloadHandler(
     filename = function(){
-      paste("colouring column",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste(input$name.colour,"colouring column",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
       write.csv(index.cleaning1(),file, row.names = FALSE)
@@ -3784,9 +3810,9 @@ server  <- function(input, output, session) {
 
     
   })
-  
   size.FACS.index <- reactive({
-    dat <- input.data_CSV2();
+    dat <- input.data_CSV2()
+    names(dat) <- gsub("\\.", " ", names(dat))
     
     validate(
       need(nrow(dat)>0,
@@ -3802,7 +3828,6 @@ server  <- function(input, output, session) {
     
     
   })
-  
   alpha.FACS.index <- reactive({
     dat <- input.data_CSV2();
     
@@ -3871,8 +3896,6 @@ server  <- function(input, output, session) {
   })
   
   
-  
-  
   dot_plot.complex <- reactive({
     index <- input.data_CSV2();
     names(index) <- gsub("\\.", " ", names(index))
@@ -3897,17 +3920,14 @@ server  <- function(input, output, session) {
                                             colour = get(input$group_complex_dot),
                                             shape = get(input$group_complex_dot), 
                                             size  = get(input$group_complex_dot),
-                                            
-                                            
                                             )
-                                 
                                  )+
       geom_point() +
       scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                    limits = c(1,10^input$max.x),
+                    limits = c(input$min.x,10^input$max.x),
                     labels = trans_format("log10", math_format(10^.x))) +
       scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                    limits = c(1,10^input$max.y),
+                    limits = c(input$min.y,10^input$max.y),
                     labels = trans_format("log10", math_format(10^.x))) +
       theme_bw() +
       scale_color_manual(values=palette.complex) + 
@@ -3959,7 +3979,7 @@ server  <- function(input, output, session) {
   output$downloadPlot_complex.dotplot <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
-      paste("complex.dotplot_",gsub("/", "-", x), ".pdf", sep = "")
+      paste(input$name.colour3,"complex.dotplot_",gsub("/", "-", x), ".pdf", sep = "")
     }, content = function(file) {
       pdf(file, width=input$width_complex.dotplot,height=input$height_complex.dotplot, onefile = FALSE) # open the pdf device
       print(dot_plot.complex1())
@@ -3969,7 +3989,7 @@ server  <- function(input, output, session) {
   output$downloadPlotPNG_complex.dotplot <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
-      paste("complex.dotplot_", gsub("/", "-", x), ".png", sep = "")
+      paste(input$name.colour3,"complex.dotplot_", gsub("/", "-", x), ".png", sep = "")
     },
     content = function(file) {
       
