@@ -731,17 +731,19 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
   
                  # UI complex dotplot add columns if needed -----
                               tabPanel("Adding columns for colouring",
-                              
-                                
-                                
-                                selectInput("string.data","Select all columns except flurochrome columns","",multiple = T, width = "1200px"),
+
+                                selectInput("string.data","Recommended selecting for ab TCR data: Indiv (or group),TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. \nDo not select flurochrome columns, clone, cloneCount, LocX or LocY, row or column","",multiple = T, width = "1200px"),
+                               
                                 fluidRow(
-                                  column(2,selectInput("group.col.dot",label = h5("group"),"")),
+                                  column(2,selectInput("group.col.dot",label = h5("Group"),"")),
                                   column(2,selectInput("V.gene.1",label = h5("V Gene 1"),"")),
                                   column(2,selectInput("CDR3.1",label = h5("CDR3 1"),"")),
                                   column(2,selectInput('V.gene.2', label = h5("V Gene 2"), "")),
                                   column(2,selectInput("CDR3.2",label = h5("CDR3 1"),"")),
-                                  column(2,numericInput("numeric.cloneCount","select clones greater than",value=1))
+                                 
+                                ),
+                                fluidRow(
+                                  column(6,numericInput("numeric.cloneCount","Filter based on number of times a clone was observed: select 0 for all",value=1))
                                 ),
                                 div(DT::dataTableOutput("table.index.1")),
                                 verbatimTextOutput("NAMES.df"),
