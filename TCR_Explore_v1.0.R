@@ -684,7 +684,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          selectInput("dataset7", "Merged FACS and clone file for colouring", choices = c("test-csv" ,"own_csv")),
                                          fileInput('file_FACS.csv1', 'FACS+clone file',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                         selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv")),
+                                         selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv_file")),
                                          fileInput('file_FACS.csv2', 'File for dot plot',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          fluidRow(
@@ -3710,7 +3710,7 @@ server  <- function(input, output, session) {
   
   # creating the dot plot ----
   
-  input.data_CSV2 <-  reactive({switch(input$dataset_index.2,"test-csv"=test.data_csv2(),"own_csv" = own.data_CSV2())})
+  input.data_CSV2 <-  reactive({switch(input$dataset_index.2,"test-csv"=test.data_csv2(),"own_csv_file" = own.data_CSV2())})
   test.data_csv2<- reactive({
     dataframe = read.csv("test-data/Index/colouring column2021.11.19.csv",header = T)
   })
@@ -3725,6 +3725,13 @@ server  <- function(input, output, session) {
   
   observe({
     dat <- input.data_CSV2()
+    
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
+    
+    
     names(dat) <- gsub("\\.", " ", names(dat))
     
     updateSelectInput(
@@ -3736,6 +3743,11 @@ server  <- function(input, output, session) {
   
   observe({
     dat <- input.data_CSV2()
+    
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
     names(dat) <- gsub("\\.", " ", names(dat))
     
     
@@ -3748,6 +3760,12 @@ server  <- function(input, output, session) {
   
   observe({
     dat <- input.data_CSV2()
+    
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
+    
     names(dat) <- gsub("\\.", " ", names(dat))
     updateSelectInput(
       session,
@@ -3758,12 +3776,14 @@ server  <- function(input, output, session) {
   
   cols.FACS.index <- reactive({
     dat <- input.data_CSV2()
-    names(dat) <- gsub("\\.", " ", names(dat))
-    
     validate(
       need(nrow(dat)>0,
-           "Upload file")
+           "Upload file for dotplot")
     )
+    
+    names(dat) <- gsub("\\.", " ", names(dat))
+    
+
     dat <- as.data.frame(dat)
     dat[is.na(dat)] <- "not_clonal"
     num <- unique(dat[names(dat) %in% input$group_complex_dot])
@@ -3796,6 +3816,10 @@ server  <- function(input, output, session) {
   
   shape.FACS.index <- reactive({
     dat <- input.data_CSV2()
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
     names(dat) <- gsub("\\.", " ", names(dat))
     
     validate(
@@ -3814,6 +3838,10 @@ server  <- function(input, output, session) {
   })
   size.FACS.index <- reactive({
     dat <- input.data_CSV2()
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
     names(dat) <- gsub("\\.", " ", names(dat))
     
     validate(
@@ -3835,7 +3863,7 @@ server  <- function(input, output, session) {
     
     validate(
       need(nrow(dat)>0,
-           "Upload file")
+           "Upload file for dotplot")
     )
     dat <- as.data.frame(dat)
     dat[is.na(dat)] <- "not_clonal"
@@ -3853,6 +3881,10 @@ server  <- function(input, output, session) {
   
   colors.FACS.index <- reactive({
     dat <- input.data_CSV2()
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
     names(dat) <- gsub("\\.", " ", names(dat))
     validate(
       need(nrow(dat)>0,
@@ -3868,6 +3900,10 @@ server  <- function(input, output, session) {
   })
   shape.FACS.index2 <- reactive({
     dat <- input.data_CSV2()
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
     names(dat) <- gsub("\\.", " ", names(dat))
     validate(
       need(nrow(dat)>0,
@@ -3883,6 +3919,10 @@ server  <- function(input, output, session) {
   })
   size.FACS.index2 <- reactive({
     dat <- input.data_CSV2()
+    validate(
+      need(nrow(dat)>0,
+           "Upload file for dotplot")
+    )
     names(dat) <- gsub("\\.", " ", names(dat))
     validate(
       need(nrow(dat)>0,
@@ -3900,11 +3940,12 @@ server  <- function(input, output, session) {
   
   dot_plot.complex <- reactive({
     index <- input.data_CSV2();
-    names(index) <- gsub("\\.", " ", names(index))
     validate(
       need(nrow(index)>0,
            "Upload file")
     )
+    names(index) <- gsub("\\.", " ", names(index))
+   
     
     index <- as.data.frame(index)
     y_lable1 <- bquote(.(input$y.axis2))
