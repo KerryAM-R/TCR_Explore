@@ -24,7 +24,8 @@ require("muscle") # aligning sequences
 require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
-require("shinyFiles")
+library("shinyFiles")
+library('shinyDirectoryInput')
 
 test_fun <- function()
 {
@@ -133,7 +134,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                             ),
                             
                             tabPanel("Making fasta files",
-                                     shinyDirButton("dir", "Input directory", "Upload"),
+                                     directoryInput('directory', label = 'select a directory'),
                                      verbatimTextOutput("dir", placeholder = TRUE),  
                                      actionButton("do", "Click Me to make fasta file (50 per file)"),
                                      h4('Merging statistics'), 
@@ -873,42 +874,64 @@ server  <- function(input, output, session) {
   })
   
 
-  
+
   # making 50 fasta files -----
-  shinyDirChoose(
-    input,
-    'dir',
-    roots = c(home = '.'),
-    filetypes = c('')
+  path = reactive({readDirectoryInput(session, 'directory')})
+  # path = readDirectoryInput(session, 'directory')
+  # path = 'path/to/directory'
+  
+  # shinyDirChoose(
+  #   input,
+  #   'dir',
+  #   roots = c(home = '~'),
+  #   filetypes = c('')
+  # )
+  # 
+  # global <- reactiveValues(datapath = getwd())
+  # 
+  # dir <- reactive(input$dir)
+  # 
+  # output$dir <- renderText({
+  #   global$datapath
+  # })
+  # 
+  # observeEvent(ignoreNULL = TRUE,
+  #              eventExpr = {
+  #                input$dir
+  #              },
+  #              handlerExpr = {
+  #                if (!"path" %in% names(dir())) return()
+  #                home <- normalizePath("~")
+  #                global$datapath <-
+  #                  file.path(home, paste(unlist(dir()$path[-1])
+  #                                        
+  #                                        , collapse = .Platform$file.sep
+  #                                        
+  #                  ))
+  #              })
+  
+  observeEvent(
+    ignoreNULL = TRUE,
+    eventExpr = {
+      input$directory
+    },
+    handlerExpr = {
+      if (input$directory > 0) {
+        # condition prevents handler execution on initial app launch
+        
+        # launch the directory selection dialog with initial path read from the widget
+        path = choose.dir(default = readDirectoryInput(session, 'directory'))
+        # update the widget value
+        updateDirectoryInput(session, 'directory', value = path)
+        setwd(path)
+        system(command = "~/test-data/scripts/alignment_211230.sh")
+      }
+    }
   )
-  
-  global <- reactiveValues(datapath = getwd())
-  
-  dir <- reactive(input$dir)
-  
-  output$dir <- renderText({
-    global$datapath
-  })
-  
-  observeEvent(ignoreNULL = TRUE,
-               eventExpr = {
-                 input$dir
-               },
-               handlerExpr = {
-                 if (!"path" %in% names(dir())) return()
-                 home <- normalizePath("~")
-                 global$datapath <-
-                   file.path(home, paste(unlist(dir()$path[-1])
-                                         
-                                         , collapse = .Platform$file.sep
-                                         
-                   ))
-               })
-  
-  
+
   
   observeEvent(input$do, {
-    setwd(global$datapath)
+    setwd(input$directory)
     system(command = "test-data/scripts/alignment_211230.sh")
     
   })
