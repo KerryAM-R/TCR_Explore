@@ -24,7 +24,7 @@ require("muscle") # aligning sequences
 require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
-library("shinyFiles")
+require("shinyFiles")
 
 test_fun <- function()
 {
@@ -878,7 +878,7 @@ server  <- function(input, output, session) {
   shinyDirChoose(
     input,
     'dir',
-    roots = c(home = '~'),
+    roots = c(home = '.'),
     filetypes = c('')
   )
   
