@@ -924,17 +924,16 @@ server  <- function(input, output, session) {
         # update the widget value
         updateDirectoryInput(session, 'directory', value = path)
         setwd(path)
-        system(command = "~/test-data/scripts/alignment_211230.sh")
+        observeEvent(input$do, {
+        system(command = "~/Documents/PhD_2018-2021/R_files/TCR_Explore/test-data/scripts/alignment_211230.sh")
+        system(command = "~/srv/shiny-server/TCR_Explore/test-data/scripts/alignment_211230.sh")
+        
+        })
+        
       }
     }
   )
 
-  
-  observeEvent(input$do, {
-    setwd(input$directory)
-    system(command = "test-data/scripts/alignment_211230.sh")
-    
-  })
   
   observeEvent(input$do, { output$textWithHTML <- renderUI({
     rawText <- readLines('time.txt') # get raw text
