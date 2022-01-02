@@ -24,7 +24,8 @@ require("muscle") # aligning sequences
 require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
-?uiOutput
+library("shinyFiles")
+
 test_fun <- function()
 {
   for (i in 1:15) {
@@ -130,6 +131,15 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                             }')
                               )
                             ),
+                            
+                            tabPanel("Making fasta files",
+                                     shinyDirButton("dir", "Input directory", "Upload"),
+                                     verbatimTextOutput("dir", placeholder = TRUE),  
+                                     actionButton("do", "Click Me to make fasta file (50 per file)"),
+                                     h4('Merging statistics'), 
+                                     uiOutput('textWithHTML') # ui output as a list of HTML p() tags
+                                     ),
+                            
                  # UI IMGT only ----
                             tabPanel("IMGT",
                                      sidebarLayout(
@@ -171,7 +181,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                       
                                                       
                                              ),
-                                             tabPanel("TCRdist ouput file",
+                                             tabPanel("TCRdist output file",
                                                       textInput("tcr_lab","ID for TCRdist","human_tcr"),
                                                       
                                                       tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
@@ -276,7 +286,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          selectInput("group_column",label = h5("Column of group"), ""),
                                          selectInput("type.tree",label = h5("Type of input"), choices =  c("scTCR","bulk")),
                                          tags$hr(),
-                                         selectInput("shannon.index", "Choose a dataset:", choices = c("gd.test.index", "own.index")),
+                                         selectInput("shannon.index", "Choose a dataset:", choices = c("ab.test.index", "own.index")),
                                          fileInput('file_diversity.index', 'Diversity statistics file',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          ),
@@ -329,7 +339,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          ),
                                 ),
                                 # UI circular plot -----
-                                tabPanel("Circular plot", 
+                                tabPanel("Chord diagram", 
                                          fluidRow(
                                            
                                            column(2,selectInput( "group_selected2",label = h5("Group"),"" )),
@@ -409,7 +419,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                               tabPanel("Motif analysis",
                                        p("This section contains 4 tabs for motif analysis"),
                                        tabsetPanel(
-                                         # UI CDR3 length distribution graphs ----- 
+                                # UI CDR3 length distribution graphs ----- 
                                          tabPanel("CDR3 length distribution",
                                                   h5("length distribution plot requires an unsummarised dataset"),
                                                   fluidRow(
@@ -436,7 +446,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_length','Download PNG'))
                                                   ),
                                          ),
-                                         # UI motif -----
+                                # UI motif -----
                                          tabPanel("Motif (amino acid)",
                                                   h5("Select amino acid column and CDR3 length"),
                                                   verbatimTextOutput("length"),
@@ -533,7 +543,6 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                        tabsetPanel(
                                          # UI bar graphs ----- 
                                          tabPanel("Chain bar graph",
-                                                  h5("Chain plot requires an unsummarised dataset"),
                                                   fluidRow(column(3,selectInput("count.percent",label = h5("Type of distribution"),choices=c("Indiviudal chains","cummulative frequency"))),
                                                            column(3,selectInput( "selected_group_chain",label = h5("Group"),"" )),
                                                   ),
@@ -585,6 +594,38 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     column(4,plotOutput("simpson.index1", height="400px")),
                                                     column(4,plotOutput("simpson.index2", height="400px"))),
                                                   fluidRow(
+                                                 
+                                                         
+                                                         column(2, numericInput("conf","confidence of T test", value =0.95, max = 0.99)),
+                                                         column(2,selectInput("group1_column",label = h5("Column of group"), "")),
+                                                         column(2,selectInput( "group1_selected",label = h5("Group1"),"" )),
+                                                        column(2,selectInput( "group2_selected",label = h5("Group2"),"" )),
+                                                  column(4,  selectInput("tail",
+                                                                         label = "Please Select a relationship you want to test:",
+                                                                         choices = c("Two.tailed" = "two.sided", 
+                                                                                     "one.tailed(Less)" = "less",
+                                                                                     "one.tailed(Greater)" = "greater")))
+                                                         ),
+                                                  
+                                                  fluidRow(
+                                                    column(2,   radioButtons("varequal",
+                                                                 "Assume equal variance:",
+                                                                 choices = c("Yes" = "y",
+                                                                             "No" = "n"))),
+                                                  column(2,radioButtons("paired",
+                                                                        "Paired?",
+                                                                        choices = c("Yes" = "y",
+                                                                                    "No" = "n"))),
+                                                     
+                                                  ),
+                                                  p("The observed t test statistic :"),
+                                                  textOutput('tvalue'),
+                                                  p("The p-value is"),
+                                                  textOutput('pvalue'),
+                                                  p("The confidence intervalue is:"),
+                                                  textOutput("confidence.int"),
+                                                  
+                                                  fluidRow(
                                                     column(3,numericInput("width_simpson.inv", "Width of PDF", value=10)),
                                                     column(3,numericInput("height_simpson.inv", "Height of PDF", value=6)),
                                                     column(3),
@@ -595,7 +636,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     column(3,numericInput("height_png_simpson.inv","Height of PNG", value = 900)),
                                                     column(3,numericInput("resolution_PNG_simpson.inv","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_simpson.inv','Download PNG'))
-                                                  ),
+                                                  )
                                                   
                                                   # gini index is created from Lorentz Surface Calculation pone.0125373.s004.xlsx
                                                   
@@ -688,8 +729,10 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          fileInput('file_FACS.csv2', 'File for dot plot',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          fluidRow(
-                                           column(6, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
-                                           column(6, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 ))),
+                                           column(4, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
+                                           column(4, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 )),
+                                           column(4, selectInput("int.type" ,label = h5("Line type"), choices = c("solid","dotted","dashed")))
+                                           ),
                                          fluidRow(
                                            column(4, colourInput("intercept.col",label = h5("Line colour"),value = "grey" )),
                                            column(4, numericInput("min.y",label = h5("Min range (y-axis)"),value = 1 )),
@@ -699,8 +742,9 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                         fluidRow(
 
                                             column(4, numericInput("max.y",label = h5("Max range (y-axis)"),value = 5 )),
-                                            column(4, numericInput("max.x",label = h5("Max range (x-axis)"),value = 5 ))),  
-                                             
+                                            column(4, numericInput("max.x",label = h5("Max range (x-axis)"),value = 5 )),  
+                                            column(4, numericInput("leg.dot.size",label = h5("Legend dot size"),value = 5 ))),
+                                        
                                            fluidRow(
                                            column(4, numericInput("axis.numeric.size",label = h5("Numeric text size"),value = 28 )),
                                            column(4, numericInput("axis.title.size",label = h5("Label text size"),value = 40 )),
@@ -756,8 +800,11 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                            column(2,selectInput("x.axis2",label = h5("Select x-axis"),"")),
                                            column(2,selectInput("y.axis2",label = h5("Select y-axis"),"")),
                                            column(2,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
-                                           column(3,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
-                                           column(3,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"), selected = "random")),
+                                           column(2, selectInput("grid.lines.dot", label = h5("Add gridlines?"), choices = c("no","yes"))),
+                                           column(2,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
+                                           column(2,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"), selected = "random")),
+                                           
+                                           
                                          ),
 
                                          fluidRow(column(3,
@@ -826,6 +873,61 @@ server  <- function(input, output, session) {
   })
   
 
+  
+  # making 50 fasta files -----
+  shinyDirChoose(
+    input,
+    'dir',
+    roots = c(home = '~'),
+    filetypes = c('')
+  )
+  
+  global <- reactiveValues(datapath = getwd())
+  
+  dir <- reactive(input$dir)
+  
+  output$dir <- renderText({
+    global$datapath
+  })
+  
+  observeEvent(ignoreNULL = TRUE,
+               eventExpr = {
+                 input$dir
+               },
+               handlerExpr = {
+                 if (!"path" %in% names(dir())) return()
+                 home <- normalizePath("~")
+                 global$datapath <-
+                   file.path(home, paste(unlist(dir()$path[-1])
+                                         
+                                         , collapse = .Platform$file.sep
+                                         
+                   ))
+               })
+  
+  
+  
+  observeEvent(input$do, {
+    setwd(global$datapath)
+    system(command = "test-data/scripts/alignment_211230.sh")
+    
+  })
+  
+  observeEvent(input$do, { output$textWithHTML <- renderUI({
+    rawText <- readLines('time.txt') # get raw text
+    
+    # split the text into a list of character vectors
+    #   Each element in the list contains one line
+    splitText <- stringi::stri_split(str = rawText, regex = '\\n')
+    
+    # wrap a paragraph tag around each element in the list
+    replacedText <- lapply(splitText, p)
+    
+    return(replacedText)  
+    
+  })
+  })
+  
   # IMGT only  -----
   input.data_IMGT.xls3 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls3(), "own_data" = own.data.IMGT3())})
   test.data_ab.xls3 <- reactive({
@@ -3124,7 +3226,7 @@ server  <- function(input, output, session) {
   
   # simpson calc -----
   
-  input.data.diversity.index <- reactive({switch(input$shannon.index,"gd.test.index" = test.data.gd.index.csv(),"own.index" = own.data.index.csv())})
+  input.data.diversity.index <- reactive({switch(input$shannon.index,"ab.test.index" = test.data.gd.index.csv(),"own.index" = own.data.index.csv())})
   
   test.data.gd.index.csv <- reactive({
   dataframe = read.csv("test-data/Group/diversity.csv",header=T)   
@@ -3178,12 +3280,11 @@ server  <- function(input, output, session) {
     a2 <- as.data.frame(t(a1))
     names(a2) <- c("inv.simpson.index","total # clones","unique # clones")
     both <- cbind(a2,df_name)
-    
+    both$V3 <- paste(both$V1,both$V2,sep = "_")
     both
     
     
   }
-  
   
   observe({
     updateSelectInput(
@@ -3246,8 +3347,6 @@ server  <- function(input, output, session) {
     
   })
   
-  
-  
   output$myPanel.inv.simp <- renderUI({cols_simp.index()})
   
   colors_inv.simp <- reactive({
@@ -3301,7 +3400,6 @@ server  <- function(input, output, session) {
     vals11$Simp1
     
   }
-  
   group.diversity2 <- function() {
     both <- inv.simpson.index()
     cols <- unlist(colors_inv.simp())
@@ -3323,9 +3421,9 @@ server  <- function(input, output, session) {
     
     vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
       geom_point(size =3, alpha =1, show.legend =T)+
-      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                    limits = c(1,10^6),
-                    labels = trans_format("log10", math_format(10^.x))) +
+      # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+      #               limits = c(1,10^6),
+      #               labels = trans_format("log10", math_format(10^.x))) +
       theme_bw() +
       scale_color_manual(values=unique.col$simp.inv_palette) +
       #annotation_logticks()  +
@@ -3344,9 +3442,6 @@ server  <- function(input, output, session) {
     vals12$Simp2
     
   }
-  
-  
-  
   output$simpson.index1 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
@@ -3354,7 +3449,6 @@ server  <- function(input, output, session) {
                  })
     group.diversity1()
       })
-  
   output$simpson.index2 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
@@ -3363,9 +3457,78 @@ server  <- function(input, output, session) {
     group.diversity2()
   })
 
+  observe({
+    updateSelectInput(
+      session,
+      "group1_column",
+      choices=names(table.inv.simpson()),
+      selected = "V2")
+    
+  }) # group 
+  
+  select_group2 <- function () {
+    df <- table.inv.simpson()
+    
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    
+    df2 <- as.data.frame(unique(df[names(df) %in% input$group1_column]))
+    df2 <- as.data.frame(df2)
+    #names(df2) <- "V1"
+    df2
+  }
+  
+  observe({
+    updateSelectInput(
+      session,
+      "group1_selected",
+      choices=select_group2(),
+      selected = "CD8")
+    
+  }) # group 
+  
+  observe({
+    updateSelectInput(
+      session,
+      "group2_selected",
+      choices=select_group2(),
+      selected = "IFN")
+    
+  }) # group 
+  
+  ttestout <- reactive({
+    dat <- table.inv.simpson()
+    conf <- input$conf
+    dat <- dat[order(dat$V1),]
+    ve <- ifelse(input$varequal == 'y', TRUE, FALSE)
+    pair_samp <- ifelse(input$paired == 'y', TRUE, FALSE)
+    group1 <- subset(dat, get(input$group1_column)==input$group1_selected) # group 1
+    group2 <- subset(dat, get(input$group1_column)==input$group2_selected) # group 2
+    t.test(group1$inv.simpson.index, group2$inv.simpson.index, paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
+  })
+  
+  output$tvalue <- renderPrint({
+    vals <- ttestout()
+    if (is.null(vals)){return(NULL)}
+    vals$statistic
+  })
+  
+  # Output of p value
+  output$pvalue <- renderPrint({
+    vals <- ttestout()
+    if (is.null(vals)){return(NULL)}
+    vals$p.value 
+  })
+  output$confidence.int <- renderPrint({
+    vals <- ttestout()
+    if (is.null(vals)){return(NULL)}
+    vals$conf.int 
+  })
   
   # 
-
+  
   
   DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
     
@@ -3496,6 +3659,7 @@ server  <- function(input, output, session) {
     clonal.file <-  input.data.clone.file();
     clonal.file <- as.data.frame(clonal.file)
     index.clonal.file <- merge(clonal.file,index_updated_ID,by="clone")
+    index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name')]
     index.clonal.file
     
   }
@@ -3512,14 +3676,11 @@ server  <- function(input, output, session) {
       need(nrow(clonal.file)>0,
            "Upload clone file")
     )
-    
-    
-    
-    
     index_updated_ID <- as.data.frame(merged.index())
     clonal.file <-  as.data.frame(input.data.clone.file())
     clonal.file <- as.data.frame(clonal.file)
     index.clonal.file <- merge(clonal.file,index_updated_ID,by="clone")
+    index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name')]
     index.clonal.file
     
   })
@@ -3547,9 +3708,6 @@ server  <- function(input, output, session) {
       dataframe <- read.csv(inFile_CSV1$datapath, header=T)}
     
   })
-
-
-  
 
   vals15 <- reactiveValues(complex_dot=NULL)
   
@@ -3690,7 +3848,6 @@ server  <- function(input, output, session) {
     a2[a2< -3] <- 0.8
     a2[a2< -2] <- 0.9
     a2[a2< 0] <- 1
-    
     a2
   })
 
@@ -3976,8 +4133,8 @@ server  <- function(input, output, session) {
       scale_color_manual(values=palette.complex) + 
       scale_shape_manual(values=shape.ggplot)+
       scale_size_manual(values=size.ggplot)+
-      geom_hline(yintercept = input$yintercept,colour=input$intercept.col)+
-      geom_vline(xintercept = input$xintercept,colour=input$intercept.col)+
+      geom_hline(yintercept = input$yintercept,colour=input$intercept.col,linetype=input$int.type)+
+      geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
       annotation_logticks()  +
       theme(text=element_text(size=20,family="serif"),
             axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
@@ -3988,7 +4145,7 @@ server  <- function(input, output, session) {
             legend.position = input$legend.dot,
             legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family="serif")) +
       scale_alpha(guide = 'none') +
-      guides(size=FALSE, col = guide_legend(ncol=input$legend.column))+
+      guides(size=FALSE, col = guide_legend(ncol=input$legend.column,override.aes = list(size=input$leg.dot.size)))+
       labs(x=x_lable1,
            y=y_lable1)
     
@@ -3996,12 +4153,20 @@ server  <- function(input, output, session) {
   })
   dot_plot.complex1 <- function () {
       
-      
-      if (input$density_dotplot =="no") {
+     
+      if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
         
-        dot_plot.complex()
-        
+        dot_plot.complex() 
       }
+    else if (input$density_dotplot =="no" & input$grid.lines.dot =='no') {
+      
+      dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    }
+      
+    else if (input$density_dotplot =="yes" & input$grid.lines.dot =='yes') {
+      
+      dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    }
       
       else {
         ggExtra::ggMarginal(dot_plot.complex(),groupColour = TRUE, groupFill = TRUE)
