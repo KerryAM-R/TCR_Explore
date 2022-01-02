@@ -24,8 +24,8 @@ require("muscle") # aligning sequences
 require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
-library("shinyFiles")
-library('shinyDirectoryInput')
+require("shinyFiles")
+require('shinyDirectoryInput')
 
 test_fun <- function()
 {
