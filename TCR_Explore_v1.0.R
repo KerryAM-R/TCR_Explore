@@ -96,7 +96,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                  navbarMenu("TCR_Explore workflow",
                             tabPanel("Overview",
                                      fluidRow(includeMarkdown("README.md")),
-                                     tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
+                                     # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                             ),     
                             tabPanel("QC",
                                      fluidRow(includeMarkdown("READMEQC.md"))
