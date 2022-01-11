@@ -1,5 +1,3 @@
-<img src="IMAGES/Logo.png" width="400">
-
 ### TCR_Explore Shiny R application
 
 TCR_explore was designed to aid in the processing and analysis of TCR repertiore for both alpha beta and gamma-delta chains
