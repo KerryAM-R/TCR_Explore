@@ -1,0 +1,10 @@
+Stats of merging fasta files
+start time:  21:47:39
+      96 fasta.file
+     257 _1_50.fasta
+     225 _51_100.fasta
+       0 _101_150.fasta
+       0 _151_200.fasta
+       0 _201_250.fasta
+       0 _251_300.fasta
+end time:  21:47:41

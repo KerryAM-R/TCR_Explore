@@ -1,0 +1,44 @@
+library(shiny)
+library(shinydashboard)
+
+ui <- function(){
+  navbarPage(title = 'Hello', 
+             tabPanel("title2"),
+             tabPanel("title3"),
+             tags$head(
+               tags$style(type = 'text/css', 
+                          HTML('.navbar { background-color: white;}
+                          .navbar-default .navbar-brand{color: white;}
+                          .tab-panel{ background-color: red; color: white}
+                          .navbar-default .navbar-nav > .active > a, 
+                           .navbar-default .navbar-nav > .active > a:focus, 
+                           .navbar-default .navbar-nav > .active > a:hover {
+                                color: #555;
+                                background-color: lightblue;
+                                
+                            }')
+               )
+             )
+  )
+  
+}
+
+server <- function(input, output, session){
+}
+
+
+shinyApp(ui = ui, server = server)
+
+t.test(group1$inv.simpson.index,group2$inv.simpson.index)
+t.test(group1$inv.simpson.index,group2$inv.simpson.index, paired = T)
+
+?diversity
+
+
+video_path  <- "www"
+video_files <- list.files(video_path,
+                          pattern = "\\.mp4$",
+                          recursive = TRUE,
+                          all.files = FALSE,
+                          full.names = TRUE)
+video_files

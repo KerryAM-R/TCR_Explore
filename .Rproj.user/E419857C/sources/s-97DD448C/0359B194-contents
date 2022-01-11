@@ -1,0 +1,22 @@
+setwd("~/Documents/PhD_2018-2021/R_files/TCR_Explore/test-data/Raw-ab-data/20160629_T00016 CBZ copy/Micromon Sequencing/")
+getwd()
+system(command = "~/Documents/PhD_2018-2021/Results_2020/MiXCR_sort/alignment_211230.sh")
+
+
+library(shiny)
+library(shinyFiles)
+shinyApp(
+  shinyUI(bootstrapPage(
+    shinyDirButton('folder', 'Select a folder', 'Please select a folder', FALSE)
+  )),
+  
+  shinyServer(function(input, output) {
+    shinyDirChoose(input, 'folder', roots=c(wd='.'), filetypes=c('', 'txt'))
+    
+    observe({
+      print(input$folder)
+    })
+  })
+)
+
+read.csv("www/KerryMullan-poster-79672.mp4")
