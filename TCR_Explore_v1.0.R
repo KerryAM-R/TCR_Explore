@@ -25,7 +25,6 @@ require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
 
-
 test_fun <- function()
 {
   for (i in 1:15) {
@@ -99,13 +98,12 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                      # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                             ),     
                             tabPanel("QC",
-                                     fluidRow(includeMarkdown("READMEQC.md"))
+                                     h3("Tutorial video of Quality control processes"),
+                                     uiOutput("video"),
+                                     fluidRow(includeMarkdown("READMEQC.md")),
+                                     
                                      # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                             ),     
-                            tabPanel("QC",
-                                     fluidRow(includeMarkdown("READMEQC.md")),
-                                     tags$video(id="video2", type = "video/mp4",src = "QC.mp4", controls = "controls", height="720px")
-                            ),
                             tabPanel("scTCR plots",
                                      fluidRow(includeMarkdown("README.scTCR.md"))),
                             tabPanel("FACS index QC and plots",
@@ -548,10 +546,10 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                        tabsetPanel(
                                          # UI bar graphs ----- 
                                          tabPanel("Chain bar graph",
-                                                  fluidRow(column(3,selectInput("count.percent",label = h5("Type of distribution"),choices=c("Indiviudal chains","cummulative frequency"))),
+                                                  fluidRow(column(3,selectInput("count.percent",label = h5("Type of distribution"),choices=c("Individual chains","cummulative frequency"))),
                                                            column(3,selectInput( "selected_group_chain",label = h5("Group"),"" )),
                                                   ),
-                                                  h5("Indiviudal chains"),
+                                                  h5("Individual chains"),
                                                   fluidRow(
                                                     column(3,selectInput( "variable_chain",label = h5("Select y-axis"),"" )),
                                                     column(3,selectInput( "graph_bar_type",label = h5("Select x-axis"),choices = c("count","percentage"))),
@@ -877,7 +875,9 @@ server  <- function(input, output, session) {
     print(sessionInfo())
   })
   
-  
+  output$video <- renderUI({
+    tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 1080, height = 720)
+  })
   
   
   # IMGT only  -----
@@ -2317,7 +2317,7 @@ server  <- function(input, output, session) {
                  detail = '', value = 0, {
                    test_fun()
                  })
-    if (input$count.percent=="Indiviudal chains") {
+    if (input$count.percent=="Individual chains") {
       Chain1_usage()
     }
     
@@ -2333,7 +2333,7 @@ server  <- function(input, output, session) {
       paste("bar.plot_",gsub("/", "-", x), ".pdf", sep = "")
     }, content = function(file) {
       pdf(file, width=input$width_chain.usage,height=input$height_chain.usage, onefile = FALSE) # open the pdf device
-      if (input$count.percent=="Indiviudal chains") {
+      if (input$count.percent=="Individual chains") {
         print(Chain1_usage())
       }
       
@@ -2351,7 +2351,7 @@ server  <- function(input, output, session) {
     content = function(file) {
       
       png(file, width = input$width_png_chain.usage, height = input$height_png_chain.usage, res = input$resolution_PNG_chain.usage)
-      if (input$count.percent=="Indiviudal chains") {
+      if (input$count.percent=="Individual chains") {
         print(Chain1_usage())
       }
       
