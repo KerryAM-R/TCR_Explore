@@ -17,4 +17,3 @@ Graphical sections:
 - FACS index data
     + This section contains combining the paired TCR data from the QC section with the index sort data (FAC file)
     + Please see Workflow -> FACS index QC and plots for details 
-
