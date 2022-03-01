@@ -78,7 +78,7 @@ error_message_val2 <- "Uploading file"
 error_message_val3 <- "Upload clone file"
 error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
-
+simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
 ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,style = "margin:-25px 10px"), position = "fixed-top",collapsible = TRUE,
                  tags$head(
@@ -289,9 +289,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          selectInput("group_column",label = h5("Column of group"), ""),
                                          selectInput("type.tree",label = h5("Type of input"), choices =  c("scTCR","bulk")),
                                          tags$hr(),
-                                         selectInput("shannon.index", "Choose a dataset:", choices = c("ab.test.index", "own.index")),
-                                         fileInput('file_diversity.index', 'Diversity statistics file',
-                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                         
                             ),
                             
                             mainPanel(tabsetPanel(
@@ -583,13 +581,29 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          # UI inverse simpson index -----
                                          tabPanel("Inverse Simpson Index",
                                                   p("Inverse simpson index; ∞=infinite diversity and 1=limited diversity"),
-                                                  fluidRow(column(9, div(DT::dataTableOutput("table_display.diversity")))),
+                                                  fluidRow(
+                                                    column(3,selectInput("group_column_simp",label = h5("Group colum"),
+                                                                         choices = c("group","Indiv","Indiv.group"),
+                                                                         selected = "Indiv.group")),
+                                                    column(3,selectInput("group_column_simp2",label = h5("Unique clone column"),
+                                                                         "")),                            
+                                                    
+                                                    
+                                                  ),
+                                                  fluidRow(column(12, div(DT::dataTableOutput("table_display.diversity")))),
                                                   downloadButton('downloadTABLE_simpson.inv','Download table'),
                                                   fluidRow(
                                                     column(3,selectInput("inv.simp_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
-                                                    column(3,selectInput("group.index",label = h5("Select x-axis"),"")),
-                                                    column(3,selectInput("group2.index",label = h5("Colour by this group"),"")),
-                                                    column(3,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),""))),
+                                                    column(3,selectInput("group.index",label = h5("Select x-axis"),
+                                                                         choices = simp.index.names,
+                                                                         selected = "V2")),
+                                                    column(3,selectInput("group2.index",label = h5("Colour by this group"),
+                                                                         choices = simp.index.names,
+                                                                         selected = "V1")),
+                                                    column(3,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
+                                                                         choices = simp.index.names,
+                                                                         selected = "total # clones"
+                                                    ))),
                                                   fluidRow(
                                                     column(3,
                                                            wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 400px",
@@ -600,10 +614,14 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     
                                                     
                                                     column(2, numericInput("conf","confidence of T test", value =0.95, max = 0.99)),
-                                                    column(2,selectInput("group1_column",label = h5("Column of group"), "")),
+                                                    column(2,selectInput("group1_column",label = h5("Column of group"), 
+                                                                         choices = simp.index.names,
+                                                                         selected = "V2")),
+                                                    column(2,selectInput("group3_column",label = h5("Group selected"),
+                                                                         choices=c("group","Indiv","Indiv.group"),selected = "group")),
                                                     column(2,selectInput( "group1_selected",label = h5("Group1"),"" )),
                                                     column(2,selectInput( "group2_selected",label = h5("Group2"),"" )),
-                                                    column(4,  selectInput("tail",
+                                                    column(2,  selectInput("tail",
                                                                            label = "Please Select a relationship you want to test:",
                                                                            choices = c("Two.tailed" = "two.sided", 
                                                                                        "one.tailed(Less)" = "less",
@@ -2327,6 +2345,24 @@ server  <- function(input, output, session) {
     }
     
   }) 
+  
+  skewness.data <- function () {
+    df <- input.data2(); 
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df <- subset(df, get(input$group_column)==input$selected_group_chain)
+    df2 <- as.data.frame(ddply(df,c(input$variable_chain),numcolwise(sum)))[1:2]
+    names(df2) <- c("chain","cloneCount")
+    
+    df2 <- df2[order(df2$cloneCount),]
+    df2$chain <- factor(df2$chain, levels = unique(df2$chain),labels = df2$chain)
+    
+    
+  }
+  
   output$downloadPlot_chain.usage <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
@@ -2640,7 +2676,7 @@ server  <- function(input, output, session) {
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% "chain"])
     x <- AAStringSet(df_unique$chain)
     
-    if (dim(df_unique)[1] < 201) {
+    if (dim(df_unique)[1] < 401) {
       aln <- muscle(x)
       df1 <- as.data.frame(aln@unmasked)
       df_unique$chain1 <- df1$x
@@ -2650,8 +2686,7 @@ server  <- function(input, output, session) {
     else {
       x <- as.data.frame(c(">200 sequences",
                            "download summary table from length distribution",
-                           "Align sequences using muscle https://www.ebi.ac.uk/Tools/msa/muscle/",
-                           "upload"))
+                           "Align sequences using muscle https://www.ebi.ac.uk/Tools/msa/muscle/"))
       names(x) <- "error message"
       x
     } 
@@ -3177,42 +3212,59 @@ server  <- function(input, output, session) {
   )
   
   # simpson calc -----
-  
-  input.data.diversity.index <- reactive({switch(input$shannon.index,"ab.test.index" = test.data.gd.index.csv(),"own.index" = own.data.index.csv())})
-  
-  test.data.gd.index.csv <- reactive({
-    dataframe = read.csv("test-data/Group/diversity.csv",header=T)   
-  })
-  
-  own.data.index.csv <- reactive({
-    inFile7 <- input$file_diversity.index
-    if (is.null(inFile7)) return(NULL)
-    
-    else {
-      dataframe <- read.csv(
-        inFile7$datapath)}
-    
-  })
-  
   vals11 <- reactiveValues(Simp1=NULL)
   vals12 <- reactiveValues(Simp2=NULL)
+
+  observe({
+    updateSelectInput(
+      session,
+      "group_column_simp2",
+      choices=names(input.data2()),
+      selected = "AJ_aCDR3_BJ_bCDR3")
+    
+  })
   
-  # 
   inv.simpson.index <- function() {
-    plots <- input.data.diversity.index();
+    dataframe = input.data2();
+    head(dataframe)
     
-    validate(
-      need(nrow(plots)>0,
-           error_message_val3)
-    )
+    df.names <-  dataframe[ , -which(names(dataframe) %in% c("cloneCount","clone"))]
+    df1 <- ddply(dataframe,names(df.names) ,numcolwise(sum))
+    df1 <- df1[order(df1$cloneCount, decreasing = T),]
     
-    a <- matrix(nrow=1,ncol=dim(plots)[2])
-    b <- matrix(nrow=1,ncol=dim(plots)[2])
-    d <- matrix(nrow=1,ncol=dim(plots)[2])
+    names(df1)
     
-    for( i in 1:dim(plots)[2]) {
+    df.group <- unique(df1[names(df1) %in% input$group_column_simp])
+    names(df.group) <- "V1"
+    
+    column.length <- length(df.group$V1)
+    column.length
+    
+    df.group2 <- unique(df1[names(df1) %in% input$group_column_simp2])
+    names(df.group2) <- "V1"
+    
+    row.length <- length(df.group2$V1)
+    row.length
+    
+    m = matrix(NA,ncol=column.length, nrow=row.length)
+    samps <- df.group$V1
+    
+    for (j in 1:column.length){
+      df2 <- subset(df1,get(input$group_column_simp)==samps[j])
+      m[,j] <- c(df2$cloneCount, rep(NA, row.length - length(df2$cloneCount)))
+    }
+    m <- as.data.frame(m)
+    names(m) <- samps
+    head(m)
+    m
+    
+    a <- matrix(nrow=1,ncol=dim(m)[2])
+    b <- matrix(nrow=1,ncol=dim(m)[2])
+    d <- matrix(nrow=1,ncol=dim(m)[2])
+    
+    for( i in 1:dim(m)[2]) {
       
-      samp <- plots[,i]
+      samp <- m[,i]
       samp <- na.omit(samp)
       a[,i] <- diversity(samp,"invsimpson")
       b[,i] <- sum(samp)
@@ -3221,48 +3273,32 @@ server  <- function(input, output, session) {
     
     a1 <- rbind(a,b,d)  
     a1 <- as.data.frame(a1)
-    names(a1) <- names(plots)
+    names(a1) <- names(m)
     a1 <- rbind(a,b,d)  
     a1 <- as.data.frame(a1)
-    names(a1) <- names(plots)
-    
-    df_name <- as.data.frame(do.call(rbind, strsplit(as.character(names(a1)), "_")))
+    names(a1) <- names(m)
+    a1
+    df_name <- as.data.frame(do.call(rbind, strsplit(as.character(names(m)), "\\.")))
     head(df_name) 
     
     a2 <- as.data.frame(t(a1))
     names(a2) <- c("inv.simpson.index","total # clones","unique # clones")
+    a2
+    
     both <- cbind(a2,df_name)
-    both$V3 <- paste(both$V1,both$V2,sep = "_")
-    both
+    both$Indiv_group <- paste(both$V1,both$V2,sep = "_")
+    as.data.frame(both)
     
     
   }
   
-  observe({
-    updateSelectInput(
-      session,
-      "group.index",
-      choices=names(inv.simpson.index()),
-      selected = "V2")
-    
-  })
-  observe({
-    updateSelectInput(
-      session,
-      "group2.index",
-      choices=names(inv.simpson.index()),
-      selected = "V1")
-    
-  })
-  observe({
-    updateSelectInput(
-      session,
-      "x.axis.index",
-      choices=names(inv.simpson.index()),
-      selected = "total # clones")
-    
+  output$table_display.diversity <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+    dat <- inv.simpson.index()
+    dat <- as.data.frame(dat)
+    dat
   })
   
+  # other ------
   cols_simp.index <- reactive({
     dat <- inv.simpson.index();
     dat <- as.data.frame(dat)
@@ -3278,20 +3314,20 @@ server  <- function(input, output, session) {
     
     if (input$inv.simp_colour.choise == "default") {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), col.gg[i])        
+        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), col.gg[i])
       })
     }
     else if (input$inv.simp_colour.choise == "random") {
       palette1 <- distinctColorPalette(dim(num)[1])
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), palette1[i])        
+        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), palette1[i])
       })
       
     }
     
     else {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), "grey")        
+        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), "grey")
       })
       
       
@@ -3409,24 +3445,23 @@ server  <- function(input, output, session) {
     group.diversity2()
   })
   
-  observe({
-    updateSelectInput(
-      session,
-      "group1_column",
-      choices=names(table.inv.simpson()),
-      selected = "V2")
+  table.inv.simpson <- function () {
+    dat <- inv.simpson.index()
+    dat <- as.data.frame(dat)
+    dat
     
-  }) # group 
+  }
+  # 
   
   select_group2 <- function () {
-    df <- table.inv.simpson()
+    df <- input.data2();
     
     validate(
       need(nrow(df)>0,
            error_message_val1)
     )
     
-    df2 <- as.data.frame(unique(df[names(df) %in% input$group1_column]))
+    df2 <- as.data.frame(unique(df[names(df) %in% input$group3_column]))
     df2 <- as.data.frame(df2)
     #names(df2) <- "V1"
     df2
@@ -3439,7 +3474,9 @@ server  <- function(input, output, session) {
       choices=select_group2(),
       selected = "CD8")
     
-  }) # group 
+  }) # group
+  
+  
   
   observe({
     updateSelectInput(
@@ -3448,8 +3485,8 @@ server  <- function(input, output, session) {
       choices=select_group2(),
       selected = "IFN")
     
-  }) # group 
-  
+  }) # group
+  # 
   ttestout <- reactive({
     dat <- table.inv.simpson()
     conf <- input$conf
@@ -3471,37 +3508,14 @@ server  <- function(input, output, session) {
   output$pvalue <- renderPrint({
     vals <- ttestout()
     if (is.null(vals)){return(NULL)}
-    vals$p.value 
+    vals$p.value
   })
   output$confidence.int <- renderPrint({
     vals <- ttestout()
     if (is.null(vals)){return(NULL)}
-    vals$conf.int 
+    vals$conf.int
   })
   
-  # 
-  
-  
-  DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
-    
-    clonal.file <-  input.data.clone.file();
-    clonal.file <- as.data.frame(clonal.file)
-    with.clone.data()
-  })
-  
-  output$table_display.diversity <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
-    
-    dat <- inv.simpson.index()
-    dat <- as.data.frame(dat)
-    dat
-  })
-  
-  table.inv.simpson <- function () {
-    dat <- inv.simpson.index()
-    dat <- as.data.frame(dat)
-    dat
-    
-  }
   
   output$downloadTABLE_simpson.inv <- downloadHandler(
     filename = function(){
@@ -4181,14 +4195,12 @@ server  <- function(input, output, session) {
     
   })
   
-  
   observe({
     updateSelectInput(
       session,
       "order.of.group",
       choices=select_group(),
       selected = c("CD8","IFN"))
-    
   })
   
   upset.parameters <- function () {

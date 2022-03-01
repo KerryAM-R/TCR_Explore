@@ -11,3 +11,7 @@ BiocManager::install("muscle")
 library("devtools")
 install_github("jokergoo/ComplexHeatmap")
 install_github("mgledi/DiffLogo")
+
+
+
+as.data.frame(distinctColorPalette(46))

@@ -1,4 +1,4 @@
-<img src="IMAGES/Logo.png" width="400">
+<img src="inst/extdata/Logo.png" width="400">
 
 ### TCR_Explore Shiny R application
 
