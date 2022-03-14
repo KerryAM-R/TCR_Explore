@@ -234,7 +234,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          selectInput("group_column",label = h5("Column of group"), ""),
                                          selectInput("type.tree",label = h5("Type of input"), choices =  c("scTCR","bulk")),
                                          tags$hr(),
-                                         selectInput("font_type","Type of font",choices = font,selected = "Times"),
+                                         selectInput("font_type","Type of font",choices = font,selected = "serif"),
+                                         
                                          conditionalPanel(
                                            condition = "input.stat == 'stacked'",
                                            h5("Stacked bar plot"),
@@ -245,12 +246,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                                   choices = c("yes","no"),
                                                                   selected = "no"))
                                            ),
-                                           
-                                           
-                                           
-                                           
                                          )
-                                         
                             ),
                             
                             mainPanel(tabsetPanel(
@@ -271,7 +267,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            
                                            column(3,  numericInput("nrow.tree",label = h5("Rows"), value = 1))
                                          ),
-                                         
+                                         selectInput("string.data.tree.order","Order of group in graph",choices = "",multiple = T, width = "1200px"),
                                          
                                          fluidRow( 
                                            column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
@@ -686,6 +682,11 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,selectInput("group.heatmap",label = h5("Select y-axis"),"" )),
                                                     column(3, colourInput("col.heatmap",label = h5("Colour"), value = "red"))
                                                   ),
+                                                  fluidRow(
+                                                    column(3,numericInput("heat.font.size.row","Font size (row)",value=8)),
+                                                    column(3,numericInput("heat.font.size.col","Font size (col)",value=8)),
+                                                    
+                                                    ),
                                                   
                                                   plotOutput("heatmap_out2",height="800px"),
                                                   fluidRow(
@@ -1559,14 +1560,16 @@ server  <- function(input, output, session) {
       selected = "AJBJ")
     
   })
+
   observe({
     updateSelectInput(
       session,
-      "wrap",
-      choices=names(input.data2()),
-      selected = "group")
-    
-  })
+      "string.data.tree.order",
+      choices=select_group(),
+      selected = c("IFN","CD8")) 
+  }) 
+  
+  
   cols <- reactive({
     dat <- input.data2();
     dat <- as.data.frame(dat)
@@ -1632,7 +1635,13 @@ server  <- function(input, output, session) {
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
       unique.col$tree_palette <- cols
+      
+      
+      
       df3 <- as.data.frame(merge(df2,unique.col,by.x=input$fill2,by.y = "V1"))
+      
+      
+      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
       
       vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
                                           fill = get(input$fill2),
@@ -1641,7 +1650,7 @@ server  <- function(input, output, session) {
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
-        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
         theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
@@ -1654,12 +1663,14 @@ server  <- function(input, output, session) {
       unique.col$tree_palette <- cols
       df3 <- as.data.frame(merge(df2,unique.col,by.x=input$fill2,by.y = "V1"))
       
+      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
+      
       vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
                                           fill = get(input$fill2),
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
         theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
@@ -1671,7 +1682,7 @@ server  <- function(input, output, session) {
       names(unique.col) <- "V1"
       unique.col$tree_palette <- cols
       df3 <- as.data.frame(merge(df1,unique.col,by.x=input$fill2,by.y = "V1"), replace = FALSE)
-      
+      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
       vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
                                           fill = get(input$fill2),
                                           subgroup = get(input$sub_group2))) +
@@ -1679,7 +1690,7 @@ server  <- function(input, output, session) {
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
-        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
         theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
@@ -1690,13 +1701,13 @@ server  <- function(input, output, session) {
       names(unique.col) <- "V1"
       unique.col$tree_palette <- cols
       df3 <- as.data.frame(merge(df1,unique.col,by.x=input$fill2,by.y = "V1"), replace = FALSE)
-      
+      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
       vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
                                           fill = get(input$fill2),
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
         theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
@@ -1941,7 +1952,7 @@ server  <- function(input, output, session) {
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     
     
-    par(mar = rep(0, 4), cex=0.8)
+    par(mar = rep(0, 4), cex=0.8, family = input$font_type)
     
     if (input$circ.lab=="yes") {
       
@@ -3157,12 +3168,14 @@ server  <- function(input, output, session) {
       scale_color_manual(values = "black") +
       coord_polar("y", start=0) + 
       facet_wrap(~group,nrow = input$nrow.pie) +
-      theme(axis.text = element_blank(),
+      theme(
+        strip.text = element_text(size = 20, family = input$font_type),
+        axis.text = element_blank(),
             axis.ticks = element_blank(),
             panel.grid  = element_blank(),
             axis.title.y= element_blank(),
             legend.position = input$cir.legend,
-            legend.text = element_text(size = input$size.circ),
+            legend.text = element_text(size = input$size.circ, family = input$font_type),
             legend.title = element_blank(),
             axis.title = element_blank()) +
       guides(color = "none", size = "none")
@@ -3257,12 +3270,17 @@ server  <- function(input, output, session) {
     df.1[is.na(df.1)] <- 0
     dim(df.1)
     
-    
-    
+
     # ha = HeatmapAnnotation(text = anno_text(df.1), which = "row", gp = gpar(fontfamily = input$font_type, fontface = "bold"))
     ht <- Heatmap(df.1,
-                  heatmap_legend_param = list(title = "count"),
-                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap))
+                  heatmap_legend_param = list(title = "count",
+                                              title_gp = gpar(fontsize = 10, 
+                                                              fontface = "bold",fontfamily=input$font_type),
+                                              labels_gp = gpar(fontsize = 10,fontfamily=input$font_type)),
+                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap)),
+                  row_names_gp = grid::gpar(fontsize = input$heat.font.size.row,fontfamily=input$font_type),
+                  column_names_gp = grid::gpar(fontsize = input$heat.font.size.col,fontfamily=input$font_type),
+                  
     )
     
     draw(ht, padding = unit(c(10, 10, 10, 10), "mm"))
@@ -3294,9 +3312,13 @@ server  <- function(input, output, session) {
     head(df.1)
     df.1[is.na(df.1)] <- 0
     dim(df.1)
+    par(family=input$font_type)
     ht <- Heatmap(df.1,
                   heatmap_legend_param = list(title = "count"),
-                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap))
+                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap)),
+                  row_names_gp = grid::gpar(fontsize = input$heat.font.size.row,fontfamily=input$font_type),
+                  column_names_gp = grid::gpar(fontsize = input$heat.font.size.col,fontfamily=input$font_type)
+                  
     )
     
     draw(ht, padding = unit(c(10, 10, 10, 10), "mm"))
@@ -3310,10 +3332,12 @@ server  <- function(input, output, session) {
                    test_fun()
                  })
     if (input$group_hm == "yes") {
+
       heatmap_matrix2()
     }
     
     else {
+      
       heatmap_matrix3()
       
     }
