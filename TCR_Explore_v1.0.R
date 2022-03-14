@@ -24,7 +24,19 @@ require("muscle") # aligning sequences
 require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
+library("shinyWidgets")
+library("showtext")
 
+font_add_google("Gochi Hand", "gochi")
+font_add_google("Schoolbell", "bell")
+font_add_google("Press Start 2P", "Game")
+
+showtext_auto() 
+
+
+font <- as.data.frame(font_families())
+font
+names(font) <- "Fonts"
 test_fun <- function()
 {
   for (i in 1:15) {
@@ -80,7 +92,7 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,style = "margin:-25px 10px"), position = "fixed-top",collapsible = TRUE,
+ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 70, width = 120,style = "margin:-25px 10px"), position = "fixed-top",collapsible = TRUE,
                  tags$head(
                    tags$style(HTML(' .navbar {
                           height: 80px;
@@ -135,14 +147,6 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                               )
                             ),
                             
-                            # tabPanel("Making fasta files",
-                            #          directoryInput('directory', label = 'select a directory'),
-                            #          verbatimTextOutput("dir", placeholder = TRUE),  
-                            #          actionButton("do", "Click Me to make fasta file (50 per file)"),
-                            #          h4('Merging statistics'), 
-                            #          uiOutput('textWithHTML') # ui output as a list of HTML p() tags
-                            #          ),
-                            # 
                             # UI IMGT only ----
                             tabPanel("IMGT",
                                      sidebarLayout(
@@ -200,66 +204,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                      )
                             ),
                             
-                            # do MIXCR+IMGT ------           
-                            # tabPanel("IMGT+MiXCR",
-                            #          sidebarLayout(
-                            #            sidebarPanel(
-                            # # IMGT+MIXCR file -----
-                            #              id = "tPanel2",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
-                            #              selectInput("chain","alpha-beta or gamma-delta",choices = c("ab","gd")),
-                            #              
-                            #              selectInput("dataset_IMGT", "Choose a dataset:", choices = c("ab-test-data","gd-test-data", "own")),
-                            #              fileInput('file_IMGT1', 'Select file for IMGT datafile (sheet 1)',
-                            #                        accept=c('xls/xlsx', '.xls')),
-                            #              fileInput('file_IMGT2', 'Select MiXCR txt file',
-                            #                        accept=c('text/csv', 'text/comma-separated-values,text/plain', '.txt')),
-                            #              fluidRow(
-                            #                column(4,radioButtons('sep_IMGT2', 'Separator', c( Tab='\t', Comma=','), '\t')),
-                            #                column(4,radioButtons('quote_IMGT2', 'Quote', c(None='', 'Double Quote'='"', 'Single Quote'="'"), '"')),
-                            #                column(4, radioButtons("header_IMGT2",'header',c(yes=TRUE,no=FALSE)))
-                            #              ),
-                            #              
-                            #              # merged MIXCR/IMGT or IMGT file with QC 
-                            #              fileInput('file_IMGT.MiXCR', 'Select chromatogram checked file (.csv)',
-                            #                        accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                            #            ),
-                            #            mainPanel(
-                            #              tabsetPanel(
-                            #                tabPanel("IMGT+MiXCR",
-                            #                         h5("Pre-processed file"),
-                            #                         tags$head(tags$style("#unmerged_chain1  {white-space: nowrap;  }")),
-                            #                         div(DT::dataTableOutput("unmerged_chain1")),
-                            #                         tags$head(tags$style("#unmerged_chain2  {white-space: nowrap;  }")),
-                            #                         div(DT::dataTableOutput("unmerged_chain2")),
-                            #                         tags$head(tags$style("#merged_IMGT  {white-space: nowrap;  }")),
-                            #                         div(DT::dataTableOutput("merged_IMGT")),
-                            #                         downloadButton('downloadTABLE2','Download merged table')
-                            #                         
-                            #                ),
-                            #                tabPanel("Unsummarised merged A/B or G/D",
-                            #                         tags$head(tags$style("#chain_table  {white-space: nowrap;  }")),
-                            #                         div(DT::dataTableOutput("chain_table")),
-                            #                         downloadButton('downloadTABLE3','Download table'),
-                            #                         
-                            #                ),
-                            #                tabPanel("summarised file for records",
-                            #                         verbatimTextOutput("names.in.file2"),
-                            #                         fluidRow(column(12, textInput("string.data2","column names for summary","Indiv.group, V.GENE.and.allele_A, J.GENE.and.allele_A, JUNCTION..AA._A, V.GENE.and.allele_B, J.GENE.and.allele_B, D.GENE.and.allele_B, JUNCTION..AA._B", width = "1200px") )),
-                            #                         tags$head(tags$style("#chain_table2  {white-space: nowrap;  }")),
-                            #                         div(DT::dataTableOutput("chain_table2")),
-                            #                         downloadButton('downloadTABLE4','Download table'),
-                            #                )
-                            #                
-                            #              )
-                            #              
-                            #            )
-                            #          )
-                            #          
-                            # )     
-                            #            
                  ),
-                 
-                 
                  
                  
                  # UI TCR plots ----
@@ -289,6 +234,22 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          selectInput("group_column",label = h5("Column of group"), ""),
                                          selectInput("type.tree",label = h5("Type of input"), choices =  c("scTCR","bulk")),
                                          tags$hr(),
+                                         selectInput("font_type","Type of font",choices = font,selected = "Times"),
+                                         conditionalPanel(
+                                           condition = "input.stat == 'stacked'",
+                                           h5("Stacked bar plot"),
+                                           fluidRow(
+                                             column(3,numericInput("bar.stack.angle","Angle of text",value = 90)),
+                                             column(3,numericInput("hight.bar.stack.adj","Position of text",value = 0)),
+                                             column(6,selectInput("lines.bar.graph","Display black lines?",
+                                                                  choices = c("yes","no"),
+                                                                  selected = "no"))
+                                           ),
+                                           
+                                           
+                                           
+                                           
+                                         )
                                          
                             ),
                             
@@ -313,12 +274,12 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          
                                          
                                          fluidRow( 
-                                           column(3, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
-                                           column(3, selectInput("fill2",label = h5("Colour treemap by"),"" )),
-                                           column(3, selectInput("sub_group2",label = h5("Separate panels by"),"" )),
-                                           column(3,selectInput( "wrap",label = h5("Group"),"sub" )),
-                                           column(3,selectInput( "count2",label = h5("Count column"),"")),
-                                           column(3, selectInput("tree.lab",label = h5 ("Add label"),choices = c("yes","no")))
+                                           column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
+                                           column(2, selectInput("fill2",label = h5("Colour treemap by"),"" )),
+                                           column(2, selectInput("sub_group2",label = h5("Separate panels by"),"" )),
+                                           # column(3,selectInput( "wrap",label = h5("Group"),"" )),
+                                           column(2,selectInput( "count2",label = h5("Count column"),"")),
+                                           column(2, selectInput("tree.lab",label = h5 ("Add label"),choices = c("yes","no")))
                                            
                                          ),
                                          fluidRow(column(3,
@@ -544,23 +505,57 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                        tabsetPanel(
                                          # UI bar graphs ----- 
                                          tabPanel("Chain bar graph",
-                                                  fluidRow(column(3,selectInput("count.percent",label = h5("Type of distribution"),choices=c("Individual chains","cummulative frequency"))),
-                                                           column(3,selectInput( "selected_group_chain",label = h5("Group"),"" )),
-                                                  ),
-                                                  h5("Individual chains"),
                                                   fluidRow(
+                                                    column(3,selectInput("stat",label = h5("Plot output"),choices=c("chains","frequency","stacked")),),
+                                                    column(3,selectInput( "selected_group_chain",label = h5("Group"),"" )),
                                                     column(3,selectInput( "variable_chain",label = h5("Select y-axis"),"" )),
-                                                    column(3,selectInput( "graph_bar_type",label = h5("Select x-axis"),choices = c("count","percentage"))),
-                                                    column(3,style = "margin-top: 10px;", numericInput("bar.numeric.size","Size of axis label", value = 12)),
-                                                    column(3,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black")),
                                                   ),
-                                                  h5("Cummulative frequency"),
-                                                  fluidRow(
-                                                    column(3,numericInput("numeric.adjust","Adjust # clones label",value=-1)),
-                                                    column(3, colourInput("colour.numeric.bar","Colour numeric", value = "black")),
-                                                    column(3, numericInput("label.size","Size of numeric label", value = 6)),
-                                                    column(3, numericInput("label.size.axis","Size of axis label", value = 20)),
+                                                  
+
+                                                  
+                                                  
+                                                  # chain usage -----
+                                                  conditionalPanel(
+                                                    condition = "input.stat == 'chains'",
+                                                    h5("Individual chains"),
+                                                    fluidRow(
+                                                      
+                                                      column(3,selectInput( "graph_bar_type",label = h5("Select x-axis"),choices = c("count","percentage"))),
+                                                      column(3,style = "margin-top: 10px;", numericInput("bar.numeric.size","Size of axis label", value = 12)),
+                                                      column(3,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black"))),
+                                                    
                                                   ),
+                                                  # cummulative freq  -----
+                                                  conditionalPanel(
+                                                    condition = "input.stat == 'frequency'",
+                                                    h5("Cummulative frequency"),
+                                                    fluidRow(
+                                                      column(3,numericInput("numeric.adjust","Adjust # clones label",value=-1)),
+                                                      column(3, colourInput("colour.numeric.bar","Colour numeric", value = "black")),
+                                                      column(3, numericInput("label.size","Size of numeric label", value = 6)),
+                                                      column(3, numericInput("label.size.axis","Size of axis label", value = 20)),
+                                                    ),
+                                                    
+                                                  ),
+                                                  # stacked bar graph  -----
+                                                  conditionalPanel(
+                                                   
+                                                    condition = "input.stat == 'stacked'",
+                                                    h5("Stacked bar plot"),
+                                                    selectInput("string.data2","Order of group in graph",choices = "",multiple = T, width = "1200px"),
+                                                    fluidRow(
+                                                      column(3, numericInput("label.size.axis2","Size of axis label", value = 20)),
+                                                      column(3,selectInput( "bar.stacked_colour.choise",label = h5("Colour"),choices = c(
+                                                      "default","rainbow","random","grey"))), 
+                                                      
+                                                      column(6,
+                                                             wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 250px",
+                                                                       uiOutput('myPanel_cols_stacked_bar'))),
+
+                                                      ),
+                                                    
+                                                     
+                                                    ),
                                                   
                                                   plotOutput("Chain1_usage",height="400px"),
                                                   fluidRow(
@@ -575,6 +570,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     column(3,numericInput("resolution_PNG_chain.usage","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_chain.usage','Download PNG'))
                                                   ),
+                                                  
+
                                          ),
                                          
                                          
@@ -603,7 +600,15 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     column(3,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
                                                                          choices = simp.index.names,
                                                                          selected = "total # clones"
-                                                    ))),
+                                                    )),
+                                                    column(3,selectInput("scale_x_continuous_x",label = h5("Number abbreivation"),choices = c("scientific","natural"))),
+                                                    column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 2)),
+                                                    column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
+                                                    column(3,numericInput("legend.text.simp",label = h5("Legend columns"),value = 8)),
+                                                    
+
+                                                       
+                                                    ),
                                                   fluidRow(
                                                     column(3,
                                                            wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 400px",
@@ -672,7 +677,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                               
                               tabPanel("Overlap",
                                        tabsetPanel(
-                                         # UI heatmap -----
+                              # UI heatmap -----
                                          tabPanel("Heatmap",
                                                   selectInput("group_hm", "Select specific groups", choices = c("yes", "no")),
                                                   fluidRow(
@@ -697,7 +702,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_heatmap','Download PNG'))
                                                   ),
                                          ),
-                                         # upset plot -----
+                              # upset plot -----
                                          tabPanel("Upset plot",
                                                   fluidRow(
                                                     column(3,selectInput("upset.select",label = h5("Select chain"), choices = "", selected = "")),
@@ -731,7 +736,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                             )
                           )
                  ),
-                 # UI Index data graphs -----
+                              # UI Index data graphs -----
                  tabPanel("FACS Index data",
                           sidebarLayout(
                             sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 1000px; position:relative;", width=3,
@@ -749,6 +754,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,sty
                                          selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv_file")),
                                          fileInput('file_FACS.csv2', 'File for dot plot',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                         selectInput("font_type2","Type of font",choices = font,selected = "Times"),
+                                         
                                          fluidRow(
                                            column(4, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
                                            column(4, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 )),
@@ -1619,10 +1626,8 @@ server  <- function(input, output, session) {
       cols <- unlist(colors())
     }
     
-    
-    
     if (input$tree.lab == "yes" & input$type.tree == "scTCR") {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
       df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
@@ -1634,16 +1639,15 @@ server  <- function(input, output, session) {
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = "serif",
+        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
-        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = "serif"))
+        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
     }
-    
     else if (input$tree.lab == "no" & input$type.tree == "scTCR") {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
       df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
@@ -1655,15 +1659,14 @@ server  <- function(input, output, session) {
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = "serif"))
+        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
       
     }
-    
     else if (input$tree.lab == "yes" & input$type.tree == "bulk") {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
       unique.col$tree_palette <- cols
@@ -1674,17 +1677,15 @@ server  <- function(input, output, session) {
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = "serif",
+        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
-        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = "serif"))
+        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
     }
-    
-    
     else {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
       unique.col$tree_palette <- cols
@@ -1695,15 +1696,14 @@ server  <- function(input, output, session) {
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = "serif"))
+        facet_wrap(~get(input$group_column),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = input$font_type))
       vals22$Treemap22
       
     }
     
     
   })
-  
   output$Treemap2 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
@@ -1711,7 +1711,7 @@ server  <- function(input, output, session) {
                  })
     tree_plot_dynamic()
   })
-  
+  # download Treeplots -----
   output$downloadPlot_scTREE <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
@@ -2035,8 +2035,6 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     df <- as.data.frame(df)
-    
-    
     if (input$graph_type == "histogram" & input$type.tree == "scTCR") {
       df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
       df1 <- ddply(df,names(df.names) ,numcolwise(sum))
@@ -2052,15 +2050,14 @@ server  <- function(input, output, session) {
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family="serif"),
-          axis.text.y = element_text(colour="black",family="serif"),
-          axis.text.x = element_text(colour="black",family="serif",angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          axis.title.y = element_text(colour="black",family=input$font_type),
+          axis.text.y = element_text(colour="black",family=input$font_type),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
           legend.text = element_blank()
         ) 
       vals4$bar.len
     }
-    
     else if (input$graph_type == "density" & input$type.tree == "scTCR") {
       df <- as.data.frame(df)
       head(df)
@@ -2084,15 +2081,14 @@ server  <- function(input, output, session) {
              title="") +
         # Add a line showing the alpha = 0.01 level
         theme(
-          axis.title.y = element_text(colour="black",family="serif"),
-          axis.text.y = element_text(colour="black",family="serif"),
-          axis.text.x = element_text(colour="black",family="serif",angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          axis.title.y = element_text(colour="black",family=input$font_type),
+          axis.text.y = element_text(colour="black",family=input$font_type),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
           legend.text = element_blank()
         )
       vals4$bar.len
     }
-    
     else if (input$graph_type == "histogram" & input$type.tree == "bulk") {
       df1 <- df
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
@@ -2107,16 +2103,15 @@ server  <- function(input, output, session) {
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family="serif"),
-          axis.text.y = element_text(colour="black",family="serif"),
-          axis.text.x = element_text(colour="black",family="serif",angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          axis.title.y = element_text(colour="black",family=input$font_type),
+          axis.text.y = element_text(colour="black",family=input$font_type),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
           legend.text = element_blank()
         ) 
       vals4$bar.len
       
     }
-    
     else {
       df1 <- df
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
@@ -2135,19 +2130,15 @@ server  <- function(input, output, session) {
              title="") +
         # Add a line showing the alpha = 0.01 level
         theme(
-          axis.title.y = element_text(colour="black",family="serif"),
-          axis.text.y = element_text(colour="black",family="serif"),
-          axis.text.x = element_text(colour="black",family="serif",angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          axis.title.y = element_text(colour="black",family=input$font_type),
+          axis.text.y = element_text(colour="black",family=input$font_type),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
           legend.text = element_blank()
         )
       vals4$bar.len
     }
-    
-    
-    
-    
-    
+
   }
   
   output$Chain1_length <- renderPlot({
@@ -2182,16 +2173,32 @@ server  <- function(input, output, session) {
   table.len.download <- reactive( {
     df <- input.data2()
     df <- as.data.frame(df)
-    df <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
-    df2 <- df[,c(grep("JUNCTION",names(df)))]
-    df3 <- df2
-    for (i in 1:dim(df3)[1]) {
-      df3[i,] <- nchar(df3[i,])
-      df3
+    if (input$type.tree == "scTCR") {
+     
+      df <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
+      df2 <- df[,c(grep("JUNCTION",names(df)))]
+      df3 <- df2
+      for (i in 1:dim(df3)[1]) {
+        df3[i,] <- nchar(df3[i,])
+        df3
+      }
+      names(df3) <- paste(names(df3),"length", sep="_")
+      df4 <- cbind(df,df3)
+      df4
     }
-    names(df3) <- paste(names(df3),"length", sep="_")
-    df4 <- cbind(df,df3)
-    df4
+   
+    else {
+      df1 <- df
+      for (i in 1:dim(df1)[1]) {
+        df1[i,] <- nchar(df1[i,])
+        df1
+      }
+      names(df1) <- paste(names(df1),"length", sep="_")
+      df4 <- cbind(df,df1)
+      df4
+    }
+    
+    
   })
   
   
@@ -2219,7 +2226,7 @@ server  <- function(input, output, session) {
       session,
       "selected_group_chain",
       choices=select_group()) }) # group
-  Chain1_usage <- function () {
+  Chain_usage <- function () {
     df <- input.data2(); 
     validate(
       need(nrow(df)>0,
@@ -2245,11 +2252,11 @@ server  <- function(input, output, session) {
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family="serif",size = input$bar.numeric.size),
-          axis.text.y = element_text(colour="black",family="serif",size = input$bar.numeric.size),
-          axis.text.x = element_text(colour="black",family="serif",angle=0,size = input$bar.numeric.size),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = input$bar.numeric.size),
-          legend.text = element_text(colour="black",family="serif")
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$bar.numeric.size),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = input$bar.numeric.size),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=0,size = input$bar.numeric.size),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$bar.numeric.size),
+          legend.text = element_text(colour="black",family=input$font_type)
         ) +
         coord_flip()
       vals5$bar.usage
@@ -2270,22 +2277,21 @@ server  <- function(input, output, session) {
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family="serif",size = 12),
-          axis.text.y = element_text(colour="black",family="serif",size = 12),
-          axis.text.x = element_text(colour="black",family="serif",angle=0,size = 12),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = 12),
-          legend.text = element_text(colour="black",family="serif")
+          axis.title.y = element_text(colour="black",family=input$font_type,size = 12),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = 12),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=0,size = 12),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = 12),
+          legend.text = element_text(colour="black",family=input$font_type)
         ) +
         coord_flip()
       vals5$bar.usage
       
     }
     
-    
-    
   }
   
   vals30 <- reactiveValues(bar.usage2=NULL)
+  
   
   Chain2_usage <- function () {
     df <- input.data2(); 
@@ -2304,7 +2310,7 @@ server  <- function(input, output, session) {
     df4 <- as.data.frame(ddply(df3,names(df3)[2],numcolwise(sum)))
     df5 <- df4 %>% group_by(percent) %>% mutate(csum = cumsum(percent))
     
-    vals30$bar.usage2 <-  ggplot()+
+    vals30$bar.usage2 <- ggplot()+
       geom_bar(aes(x=df3$cloneCount,y=df3$percent),stat="identity",fill=input$colour_bar.usage)+
       geom_line(aes(x=df5$cloneCount,y=df5$csum))+
       geom_point(aes(x=df5$cloneCount,y=df5$csum)) +
@@ -2313,39 +2319,214 @@ server  <- function(input, output, session) {
       ylab("Frequency of repertoire")+
       theme_bw()+
       theme(
-        axis.title.y = element_text(colour="black",family="serif",size = input$label.size.axis),
-        axis.text.y = element_text(colour="black",family="serif",size = input$label.size.axis),
-        axis.text.x = element_text(colour="black",family="serif",angle=0,size = input$label.size.axis),
-        axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = input$label.size.axis),
-        legend.text = element_text(colour="black",family="serif")
+        axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis),
+        axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis),
+        axis.text.x = element_text(colour="black",family=input$font_type,angle=0,size = input$label.size.axis),
+        axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis),
+        legend.text = element_text(colour="black",family=input$font_type)
       ) 
+      
     vals30$bar.usage2
-    
-    
-    
-    
-    
-    
+
     
   }
   
+  vals31 <- reactiveValues(bar.usage3=NULL)
+  
+  observe({
+    updateSelectInput(
+      session,
+      "string.data2",
+      choices=select_group(),
+      selected = c("IFN","CD8")) 
+  }) 
+  
+  
+  cols_stacked_bar <- reactive({
+    dat <- input.data2();
+    validate(
+      need(nrow(dat)>0,
+           error_message_val1)
+    )
+    dat <- as.data.frame(dat)
+    df <- as.data.frame(ddply(dat,(c(input$group_column,input$variable_chain)),numcolwise(sum)))
+    names(df) <- c("group","chain","cloneCount")
+    
+    df <-df[order(df$chain),]
+    
+    num <- unique(df$chain)
+    col.gg <- gg_fill_hue(length(num))
+    
+    palette_rainbow <- rev(rainbow(length(t(num))))
+    
+    if (input$bar.stacked_colour.choise == "default") {
+      lapply(1:length(num), function(i) {
+        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), col.gg[i])        
+      })}
+    
+  else  if (input$bar.stacked_colour.choise == "rainbow") {
+    lapply(1:length(num), function(i) {
+        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), palette_rainbow[i])        
+      }) }
+    
+    else if (input$bar.stacked_colour.choise == "random") {
+      
+      lapply(1:length(num), function(i) {
+        palette1 <- distinctColorPalette(length(num))
+        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), palette1[i])        
+      }) }
+    else  {
+      lapply(1:length(num), function(i) {
+        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), "grey")        
+      }) }
+    
+  })
+  output$myPanel_cols_stacked_bar <- renderUI({cols_stacked_bar()})
+  colors_bar.stacked <- reactive({
+    dat <- input.data2();
+    validate(
+      need(nrow(dat)>0,
+           error_message_val1)
+    )
+    dat <- as.data.frame(dat)
+    df <- as.data.frame(ddply(dat,(c(input$group_column,input$variable_chain)),numcolwise(sum)))
+    names(df) <- c("group","chain","cloneCount")
+    
+    df <-df[order(df$chain),]
+    
+    num <- unique(df$chain)
+    lapply(1:length(num), function(i) {
+      input[[paste("cols_stacked_bar", i, sep="_")]]
+    })
+  })
+    Chain3_usage <- function () {
+    dat <- input.data2();
+    validate(
+      need(nrow(dat)>0,
+           error_message_val1)
+    )
+    dat <- as.data.frame(dat)
+    df <- as.data.frame(ddply(dat,(c(input$group_column,input$variable_chain)),numcolwise(sum)))
+    names(df) <- c("group","chain","cloneCount")
+    
+    df <-df[order(df$chain),]
+    df$group <- factor(df$group, levels = input$string.data2)
+    cols <- unlist(colors_bar.stacked())
+    palette <- cols
+    
+    if (input$lines.bar.graph == 'yes') {
+      vals31$bar.usage3 <-  ggplot(df, aes(fill=chain, y=cloneCount, x=group,colour="black")) +
+        geom_bar(position="fill", stat="identity") +
+        xlab("")+
+        ylab("Frequency")+
+        theme_bw()+
+        theme(
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=input$bar.stack.angle,size = input$label.size.axis2, hjust=input$hight.bar.stack.adj),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis2),
+          legend.text = element_text(colour="black",family=input$font_type),
+          legend.title = element_blank()
+        )+ 
+        scale_fill_manual(values=palette) +
+        scale_color_manual(values="black", guide = "none")
+      vals31$bar.usage3
+      
+      
+    }
+    
+    else {
+      vals31$bar.usage3 <-  ggplot(df, aes(fill=chain, y=cloneCount, x=group)) +
+        geom_bar(position="fill", stat="identity") +
+        xlab("")+
+        ylab("Frequency")+
+        theme_bw()+
+        theme(
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
+          axis.text.x = element_text(colour="black",family=input$font_type,angle=input$bar.stack.angle,size = input$label.size.axis2, hjust=input$hight.bar.stack.adj),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis2),
+          legend.text = element_text(colour="black",family=input$font_type),
+          legend.title = element_blank()
+        )+ 
+        scale_fill_manual(values=palette) 
+      vals31$bar.usage3
+      
+    }
+    
+
+
+    
+  }
   
   output$Chain1_usage <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    if (input$count.percent=="Individual chains") {
-      Chain1_usage()
+    if (input$stat=="chains") {
+      print(Chain_usage())
+    }
+    
+    
+    else if (input$stat=="frequency") {
+      print(Chain2_usage())
     }
     
     else {
-      Chain2_usage()
+      print(Chain3_usage())
       
     }
     
   }) 
   
+  # downloading bar plots =====
+  output$downloadPlot_chain.usage <- downloadHandler(
+    filename = function() {
+      x <- gsub(":", ".", Sys.time())
+      paste("bar.plot_",gsub("/", "-", x), ".pdf", sep = "")
+    }, content = function(file) {
+      pdf(file, width=input$width_chain.usage,height=input$height_chain.usage, onefile = FALSE) # open the pdf device
+      if (input$stat=="chains") {
+        print(Chain_usage())
+      }
+      
+      
+      else if (input$stat=="frequency") {
+        print(Chain2_usage())
+      }
+      
+      else {
+        print(Chain3_usage())
+        
+      }
+      dev.off()}, contentType = "application/pdf" )
+  
+  output$downloadPlotPNG_chain.usage <- downloadHandler(
+    filename = function() {
+      x <- gsub(":", ".", Sys.time())
+      paste("bar.plot_", gsub("/", "-", x), ".png", sep = "")
+    },
+    content = function(file) {
+      
+      png(file, width = input$width_png_chain.usage, height = input$height_png_chain.usage, res = input$resolution_PNG_chain.usage)
+      if (input$stat=="chains") {
+        print(Chain_usage())
+      }
+      
+      
+      else if (input$stat=="frequency") {
+        print(Chain2_usage())
+      }
+      
+      else {
+        print(Chain3_usage())
+        
+      }
+      dev.off()}, contentType = "application/png" # MIME type of the image
+  )
+  
+  # skewness of data (to be possibly added as stat) ------
   skewness.data <- function () {
     df <- input.data2(); 
     validate(
@@ -2362,43 +2543,6 @@ server  <- function(input, output, session) {
     
     
   }
-  
-  output$downloadPlot_chain.usage <- downloadHandler(
-    filename = function() {
-      x <- gsub(":", ".", Sys.time())
-      paste("bar.plot_",gsub("/", "-", x), ".pdf", sep = "")
-    }, content = function(file) {
-      pdf(file, width=input$width_chain.usage,height=input$height_chain.usage, onefile = FALSE) # open the pdf device
-      if (input$count.percent=="Individual chains") {
-        print(Chain1_usage())
-      }
-      
-      else {
-        print(Chain2_usage())
-        
-      }
-      dev.off()}, contentType = "application/pdf" )
-  
-  output$downloadPlotPNG_chain.usage <- downloadHandler(
-    filename = function() {
-      x <- gsub(":", ".", Sys.time())
-      paste("bar.plot_", gsub("/", "-", x), ".png", sep = "")
-    },
-    content = function(file) {
-      
-      png(file, width = input$width_png_chain.usage, height = input$height_png_chain.usage, res = input$resolution_PNG_chain.usage)
-      if (input$count.percent=="Individual chains") {
-        print(Chain1_usage())
-      }
-      
-      else {
-        print(Chain2_usage())
-        
-      }
-      dev.off()}, contentType = "application/png" # MIME type of the image
-  )
-  
-  
   # motif -----
   observe({
     updateSelectInput(
@@ -2411,6 +2555,7 @@ server  <- function(input, output, session) {
       session,
       "group_selected_motif",
       choices=select_group()) })
+  
   output$Motif <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
     df <- input.data2();
     validate(
@@ -2676,7 +2821,7 @@ server  <- function(input, output, session) {
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% "chain"])
     x <- AAStringSet(df_unique$chain)
     
-    if (dim(df_unique)[1] < 401) {
+    if (dim(df_unique)[1] < 501) {
       aln <- muscle(x)
       df1 <- as.data.frame(aln@unmasked)
       df_unique$chain1 <- df1$x
@@ -2684,9 +2829,10 @@ server  <- function(input, output, session) {
       
     }
     else {
-      x <- as.data.frame(c(">200 sequences",
-                           "download summary table from length distribution",
-                           "Align sequences using muscle https://www.ebi.ac.uk/Tools/msa/muscle/"))
+      x <- as.data.frame(c(">500 sequences",
+                          "Online tool cannot align >500 sequences",
+                          "Use local application as more sequences"
+                           ))
       names(x) <- "error message"
       x
     } 
@@ -3113,7 +3259,7 @@ server  <- function(input, output, session) {
     
     
     
-    # ha = HeatmapAnnotation(text = anno_text(df.1), which = "row", gp = gpar(fontfamily = "serif", fontface = "bold"))
+    # ha = HeatmapAnnotation(text = anno_text(df.1), which = "row", gp = gpar(fontfamily = input$font_type, fontface = "bold"))
     ht <- Heatmap(df.1,
                   heatmap_legend_param = list(title = "count"),
                   col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap))
@@ -3292,7 +3438,7 @@ server  <- function(input, output, session) {
     
   }
   
-  output$table_display.diversity <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+  output$table_display.diversity <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
     dat <- inv.simpson.index()
     dat <- as.data.frame(dat)
     dat
@@ -3373,15 +3519,16 @@ server  <- function(input, output, session) {
                    stackdir = 'center',show.legend = T) +
       theme_classic() +
       scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
-      theme(text=element_text(size=20,family="serif"),
-            axis.title = element_text(colour="black", size=20,family="serif"),
-            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
-            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family="serif"),
-            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
-            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family="serif"),
+      theme(text=element_text(size=20,family=input$font_type),
+            axis.title = element_text(colour="black", size=20,family=input$font_type),
+            axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
             legend.title  =element_blank(),
-            legend.position = "bottom") +
-      
+            legend.position = input$legend.placement.simp,
+            legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+      guides(fill=guide_legend(ncol=input$col.num.simp)) +
       xlab("")+
       ylab("Inverse simpson index")
     
@@ -3406,28 +3553,48 @@ server  <- function(input, output, session) {
     names(unique.col) <- "V1"
     unique.col$simp.inv_palette <- cols
     
+    if (input$scale_x_continuous_x=="scientific") {
+      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+        geom_point(size =3, alpha =1, show.legend =T)+
+        theme_bw() +
+        scale_color_manual(values=unique.col$simp.inv_palette) +
+        theme(text=element_text(size=20,family=input$font_type),
+              axis.title = element_text(colour="black", size=20,family=input$font_type),
+              axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              legend.title  =element_blank(),
+              legend.position = "none",
+              legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+        # scale_alpha(guide = 'none') +
+        scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
+        labs(x="number of clones",
+             y="inverse simpson index")
+      
+      vals12$Simp2
+    }
+
     
-    vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
-      geom_point(size =3, alpha =1, show.legend =T)+
-      # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-      #               limits = c(1,10^6),
-      #               labels = trans_format("log10", math_format(10^.x))) +
-      theme_bw() +
-      scale_color_manual(values=unique.col$simp.inv_palette) +
-      #annotation_logticks()  +
-      theme(text=element_text(size=20,family="serif"),
-            axis.title = element_text(colour="black", size=20,family="serif"),
-            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
-            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family="serif"),
-            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
-            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family="serif"),
-            legend.title  =element_blank(),
-            legend.position = "bottom") +
-      scale_alpha(guide = 'none') +
-      labs(x="number of clones",
-           y="inverse simpson index")
-    
-    vals12$Simp2
+    else {
+      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+        geom_point(size =3, alpha =1, show.legend =T)+
+        theme_bw() +
+        scale_color_manual(values=unique.col$simp.inv_palette) +
+        theme(text=element_text(size=20,family=input$font_type),
+              axis.title = element_text(colour="black", size=20,family=input$font_type),
+              axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              legend.title  =element_blank(),
+              legend.position = "none",
+              legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+        labs(x="number of clones",
+             y="inverse simpson index")
+      
+      vals12$Simp2
+    }
     
   }
   output$simpson.index1 <- renderPlot({
@@ -3435,14 +3602,14 @@ server  <- function(input, output, session) {
                  detail = '', value = 0, {
                    test_fun()
                  })
-    group.diversity1()
+    group.diversity1() 
   })
   output$simpson.index2 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    group.diversity2()
+    group.diversity2() 
   })
   
   table.inv.simpson <- function () {
@@ -4102,14 +4269,14 @@ server  <- function(input, output, session) {
       geom_hline(yintercept = input$yintercept,colour=input$intercept.col,linetype=input$int.type)+
       geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
       annotation_logticks()  +
-      theme(text=element_text(size=20,family="serif"),
-            axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
-            axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family="serif"),
-            axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
-            axis.title.y = element_text(colour="black",size=input$axis.title.size,angle=90,hjust=.5,vjust=.5,face="plain",family="serif"),
+      theme(text=element_text(size=20,family=input$font_type2),
+            axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+            axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
+            axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+            axis.title.y = element_text(colour="black",size=input$axis.title.size,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
             legend.title  =element_blank(),
             legend.position = input$legend.dot,
-            legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family="serif")) +
+            legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family=input$font_type2)) +
       scale_alpha(guide = 'none') +
       guides(size=FALSE, col = guide_legend(ncol=input$legend.column,override.aes = list(size=input$leg.dot.size)))+
       labs(x=x_lable1,
@@ -4120,22 +4287,25 @@ server  <- function(input, output, session) {
   dot_plot.complex1 <- function () {
     
     
-    if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
+    if (input$density_dotplot =="no" & input$grid.lines.dot =='no') {
+      
+      dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    }
+    else if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
       
       dot_plot.complex() 
     }
-    else if (input$density_dotplot =="no" & input$grid.lines.dot =='no') {
-      
-      dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-    }
     
-    else if (input$density_dotplot =="yes" & input$grid.lines.dot =='yes') {
+    else if (input$density_dotplot =="yes" & input$grid.lines.dot =='no') {
       
-      dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+      dot_plot <- dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+      ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
+      
     }
     
     else {
       ggExtra::ggMarginal(dot_plot.complex(),groupColour = TRUE, groupFill = TRUE)
+
     }
     
   }
@@ -4242,11 +4412,7 @@ server  <- function(input, output, session) {
       grid.text(cs[od], x = seq_along(cs), y = unit(cs[od], "native") + unit(2, "pt"), 
                 default.units = "native", just = "bottom", gp = gpar(fontsize = 12, fontfamily = 'serif')
       ) })
-    
-    
-    
-    
-    
+
   }
   output$UpSet.plot <- renderPlot({
     withProgress(message = 'Figure is being generated...',
@@ -4304,392 +4470,8 @@ server  <- function(input, output, session) {
       print(upset.parameters())
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
-  
-  
-  # QC MiXCR and IMGT files -----
-  input.data_IMGT.xls <- reactive({switch(input$dataset_IMGT,"ab-test-data" = test.data_ab.xls(), "gd-test-data" = test.data_gd.xls(),"own" = own.data.IMGT())})
-  test.data_ab.xls <- reactive({
-    dataframe = read_excel("test-data/IMGT/T00016.xls") 
-  })
-  
-  own.data.IMGT <- reactive({
-    inFile4 <- input$file_IMGT1
-    if (is.null(inFile4)) return(NULL)
-    
-    else {
-      dataframe <- read_excel(
-        inFile4$datapath
-        
-      )}
-    
-  })
-  
-  input.data_MiXCR.txt <- reactive({switch(input$dataset_IMGT,"ab-test-data" = test.data_ab.txt(),"gd-test-data" = test.data_gd.txt(),"own" = own.data.MiXCR())})
-  test.data_ab.txt <- reactive({
-    dataframe = read.table("test-data/MiXCR/SJS_TEN/T00016.txt",sep="\t",header=T) 
-  })
-  test.data_gd.txt <- reactive({
-    dataframe = read.table("test-data/MiXCR/SJS_TEN/T00016.txt",sep="\t",header=T) 
-  })
-  own.data.MiXCR <- reactive({
-    inFile5 <- input$file_IMGT2
-    if (is.null(inFile5)) return(NULL)
-    
-    else {
-      dataframe <- read.table(
-        inFile5$datapath,
-        header=inFile5$header_IMGT2,
-        sep=input$sep_IMGT2,
-        quote=input$quote_IMGT2)}
-    
-  })
-  
-  # combining MiXCR and IMGT -----
-  input.data.IMGT.MiXCR <- reactive({switch(input$dataset_IMGT,"ab-test-data" = test.data.ab.csv(), "gd-test-data" = test.data.gd.csv(),"own" = own.data.csv())})
-  test.data.ab.csv <- reactive({
-    dataframe = read.csv("test-data/QC/merged_IMGT_table2021.08.01.csv",header=T) 
-  })
-  test.data.gd.csv <- reactive({
-    dataframe = read.csv("test-data/QC/merged_IMGT_table2021.08.01.csv",header=T) 
-  })
-  own.data.csv <- reactive({
-    inFile6 <- input$file_IMGT.MiXCR
-    if (is.null(inFile6)) return(NULL)
-    
-    else {
-      dataframe <- read.csv(
-        inFile6$datapath)}
-    
-  })
-  
-  # unmerged IMGT df
-  
-  output$unmerged_chain1 <- DT::renderDataTable(escape = FALSE,options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
-    df <- input.data_IMGT.xls();
-    
-    
-    
-    df_chain1 <- as.data.frame(df)
-    df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
-    df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
-    df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-    df_chain1$`D-GENE and allele` <- gsub(' F','',df_chain1$`D-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('[(]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('[)]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub(' F,','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub(' F','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('[[]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('[]]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('F','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
-    df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
-    df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
-    df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-    df_chain1
-    
-  })
-  output$unmerged_chain2 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
-    df <- input.data_MiXCR.txt();
-    df <- as.data.frame(df)
-    df
-    
-  })
-  IMGT <- reactive({
-    df_chain1 <- input.data_IMGT.xls();
-    df_chain1 <- as.data.frame(df_chain1)
-    df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
-    df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
-    df_chain1$`J-GENE and allele` <- gsub('[(]','',df_chain1$`J-GENE and allele`)
-    df_chain1$`J-GENE and allele` <- gsub('[)]','',df_chain1$`J-GENE and allele`)
-    df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-    df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
-    
-    df_chain1$`D-GENE and allele` <- gsub(' F','',df_chain1$`D-GENE and allele`)
-    
-    df_chain1$`V-GENE and allele` <- gsub('[(]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('[)]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub(' F,','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub(' F','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('[[]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('[]]','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub('F','',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
-    df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
-    
-    
-    df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-    
-    # MiXCR -----
-    df_chain2 <- input.data_MiXCR.txt();
-    df_chain2 <- as.data.frame(df_chain2)
-    df <- merge(df_chain1,df_chain2, by.x="Sequence ID",by.y="ID",all=T)
-    df$V.Gene.IMGT <- df$`V-GENE and allele`
-    df$V.Gene.IMGT <- gsub("[*]0.","",df$V.Gene.IMGT)
-    df$V.Gene.IMGT <- gsub("[*]0..","",df$V.Gene.IMGT)
-    df$V.Gene.IMGT <- gsub("/","",df$V.Gene.IMGT)
-    df$V.Gene.IMGT <- gsub(",.*", "", df$V.Gene.IMGT)
-    df$V.Gene.IMGT <- gsub(" ", "", df$V.Gene.IMGT)
-    df$V.Gene.IMGT <- gsub("TR", "", df$V.Gene.IMGT)
-    df$`J-GENE and allele` <- gsub('TR','',df$`J-GENE and allele`)
-    df$`V-GENE and allele` <- gsub('TR','',df$`V-GENE and allele`)
-    df$`D-GENE and allele` <- gsub('TR','',df$`D-GENE and allele`)
-    
-    df <- mutate(df, CDR3_sequence_match_nt = ifelse(df$JUNCTION==df$nSeqCDR3,"matched","different"),
-                 CDR3_sequence_match_aa = ifelse(df$`JUNCTION (AA)`==df$aaSeqCDR3,"matched","different"),
-                 Matched_TRV = ifelse(df$V.Gene.IMGT==df$bestVHit,"matched","different"))
-    
-    df$clone_quality <- NA 
-    df$comments <- NA
-    df
-    
-  })
-  output$merged_IMGT <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
-    IMGT()
-  })
-  output$downloadTABLE2 <- downloadHandler(
-    filename = function(){
-      paste("merged_IMGT_table",gsub("-", ".", Sys.Date()),".csv", sep = "")
-    },
-    content = function(file){
-      write.csv(IMGT(),file, row.names = FALSE)
-    })
-  
-  # # QC after merged MiXCR.IMGT ---- 
-  # chain_merge <- reactive({
-  #   df1 <- input.data.IMGT.MiXCR();
-  #   df1 <- as.data.frame(df1)
-  #   df <- subset(df1,df1$clone_quality=="pass")
-  #   df <- as.data.frame(df)
-  #   
-  #   df2 <- df[c(1:7,11,22,13)]
-  #   y = dim(df2)[2]-1
-  #   y
-  #   df2$V.Gene.IMGT <- gsub("TR","",df2$V.Gene.IMGT)
-  #   df2$cloneCount <- 1
-  #   
-  #   if (input$chain=="ab") {
-  # 
-  #     df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-  #     head(df_name2)
-  #     df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-  #     df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-  #     df_name3$V1 <- gsub("A","",df_name3$V1)
-  #     df_name3$V1 <- gsub("B","",df_name3$V1)
-  #     
-  #     df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-  #     head(df_name5)
-  #     df2$ID <- df_name2$V1
-  #     
-  #     df2$Indiv.group <- df_name3$V1
-  #     df2$Indiv <-df_name5$V1
-  #     df2$group <- df_name5$V2
-  #     df2$clone <- df_name4$V2
-  #     names(df2)
-  #     
-  #     dim(df)
-  #     
-  #     chain1 <- df2[grep("A",df2$V.Gene.IMGT),]
-  #     chain2 <- df2[grep("B",df2$V.Gene.IMGT),]
-  #     # paste chain into name
-  #     chain1$ID <- gsub("A-","-",chain1$ID)
-  #     names(chain1)[1:y] <- paste(names(chain1)[1:y],"A",sep="_")
-  #     head(chain1)
-  #     chain2$ID <- gsub("B-","-",chain2$ID)
-  #     names(chain2)[1:y] <- paste(names(chain2)[1:y],"B",sep="_")
-  #     
-  #     x <- names(chain2)[10:dim(chain2)[2]]
-  #     
-  #     merged_chain <- merge(chain1,chain2,by =x)
-  #     head(merged_chain)
-  #     merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
-  #     names(merged_chain2)
-  #     dat <- merged_chain2
-  #     dat$AJ <- paste(dat$V.Gene.IMGT_A,".",dat$J.GENE.and.allele_A,sep="")
-  #     dat$BJ <- paste(dat$V.Gene.IMGT_B,".",dat$J.GENE.and.allele_B,sep="")
-  #     dat$AJ <- gsub("[*]0.","",dat$AJ)
-  #     dat$BJ <- gsub("[*]0.","",dat$BJ)
-  #     dat$AJ <- gsub("TR","",dat$AJ)
-  #     dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
-  #     dat$AJ_aCDR3 <- paste(dat$AJ,dat$JUNCTION..AA._A,sep="_")
-  #     dat$BJ_bCDR3 <- paste(dat$BJ,dat$JUNCTION..AA._B,sep="_")
-  #     dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
-  #     head(dat)
-  #     
-  #     dat
-  #     
-  #   }
-  #   else {
-  #     df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-  #     df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-  #     df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-  #     df_name3$V1 <- gsub("G","",df_name4$V1)
-  #     df_name3$V1 <- gsub("D","",df_name4$V1)
-  #     df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-  #     df2$ID <- df_name2$V1
-  #     df2$Indiv.group <- df_name3$V1
-  #     df2$Indiv <-df_name5$V1
-  #     df2$group <- df_name5$V2
-  #     df2$clone <- df_name4$V2
-  #     chain1 <- df2[grep("G",df2$V.Gene.IMGT),]
-  #     chain2 <- df2[grep("D",df2$V.Gene.IMGT),]
-  #     # paste chain into name
-  #     chain1$ID <- gsub("G-",".",chain1$ID)
-  #     names(chain1)[1:y] <- paste(names(chain1)[1:y],"G",sep="_")
-  #     chain2$ID <- gsub("D-",".",chain2$ID)
-  #     names(chain2)[1:y] <- paste(names(chain2)[1:y],"D",sep="_")
-  #     x <- names(chain2)[10:dim(chain2)[2]]
-  #     merged_chain <- merge(chain1,chain2,by=x)
-  #     merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_G","Sequence.ID_D","V.DOMAIN.Functionality_G","V.DOMAIN.Functionality_D","D.GENE.and.allele_G","JUNCTION.frame_G","JUNCTION.frame_D"))]
-  #     dat <- merged_chain2
-  #     head(dat)
-  #     dat$GJ <- paste(dat$V.Gene.IMGT_G,"-",dat$J.GENE.and.allele_G,sep="")
-  #     
-  #     dat$DJ <- paste(dat$V.Gene.IMGT_D,"-",dat$J.GENE.and.allele_D,sep="")
-  #     dat$GJ <- gsub("[*]0.","",dat$GJ)
-  #     dat$DJ <- gsub("[*]0.","",dat$DJ)
-  #     dat$GJDJ <- paste(dat$GJ,"_",dat$DJ,sep="")
-  #     dat$GJ_gCDR3 <- paste(dat$GJ,dat$JUNCTION..AA._G,sep="_")
-  #     dat$DJ_dCDR3 <- paste(dat$DJ,dat$JUNCTION..AA._D,sep="_")
-  #     dat$GJ_gCDR3_DJ_dCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
-  #     
-  #     
-  #     dat
-  #     
-  #   }
-  # })
-  # output$chain_table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
-  #   df1 <- input.data.IMGT.MiXCR();
-  #   df1 <- as.data.frame(df1)
-  #   
-  #   a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
-  #   if (dim(a)[1]>0) {
-  #     df <- as.data.frame("please complete QC analysis")
-  #     names(df) <- " "
-  #     df
-  #   }
-  #   else {
-  #     df <- chain_merge()
-  #     df <- as.data.frame(df)
-  #     df
-  #   }
-  # })
-  # 
-  # output$downloadTABLE3 <- downloadHandler(
-  #   filename = function(){
-  #     paste("paired.file",gsub("-", ".", Sys.Date()),".csv", sep = "")
-  #   },
-  #   content = function(file){
-  #     df <- chain_merge()
-  #     df <- as.data.frame(df)
-  #     write.csv(df,file, row.names = FALSE)
-  #   } )
-  # 
-  # output$names.in.file2 <- renderPrint( {
-  #   df <- chain_merge()
-  #   df <- as.data.frame(df)
-  #   names(df)
-  #   
-  # })
-  # output$chain_table2 <- DT::renderDataTable(escape = FALSE, options = list(autoWidth = FALSE, lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
-  #   df1 <- input.data.IMGT.MiXCR();
-  #   df1 <- as.data.frame(df1)
-  #   
-  #   a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
-  #   if (dim(a)[1]>0) {
-  #     df <- as.data.frame("please complete QC analysis")
-  #     names(df) <- " "
-  #     df
-  #     
-  #   }
-  #   else {
-  #     df <- chain_merge()
-  #     df <- as.data.frame(df)
-  #     
-  #     your_list <- c("cloneCount",input$string.data2)
-  #     your_list_df <- as.data.frame((unlist(strsplit(your_list, ', '))))
-  #     names(your_list_df) <- "V1"
-  #     your_list_df
-  #     df.your_list <- df[names(df) %in% your_list_df$V1]
-  #     names.df <- names(df.your_list[ , -which(names(df.your_list) %in% "cloneCount")])
-  #     
-  #     df2 <- as.data.frame(ddply(df.your_list,names.df,numcolwise(sum)))
-  #     df2
-  #     
-  #   }
-  # })
-  # output$downloadTABLE4 <- downloadHandler(
-  #   filename = function(){
-  #     paste("summarised_CDR3_chain",gsub("-", ".", Sys.Date()),".csv", sep = "")
-  #   },
-  #   content = function(file){
-  #     df <- chain_merge()
-  #     df <- as.data.frame(df)
-  #     
-  #     your_list <- c("cloneCount",input$string.data2)
-  #     your_list_df <- as.data.frame((unlist(strsplit(your_list, ', '))))
-  #     names(your_list_df) <- "V1"
-  #     your_list_df
-  #     df.your_list <- df[names(df) %in% your_list_df$V1]
-  #     names.df <- names(df.your_list[ , -which(names(df.your_list) %in% "cloneCount")])
-  #     
-  #     df2 <- as.data.frame(ddply(df.your_list,names.df,numcolwise(sum)))
-  #     df2
-  #     write.csv(df2,file, row.names = FALSE)
-  #   } )
-  # 
-  # 
-  
 }
 
 
 
 shinyApp(ui, server)
-
-
-# making 50 fasta files -----
-# path = reactive({readDirectoryInput(session, 'directory')})
-#  observeEvent(
-#   ignoreNULL = TRUE,
-#   eventExpr = {
-#     input$directory
-#   },
-#   handlerExpr = {
-#     if (input$directory > 0) {
-#       # condition prevents handler execution on initial app launch
-#       
-#       # launch the directory selection dialog with initial path read from the widget
-#       path = choose.dir(default = readDirectoryInput(session, 'directory'))
-#       # update the widget value
-#       updateDirectoryInput(session, 'directory', value = path)
-#       setwd(path)
-#       observeEvent(input$do, {
-#       system(command = "~/Documents/PhD_2018-2021/R_files/TCR_Explore/test-data/scripts/alignment_211230.sh")
-#       system(command = "~/srv/shiny-server/TCR_Explore/test-data/scripts/alignment_211230.sh")
-#       
-#       })
-#       
-#     }
-#   }
-# )
-# 
-# observeEvent(input$do, { output$textWithHTML <- renderUI({
-#   rawText <- readLines('time.txt') # get raw text
-#   
-#   # split the text into a list of character vectors
-#   #   Each element in the list contains one line
-#   splitText <- stringi::stri_split(str = rawText, regex = '\\n')
-#   
-#   # wrap a paragraph tag around each element in the list
-#   replacedText <- lapply(splitText, p)
-#   
-#   return(replacedText)  
-#   
-# })
-# })
-# 
-# library("shinyFiles")
-# library('shinyDirectoryInput')
-
