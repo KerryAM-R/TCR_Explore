@@ -147,14 +147,18 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               )
                             ),
                             
-                            # UI IMGT only ----
+                 # UI IMGT only ----
                             tabPanel("IMGT",
                                      sidebarLayout(
                                        sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
+                                                    conditionalPanel(condition="input.QC_panel==1",
+                                                                     selectInput("dataset_IMGT3", "Choose a dataset:", choices = c("ab-test-data1", "own_data")),
+                                                                     fileInput('file_IMGT3', 'Select file for IMGT datafile',
+                                                                               accept=c('xls/xlsx', '.xls')),
+                                                                     downloadButton('downloadTABLE_IMGTonly','Download table')
+                                                                     ),
                                                     
-                                                    selectInput("dataset_IMGT3", "Choose a dataset:", choices = c("ab-test-data1", "own_data")),
-                                                    fileInput('file_IMGT3', 'Select file for IMGT datafile',
-                                                              accept=c('xls/xlsx', '.xls')),
+                                                    conditionalPanel(condition="input.QC_panel==2 || input.QC_panel==3",
                                                     
                                                     selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own1")),
                                                     
@@ -162,12 +166,21 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                               accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                                     h5("option for paired and TCRdist outputs"),
                                                     selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
-                                                    selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary"))
+                                                    selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
+                                                    
+                                                    conditionalPanel(condition="input.QC_panel==2",
+                                                                     downloadButton('downloadTABLE.QC1','Download paired chain file')
+                                                                     ),
+                                                    
+                                                    conditionalPanel(condition="input.QC_panel==3",
+                                                                    textInput("tcr_lab","ID for TCRdist","human_tcr"),
+                                                                    downloadButton('downloadTABLE.TSV','Download tsv file for TCRdist')
+                                                                     )
                                                     
                                        ),
                                        mainPanel(
-                                         tabsetPanel(
-                                           tabPanel("IMGT create QC file",
+                                         tabsetPanel(id = "QC_panel",
+                                           tabPanel("IMGT create QC file",value = 1,
                                                     h4("Fill in the 'clone_quality' column: pass or fail"), 
                                                     h4("Add comments if desired"),
                                                     fluidRow(column(4, selectInput("sheet","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
@@ -175,28 +188,16 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     ),
                                                     tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
                                                     div(DT::dataTableOutput("IMGT2_out")),
-                                                    downloadButton('downloadTABLE_IMGTonly','Download table')
+                                                    
                                            ),
-                                           tabPanel("Paired chain file",
-                                                    
-                                                    
-                                                    
+                                           tabPanel("Paired chain file",value = 2,
                                                     tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
-                                                    div(DT::dataTableOutput("chain_table_IMGT.QC1")),
-                                                    p(" "),
-                                                    downloadButton('downloadTABLE.QC1','Download paired chain file'),
-                                                    
-                                                    
+                                                    div(DT::dataTableOutput("chain_table_IMGT.QC1"))
                                            ),
-                                           tabPanel("TCRdist output file",
-                                                    textInput("tcr_lab","ID for TCRdist","human_tcr"),
-                                                    
+                                           tabPanel("TCRdist output file",value = 3,
                                                     tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
                                                     div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
                                                     
-                                                    
-                                                    h5(" "),
-                                                    downloadButton('downloadTABLE.TSV','Download tsv file for TCRdist')
                                            )
                                          )
                                        )
@@ -238,7 +239,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          
                                          conditionalPanel(
                                            condition = "input.stat == 'stacked'",
-                                           h5("Stacked bar plot"),
+                                           h4("Stacked bar plot"),
                                            fluidRow(
                                              column(3,numericInput("bar.stack.angle","Angle of text",value = 90)),
                                              column(3,numericInput("hight.bar.stack.adj","Position of text",value = 0)),
@@ -251,7 +252,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             
                             mainPanel(tabsetPanel(
                               tabPanel("Overview of TCR pairing",tabsetPanel(
-                                # UI Summary table -----
+                 # UI Summary table -----
                                 tabPanel("Summary table",
                                          verbatimTextOutput("names.in.file3"),
                                          selectInput("type.chain","Alpha-beta or gamma-delta",choices = c("ab","gd")),
@@ -261,7 +262,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          downloadButton('downloadTABLE.QC3','Download table')
                                          
                                 ),
-                                # UI Treemap -----
+                 # UI Treemap -----
                                 tabPanel("Treemap",
                                          fluidRow(
                                            
@@ -270,7 +271,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          selectInput("string.data.tree.order","Order of group in graph",choices = "",multiple = T, width = "1200px"),
                                          
                                          fluidRow( 
-                                           column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
+                                           column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","grey"))),
                                            column(2, selectInput("fill2",label = h5("Colour treemap by"),"" )),
                                            column(2, selectInput("sub_group2",label = h5("Separate panels by"),"" )),
                                            # column(3,selectInput( "wrap",label = h5("Group"),"" )),
@@ -296,7 +297,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_scTREE','Download PNG'))
                                          ),
                                 ),
-                                # UI circular plot -----
+                 # UI circular plot -----
                                 tabPanel("Chord diagram", 
                                          fluidRow(
                                            
@@ -336,7 +337,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                 ),
                                 
                                 
-                                # UI Pie ----
+                 # UI Pie ----
                                 tabPanel("Pie chart",
                                          fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this group"),"")),
                                                   column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
@@ -351,7 +352,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
                                                                    uiOutput('myPanel_pie'))),
-                                                  column(9, plotOutput("pie_out",height="800px"))),
+                                                  column(9, plotOutput("pie_out",height="600px"))),
                                          fluidRow(
                                            column(3,numericInput("width_pie", "Width of PDF", value=10)),
                                            column(3,numericInput("height_pie", "Height of PDF", value=8)),
@@ -377,7 +378,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               tabPanel("Motif analysis",
                                        p("This section contains 4 tabs for motif analysis"),
                                        tabsetPanel(
-                                         # UI CDR3 length distribution graphs ----- 
+                 # UI CDR3 length distribution graphs ----- 
                                          tabPanel("CDR3 length distribution",
                                                   h5("length distribution plot requires an unsummarised dataset"),
                                                   fluidRow(
@@ -404,7 +405,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_length','Download PNG'))
                                                   ),
                                          ),
-                                         # UI motif -----
+                 # UI motif -----
                                          tabPanel("Motif (amino acid)",
                                                   h5("Select amino acid column and CDR3 length"),
                                                   verbatimTextOutput("length"),
@@ -431,7 +432,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,numericInput("resolution_PNG_motif","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif','Download PNG'))
                                                   )),
-                                         # UI motif NT -----
+                 # UI motif NT -----
                                          tabPanel("Motif (nucleotide sequence)",
                                                   h5("Select nucleotide column and CDR3 length"),
                                                   verbatimTextOutput("length_nt"),
@@ -459,7 +460,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif_nt','Download PNG'))
                                                   )
                                          ),
-                                         # motif align with muscle -----
+                 # motif align with muscle -----
                                          tabPanel("Motif (AA or NT alignment)",
                                                   fluidRow(
                                                     column(3,selectInput("aa.or.nt4",label = h5("CDR3 column"),"")),
@@ -499,7 +500,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               
                               tabPanel("Diversity and chain usage",
                                        tabsetPanel(
-                                         # UI bar graphs ----- 
+                 # UI bar graphs ----- 
                                          tabPanel("Chain bar graph",
                                                   fluidRow(
                                                     column(3,selectInput("stat",label = h5("Plot output"),choices=c("chains","frequency","stacked")),),
@@ -510,7 +511,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
 
                                                   
                                                   
-                                                  # chain usage -----
+                 # chain usage -----
                                                   conditionalPanel(
                                                     condition = "input.stat == 'chains'",
                                                     h5("Individual chains"),
@@ -521,7 +522,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                       column(3,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black"))),
                                                     
                                                   ),
-                                                  # cummulative freq  -----
+                 # cummulative freq  -----
                                                   conditionalPanel(
                                                     condition = "input.stat == 'frequency'",
                                                     h5("Cummulative frequency"),
@@ -533,7 +534,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     ),
                                                     
                                                   ),
-                                                  # stacked bar graph  -----
+                 # stacked bar graph  -----
                                                   conditionalPanel(
                                                    
                                                     condition = "input.stat == 'stacked'",
@@ -571,7 +572,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          ),
                                          
                                          
-                                         # UI inverse simpson index -----
+                 # UI inverse simpson index -----
                                          tabPanel("Inverse Simpson Index",
                                                   p("Inverse simpson index; ∞=infinite diversity and 1=limited diversity"),
                                                   fluidRow(
@@ -663,7 +664,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   # gini index is created from Lorentz Surface Calculation pone.0125373.s004.xlsx
                                                   
                                          )
-                                         #####   
+                 #####   
                                          
                                        )
                                        
@@ -673,7 +674,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               
                               tabPanel("Overlap",
                                        tabsetPanel(
-                              # UI heatmap -----
+                 # UI heatmap -----
                                          tabPanel("Heatmap",
                                                   selectInput("group_hm", "Select specific groups", choices = c("yes", "no")),
                                                   fluidRow(
@@ -703,7 +704,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_heatmap','Download PNG'))
                                                   ),
                                          ),
-                              # upset plot -----
+                 # upset plot -----
                                          tabPanel("Upset plot",
                                                   fluidRow(
                                                     column(3,selectInput("upset.select",label = h5("Select chain"), choices = "", selected = "")),
@@ -737,125 +738,130 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             )
                           )
                  ),
-                              # UI Index data graphs -----
+                 # UI Index data graphs -----
                  tabPanel("FACS Index data",
                           sidebarLayout(
-                            sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 1000px; position:relative;", width=3,
+                            sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 850px; position:relative;", width=3,
                                          tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
-                                         selectInput("dataset3", "FACS file:", choices = c("test-FACS", "own_FACS")),
-                                         fileInput('file_FACS', 'Raw index FACS file',
-                                                   accept=c('FACS files', '.fcs')),
                                          
-                                         selectInput("data_clone.index", "Unsummarised clone file:", choices = c("gd.test.clone" ,"own.clone.file")),
-                                         fileInput('file_diversity.index.2', 'Upload unsummarised clone file',
-                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                         selectInput("dataset7", "Merged FACS and clone file for colouring", choices = c("test-csv" ,"own_csv")),
-                                         fileInput('file_FACS.csv1', 'FACS+clone file',
-                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                         selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv_file")),
-                                         fileInput('file_FACS.csv2', 'File for dot plot',
-                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                         selectInput("font_type2","Type of font",choices = font,selected = "Times"),
-                                         
-                                         fluidRow(
-                                           column(4, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
-                                           column(4, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 )),
-                                           column(4, selectInput("int.type" ,label = h5("Line type"), choices = c("solid","dotted","dashed")))
+                                         conditionalPanel(condition="input.tabselected==1",
+                                                          selectInput("dataset3", "FACS file:", choices = c("test-FACS", "own_FACS")),
+                                                          fileInput('file_FACS', 'Raw index FACS file',
+                                                                    accept=c('FACS files', '.fcs')),
+                                                          
+                                                          selectInput("data_clone.index", "Unsummarised clone file:", choices = c("gd.test.clone" ,"own.clone.file")),
+                                                          fileInput('file_diversity.index.2', 'Upload unsummarised clone file',
+                                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                                          textInput("name.colour2","Prefix of file name","ID.780_plate1.section1."),
+                                                          downloadButton('downloadTABLE_FACS','Download table')
+                                                          ),
+                 # tab panel 2 (Other QC steps) ------
+                                         conditionalPanel(condition="input.tabselected==2",
+                                                          selectInput("dataset7", "Merged FACS and clone file for colouring", choices = c("test-csv" ,"own_csv")),
+                                                          fileInput('file_FACS.csv1', 'FACS+clone file',
+                                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                                          
+                                                          fluidRow(
+                                                            
+                                                            column(6,selectInput("V.gene.1",label = h5("V Gene 1"),"")),
+                                                            column(6,selectInput("CDR3.1",label = h5("CDR3 1"),"")),
+                                                            column(6,selectInput('V.gene.2', label = h5("V Gene 2"), "")),
+                                                            column(6,selectInput("CDR3.2",label = h5("CDR3 2"),"")),
+                                                            
+                                                          ),
+                                                          fluidRow(
+                                                            column(6,selectInput("group.col.dot",label = h5("Group"),"")),
+                                                            column(6,numericInput("numeric.cloneCount","Filter based on number of times a clone was observed: select 0 for all",value=1))
+                                                          ),
+                                                          verbatimTextOutput("NAMES.df"),
+                                                          textInput("name.colour","Prefix of file name","ID.780_"),
+                                                          downloadButton('downloadTABLE_cleaning','Download table')
+                                                          ),
+                 # conditional panel 3 -----
+                                         conditionalPanel(condition="input.tabselected==3",
+                                                          selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv_file")),
+                                                          fileInput('file_FACS.csv2', 'File for dot plot',
+                                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                                          selectInput("font_type2","Type of font",choices = font,selected = "Times"),
+                                                          fluidRow(
+                                                            column(4,selectInput("x.axis2",label = h5("Select x-axis"),"")),
+                                                            column(4,selectInput("y.axis2",label = h5("Select y-axis"),"")),
+                                                            column(4,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
+                                                            ),
+                                                          fluidRow(
+                                                            column(4, selectInput("grid.lines.dot", label = h5("Add gridlines?"), choices = c("no","yes"))),
+                                                            column(4,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
+                                                            column(4,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"), selected = "random")),
+
+                                                          ),
+                                                          fluidRow(
+                                                            column(4, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
+                                                            column(4, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 )),
+                                                            column(4, selectInput("int.type" ,label = h5("Line type"), choices = c("solid","dotted","dashed")))
+                                                          ),
+                                                          fluidRow(
+                                                            column(4, colourInput("intercept.col",label = h5("Line colour"),value = "grey" )),
+                                                            column(4, numericInput("min.y",label = h5("Min range (y-axis)"),value = 1 )),
+                                                            column(4, numericInput("min.x",label = h5("min range (x-axis)"),value = 1 ))),                     
+                                                          fluidRow(
+                                                            column(4, numericInput("max.y",label = h5("Max range (y-axis)"),value = 5 )),
+                                                            column(4, numericInput("max.x",label = h5("Max range (x-axis)"),value = 5 )),  
+                                                            column(4, numericInput("leg.dot.size",label = h5("Legend dot size"),value = 5 ))),
+                                                          fluidRow(
+                                                            column(4, numericInput("axis.numeric.size",label = h5("Numeric text size"),value = 28 )),
+                                                            column(4, numericInput("axis.title.size",label = h5("Label text size"),value = 40 )),
+                                                            column(4, numericInput("dot.alpha",label = h5("Transparancy of point"),value = 1 )),
+                                                          ),
+                                                          fluidRow(
+                                                            column(4, selectInput("legend.dot",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
+                                                            column(4,numericInput("legend.size.cd","Legend text size",value=12)),
+                                                            column(4,numericInput("legend.column", "# of legend columns", value=1)),
+                                                          ),    
                                          ),
-                                         fluidRow(
-                                           column(4, colourInput("intercept.col",label = h5("Line colour"),value = "grey" )),
-                                           column(4, numericInput("min.y",label = h5("Min range (y-axis)"),value = 1 )),
-                                           column(4, numericInput("min.x",label = h5("min range (x-axis)"),value = 1 ))),                                        
-                                         
-                                         
-                                         fluidRow(
-                                           
-                                           column(4, numericInput("max.y",label = h5("Max range (y-axis)"),value = 5 )),
-                                           column(4, numericInput("max.x",label = h5("Max range (x-axis)"),value = 5 )),  
-                                           column(4, numericInput("leg.dot.size",label = h5("Legend dot size"),value = 5 ))),
-                                         
-                                         fluidRow(
-                                           column(4, numericInput("axis.numeric.size",label = h5("Numeric text size"),value = 28 )),
-                                           column(4, numericInput("axis.title.size",label = h5("Label text size"),value = 40 )),
-                                           column(4, numericInput("dot.alpha",label = h5("Transparancy of point"),value = 1 )),
-                                         ),
-                                         
-                                         fluidRow(
-                                           
-                                           
-                                           column(4, selectInput("legend.dot",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
-                                           column(4,numericInput("legend.size.cd","Legend text size",value=12)),
-                                           column(4,numericInput("legend.column", "# of legend columns", value=1)),
-                                         ),
-                                         
-                                         
+   
                             ),
-                            mainPanel(tabsetPanel(
+                            mainPanel(tabsetPanel(id = "tabselected",
                               
-                              # merging FACS file with clone file -----
-                              tabPanel("Combined scTCR with Index data",
+                 # merging FACS file with clone file -----
+                              tabPanel("Combined scTCR with Index data",value = 1,
                                        div(DT::dataTableOutput("FACS.CSV")),
                                        # div(DT::dataTableOutput("merged.clone")),
                                        div(DT::dataTableOutput("merged.index.clone")),
                                        
-                                       textInput("name.colour2","Prefix of file name","ID.780_plate1.section1."),
-                                       downloadButton('downloadTABLE_FACS','Download table')
+
                               ),
                               
-                              # UI complex dotplot add columns if needed -----
-                              tabPanel("Adding columns for colouring",
+                 # UI complex dotplot add columns if needed -----
+                              tabPanel("Adding columns for colouring",value = 2,
                                        
                                        selectInput("string.data","Recommended selecting for ab TCR data: Indiv (or group),TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. \nDo not select flurochrome columns, clone, cloneCount, LocX or LocY, row or column","",multiple = T, width = "1200px"),
-                                       
-                                       fluidRow(
-                                         column(2,selectInput("group.col.dot",label = h5("Group"),"")),
-                                         column(2,selectInput("V.gene.1",label = h5("V Gene 1"),"")),
-                                         column(2,selectInput("CDR3.1",label = h5("CDR3 1"),"")),
-                                         column(2,selectInput('V.gene.2', label = h5("V Gene 2"), "")),
-                                         column(2,selectInput("CDR3.2",label = h5("CDR3 1"),"")),
-                                         
-                                       ),
-                                       fluidRow(
-                                         column(6,numericInput("numeric.cloneCount","Filter based on number of times a clone was observed: select 0 for all",value=1))
-                                       ),
                                        div(DT::dataTableOutput("table.index.1")),
-                                       verbatimTextOutput("NAMES.df"),
                                        
-                                       textInput("name.colour","Prefix of file name","ID.780_"),
-                                       downloadButton('downloadTABLE_cleaning','Download table')),
-                              # UI complex dotplot -----
-                              tabPanel("Complex dotplot",
-                                       fluidRow(
-                                         column(2,selectInput("x.axis2",label = h5("Select x-axis"),"")),
-                                         column(2,selectInput("y.axis2",label = h5("Select y-axis"),"")),
-                                         column(2,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
-                                         column(2, selectInput("grid.lines.dot", label = h5("Add gridlines?"), choices = c("no","yes"))),
-                                         column(2,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
-                                         column(2,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"), selected = "random")),
-                                         
-                                         
                                        ),
+                 # UI complex dotplot -----
+                              tabPanel("Complex dotplot",value = 3,
+                                      
                                        
                                        fluidRow(column(3,
-                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
+                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 250px",
                                                                  h4("Colour"),
                                                                  uiOutput('myPanel.FACS.index'),
                                                        )),
                                                 
                                                 column(3,
-                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
+                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 250px",
                                                                  h4("Shape"),
                                                                  uiOutput('myPanel.FACS.index.shape')
                                                                  
                                                        )),
                                                 
                                                 column(3,
-                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
+                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 250px",
                                                                  h4("Size"),
                                                                  uiOutput('myPanel.FACS.index.size')
                                                                  
                                                        )),
-                                                column(3, tags$img(src = "shape.png", height = "300px"))
+                                                column(3, tags$img(src = "shape.png", height = "250px"))
                                                 
                                                 
                                        ),
@@ -1578,9 +1584,14 @@ server  <- function(input, output, session) {
     col.gg <- gg_fill_hue(dim(num)[1])
     unique.col <- as.data.frame(unique(dat[grep(input$fill2,names(dat))]))
     
+    palette_rainbow <- rev(rainbow(dim(num)[1]))
     
+    if (input$tree_colour.choise == "rainbow") {
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col", i, sep="_"), paste(num[i,]), palette_rainbow[i])        
+      }) }
     
-    if (input$tree_colour.choise == "default") {
+   else if (input$tree_colour.choise == "default") {
       lapply(1:dim(num)[1], function(i) {
         colourInput(paste("col", i, sep="_"), paste(num[i,]), col.gg[i])        
       })
