@@ -1,0 +1,15 @@
+Analysis date: Fri Jul 30 14:57:10 AEST 2021
+Input file(s): IFNB-D7_A11.seq_clones.clna
+Output file(s): IFNB-D7_A11.seq_full_clones.clns
+Version: 3.0.12; built=Thu Nov 21 00:38:34 AEDT 2019; rev=cad6564; lib=repseqio.v1.6
+Command line arguments: assembleContigs --report IFNB-D7_A11.seq_contigs_report.txt IFNB-D7_A11.seq_clones.clna IFNB-D7_A11.seq_full_clones.clns -f
+Analysis time: 1.49s
+Initial clonotype count: 1
+Final clonotype count: 1 (100%)
+Canceled assemblies: 0 (0%)
+Number of premature termination assembly events, percent of number of initial clonotypes: 0.0 (0%)
+Longest contig length: 39
+Clustered variants: 0 (0%)
+Reads in clustered variants: 0.0 (0%)
+Reads in divided (newly created) clones: 0.0 (0%)
+======================================

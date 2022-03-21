@@ -1,0 +1,2 @@
+CD8_A-A3_A01.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+CD8_A-A3_A01.seq_clones.txt	1.0	TRAV19*00		TRAJ40*00	TRAC*00	TGTGCTCTGAGTGAGGCCACCTCAGGAACCTACAAATACATCTTT	CALSEATSGTYKYIF	rnsfdeqn	trdttyy

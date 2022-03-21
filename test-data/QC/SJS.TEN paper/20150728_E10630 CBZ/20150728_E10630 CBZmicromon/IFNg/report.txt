@@ -1,0 +1,4 @@
+      48 alignments.vdjca.file
+      48 clones.clna.file
+      46 sorted.clones.txt
+      44 IFNg_functional.clones.sorted.txt

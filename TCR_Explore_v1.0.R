@@ -232,11 +232,11 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(6,radioButtons('quote', 'Quote', c(None='', 'Double Quote'='"', 'Single Quote'="'"), '"'))
                                          ),
                                          
-                                         selectInput("group_column",label = h5("Column of group"), ""),
-                                         selectInput("type.tree",label = h5("Type of input"), choices =  c("scTCR","bulk")),
-                                         tags$hr(),
-                                         selectInput("font_type","Type of font",choices = font,selected = "serif"),
-                                         
+                                         selectInput("group_column",label = h4("Column of group"), ""),
+                                         selectInput("type.tree",label = h4("Type of input"), choices =  c("raw data","Summarised data")),
+
+                                         selectInput("font_type",label = h4("Type of font"),choices = font,selected = "serif"),
+                                         downloadButton("table_length","Download summarised table with length"),
                                          conditionalPanel(
                                            condition = "input.stat == 'stacked'",
                                            h4("Stacked bar plot"),
@@ -247,15 +247,19 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                                   choices = c("yes","no"),
                                                                   selected = "no"))
                                            ),
-                                         )
+                                         ),
+                                         tags$hr()
                             ),
                             
                             mainPanel(tabsetPanel(
                               tabPanel("Overview of TCR pairing",tabsetPanel(
                  # UI Summary table -----
                                 tabPanel("Summary table",
-                                         verbatimTextOutput("names.in.file3"),
-                                         selectInput("type.chain","Alpha-beta or gamma-delta",choices = c("ab","gd")),
+                                         # verbatimTextOutput("names.in.file3"),
+                                         fluidRow(
+                                           column(3,selectInput("type.chain","Alpha-beta or gamma-delta",choices = c("ab","gd"))),
+                                           column(3,selectInput("type.of.graph", "Summary table output",choices = c("general summary","TCRdist3")))
+                                         ),
                                          fluidRow(column(12, selectInput("string.data3","column names for summary","",multiple = T, width = "1200px") )),
                                          tags$head(tags$style("#chain_table_IMGT.QC3  {white-space: nowrap;  }")),
                                          div(DT::dataTableOutput("chain_table_IMGT.QC3")),
@@ -381,17 +385,51 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                  # UI CDR3 length distribution graphs ----- 
                                          tabPanel("CDR3 length distribution",
                                                   h5("length distribution plot requires an unsummarised dataset"),
+                                                  
+                                                  
+                                                  
                                                   fluidRow(
-                                                    column(3,selectInput( "aa.or.nt",label = h5("Amino acid or nucleotide sequence column"),"" )),
-                                                    column(3,selectInput( "selected_group_len",label = h5("Group"),"" ))
+                                                    column(3,selectInput('graph_type', 'Type of graph', graph_type)),
+                                                    
+                                                    column(3,selectInput( "aa.or.nt",label = h5("CDR3 length column"),"" )),
+                                                    column(2, selectInput("hist.density.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
                                                   ),
+  
                                                   fluidRow(
-                                                    column(3, numericInput("bin","Bins of histogram",value=30)),
-                                                    column(3, colourInput("hist_col","Colour of histogram","red")),
-                                                    column(3, selectInput('graph_type', 'Type of graph', graph_type))
+                                                    column(3,numericInput("hist.text.sizer","size of text",value=30)),
+                                                    column(3, numericInput("xlow","x-axis (min)",value=1)),
+                                                    column(3, numericInput("xhigh","x-axis (max)",value=30)),
+                                                    column(3, numericInput("xbreaks","x-axis tick marks",value=1)),
+                                                    ),
+                                                  
+                                                  conditionalPanel(
+                                                    condition = "input.graph_type == 'histogram'",
+                                                    fluidRow(
+                                                      # column(3, numericInput("bin","Bins of histogram",value=30)),
+                                                      column(3,selectInput( "selected_group_len",label = h5("Group"),"" )),
+                                                      column(3,selectInput("chain.hist.col",label = h5 ("Colour by:"),"")),
+                                                      column(3,selectInput("hist_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","grey")))
+                                                    ),
+                                                    
                                                   ),
-                                                  plotOutput("Chain1_length"),
-                                                  downloadButton("table_length","Download length table"),
+                                                  
+                                                  
+                                                  
+                                                  fluidRow(
+                                                    conditionalPanel(
+                                                      condition = "input.graph_type == 'histogram'",
+                                                    
+                                                    column(3,
+                                                                  wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
+                                                                            uiOutput('myPanel.hist')))),
+                                                           column(9, plotOutput("Chain1_length",height="600px"))),
+                                                  
+                                                  conditionalPanel(
+                                                    condition = "input.graph_type == 'histogram'",
+                                                    div(DT::dataTableOutput("hist.table")),
+                                                    
+                                                  ),
+                                                 
                                                   fluidRow(
                                                     column(3,numericInput("width_length", "Width of PDF", value=6)),
                                                     column(3,numericInput("height_length", "Height of PDF", value=4)),
@@ -1133,7 +1171,7 @@ server  <- function(input, output, session) {
   # table of IMGT for pairing -----
   input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own1" = own.data.csv3())})
   test.data.ab.csv3 <- reactive({
-    dataframe = read.csv("test-data/QC/IMGT_only.QC2021.08.29.csv",header=T) 
+    dataframe = read.csv("test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",header=T) 
   })
   own.data.csv3 <- reactive({
     inFile12 <- input$file_IMGT_afterQC
@@ -1195,15 +1233,30 @@ server  <- function(input, output, session) {
       merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
       names(merged_chain2)
       dat <- merged_chain2
-      dat$AJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
-      dat$BJ <- paste(dat$V.GENE_B,".",dat$J.GENE.and.allele_B,sep="")
+      dat$AV <- paste(dat$V.GENE_A)
+      dat$AJ <- paste(dat$J.GENE.and.allele_A,sep="")
+      dat$AVJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
+      dat$AV <- gsub("[*]0.","",dat$AV)
       dat$AJ <- gsub("[*]0.","",dat$AJ)
+      dat$AVJ <- gsub("[*]0.","",dat$AVJ)
+      
+      dat$BV <- paste(dat$V.GENE_B)
+      dat$BJ <- paste(dat$J.GENE.and.allele_B)
+      dat$BD <- paste(dat$D.GENE.and.allele_B)
+      dat$BVDJ <- paste(dat$V.GENE_B,".",dat$D.GENE.and.allele_B,".",dat$J.GENE.and.allele_B,sep="")
+      
+      dat$BV <- gsub("[*]0.","",dat$BV)
       dat$BJ <- gsub("[*]0.","",dat$BJ)
+      dat$BD <- gsub("[*]0.","",dat$BD)
+      dat$BVDJ <- gsub("[*]0.","",dat$BVDJ)
+    
       dat$AJ <- gsub("TR","",dat$AJ)
-      dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
-      dat$AJ_aCDR3 <- paste(dat$AJ,dat$JUNCTION..AA._A,sep="_")
-      dat$BJ_bCDR3 <- paste(dat$BJ,dat$JUNCTION..AA._B,sep="_")
-      dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
+      dat$AVJ <- gsub("TR","",dat$AJ)
+      
+      dat$AVJ.BVDJ <- paste(dat$AVJ,"_",dat$BVDJ,sep="")
+      dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$JUNCTION..AA._A,sep="_")
+      dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$JUNCTION..AA._B,sep="_")
+      dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
       head(dat)
       
       dat
@@ -1247,16 +1300,31 @@ server  <- function(input, output, session) {
       merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
       names(merged_chain2)
       dat <- merged_chain2
-      dat$AJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
-      dat$BJ <- paste(dat$V.GENE_B,".",dat$J.GENE.and.allele_B,sep="")
+      dat$AV <- paste(dat$V.GENE_A)
+      dat$AJ <- paste(dat$J.GENE.and.allele_A,sep="")
+      dat$AVJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
+      dat$AV <- gsub("[*]0.","",dat$AV)
       dat$AJ <- gsub("[*]0.","",dat$AJ)
+      dat$AVJ <- gsub("[*]0.","",dat$AVJ)
+      
+      dat$BV <- paste(dat$V.GENE_B)
+      dat$BJ <- paste(dat$J.GENE.and.allele_B)
+      dat$BD <- paste(dat$D.GENE.and.allele_B)
+      dat$BVDJ <- paste(dat$V.GENE_B,".",dat$D.GENE.and.allele_B,".",dat$J.GENE.and.allele_B,sep="")
+      
+      dat$BV <- gsub("[*]0.","",dat$BV)
       dat$BJ <- gsub("[*]0.","",dat$BJ)
+      dat$BD <- gsub("[*]0.","",dat$BD)
+      dat$BVDJ <- gsub("[*]0.","",dat$BVDJ)
+      
       dat$AJ <- gsub("TR","",dat$AJ)
-      dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
-      dat$AJ_aCDR3 <- paste(dat$AJ,dat$AA.JUNCTION_A,sep="_")
-      dat$BJ_bCDR3 <- paste(dat$BJ,dat$AA.JUNCTION_B,sep="_")
-      dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
+      dat$AVJ <- gsub("TR","",dat$AJ)
+      dat$AVJ.BVDJ <- paste(dat$AVJ,"_",dat$BVDJ,sep="")
+      dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$JUNCTION..AA._A,sep="_")
+      dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$JUNCTION..AA._B,sep="_")
+      dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
       head(dat)
+      
       dat
       
     }
@@ -1467,33 +1535,121 @@ server  <- function(input, output, session) {
     
     
   })
+  # subject,epitope,count,v_a_gene,j_a_gene,cdr3_a_aa,cdr3_a_nucseq,v_b_gene,j_b_gene,cdr3_b_aa,cdr3_b_nucseq,clone_id
+  # [1] "cloneCount"          "Indiv.group"         "Indiv"               "group"               "clone"               "V.GENE.and.allele_A" "J.GENE.and.allele_A"
+  # [8] "JUNCTION_A"          "JUNCTION..AA._A"     "V.GENE_A"            "V.GENE.and.allele_B" "J.GENE.and.allele_B" "D.GENE.and.allele_B" "JUNCTION_B"         
+  # [15] "JUNCTION..AA._B"     "V.GENE_B"            "AJ"                  "BJ"                  "AJBJ"                "AJ_aCDR3"            "BJ_bCDR3"           
+  # [22] "AJ_aCDR3_BJ_bCDR3"   
+  # 
+  chain_table_summary.TCRdist3.ab <- reactive({
+    df <- input.data2()
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df2 <- df[,c("Indiv","group","cloneCount","V.GENE.and.allele_A","J.GENE.and.allele_A","JUNCTION..AA._A","JUNCTION_A","V.GENE.and.allele_B","J.GENE.and.allele_B","JUNCTION..AA._B","JUNCTION_B")] 
+
+    names(df2) <- c("subject","epitope","count","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq")
+    
+    df2$clone_id <- paste("clone")
+    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq","clone_id"),numcolwise(sum)))
+    df3 <- df3[,c(1,2,12,3:11)]
+    df3
+    
+  })
+  
+  
+  chain_table_summary.TCRdist3.gd <- reactive({
+    df <- input.data2()
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df2 <- df[,c("Indiv","group","cloneCount","V.GENE.and.allele_G","J.GENE.and.allele_G","JUNCTION..AA._G","JUNCTION_G","V.GENE.and.allele_D","J.GENE.and.allele_D","JUNCTION..AA._D","JUNCTION_D")] 
+    
+    names(df2) <- c("subject","epitope","count","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq")
+    
+    df2$clone_id <- paste("clone")
+    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq","clone_id"),numcolwise(sum)))
+    df3 <- df3[,c(1,2,12,3:11)]
+    df3
+    
+  })
   
   
   output$chain_table_IMGT.QC3 <- DT::renderDataTable(escape = FALSE, options = list(autoWidth = FALSE, lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
     df1 <- input.data.IMGT_afterQC();
     df1 <- as.data.frame(df1)
     
-    a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
-    if (dim(a)[1]>0) {
-      df <- as.data.frame("please complete QC analysis")
-      names(df) <- " "
-      df
-      
-    }
-    else {
-      
+    if (input$type.of.graph == "general summary") {
       chain_table_summary()
     }
-  })
+    
+    else if (input$type.of.graph == "TCRdist3" && input$type.chain == "ab") {
+      chain_table_summary.TCRdist3.ab()
+    }
+    
+    
+    else if (input$type.of.graph == "TCRdist3" && input$type.chain == "gd") {
+      chain_table_summary.TCRdist3.gd()
+    }
+    
+    
+    else {
+      
+      chain_table_summary.TCRdist3()
+      
+    }
+    
+      })
   
-  
+  # summary table download file -----
   output$downloadTABLE.QC3 <- downloadHandler(
     filename = function(){
-      paste("paired_chain_CDR3",gsub("-", ".", Sys.Date()),".csv", sep = "")
-    },
+      if (input$type.of.graph == "general summary") {
+        paste("paired_chain_CDR3",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      }
+      
+      else if (input$type.of.graph == "TCRdist3" && input$type.chain == "ab") {
+        paste("paired_TCRdist.ab",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      }
+        
+        else if (input$type.of.graph == "TCRdist3" && input$type.chain == "gd") {
+          paste("paired_TCRdist.gd",gsub("-", ".", Sys.Date()),".csv", sep = "")
+        }
+      
+      
+      else {
+        paste("paired_TCRdist",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      }
+      
+      },
     content = function(file){
-      df <- chain_table_summary()
-      write.csv(df,file, row.names = FALSE)
+      
+      if (input$type.of.graph == "general summary") {
+        df <- chain_table_summary()
+        write.csv(df,file, row.names = FALSE)
+      }
+      
+      else if (input$type.of.graph == "TCRdist3" && input$type.chain == "ab") {
+        df <- chain_table_summary.TCRdist3.ab()
+        write.csv(df,file, row.names = FALSE)
+      }
+      
+      else if (input$type.of.graph == "TCRdist3" && input$type.chain == "gd") {
+        df <- chain_table_summary.TCRdist3.gd()
+        write.csv(df,file, row.names = FALSE)
+      }
+      
+      
+      else {
+        df <- chain_table_summary()
+        write.csv(df,file, row.names = FALSE)
+      }
+
+      
     })
   
   ## output VDJtools ----
@@ -1640,7 +1796,7 @@ server  <- function(input, output, session) {
       cols <- unlist(colors())
     }
     
-    if (input$tree.lab == "yes" & input$type.tree == "scTCR") {
+    if (input$tree.lab == "yes" & input$type.tree == "raw data") {
       df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
       df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
@@ -1666,7 +1822,7 @@ server  <- function(input, output, session) {
       vals22$Treemap22
       
     }
-    else if (input$tree.lab == "no" & input$type.tree == "scTCR") {
+    else if (input$tree.lab == "no" & input$type.tree == "raw data") {
       df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
       df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
@@ -1687,7 +1843,7 @@ server  <- function(input, output, session) {
       
       
     }
-    else if (input$tree.lab == "yes" & input$type.tree == "bulk") {
+    else if (input$tree.lab == "yes" & input$type.tree == "Summarised data") {
       df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
@@ -2042,14 +2198,145 @@ server  <- function(input, output, session) {
       session,
       "aa.or.nt",
       choices=names(input.data2()),
-      selected = "JUNCTION_B") 
+      selected = "JUNCTION..AA._A") 
   }) # amino acid or nucleotides column
   observe({
     updateSelectInput( 
       session,
       "selected_group_len",
       choices=select_group()) }) # group
+  observe({
+    updateSelectInput(
+      session,
+      "chain.hist.col",
+      choices=names(input.data2()),
+      selected = "AJ")
+    
+  })
   
+  cols.hist <- reactive({
+    df <- input.data2(); 
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    # 
+    # df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+    df1 <- df
+    df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+    
+    df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
+    df1 <- df1[order(df1$chain, decreasing = F),]
+    df1$chain <- factor(df1$chain,levels = unique(df1$chain))
+    
+    num <- as.data.frame(unique(df1$chain))
+    
+    col.gg <- gg_fill_hue(dim(num)[1])
+    unique.col <- as.data.frame(unique(df$chain))
+    
+    palette_rainbow <- rev(rainbow(dim(num)[1]))
+    
+    if (input$hist_colour.choise == "rainbow") {
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), palette_rainbow[i])        
+      }) }
+    else if (input$hist_colour.choise == "default") {
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), col.gg[i])        
+      })
+    }
+    else if (input$hist_colour.choise == "random") {
+      palette1 <- distinctColorPalette(dim(num)[1])
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), palette1[i])        
+      })
+      
+    }
+    else {
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), "grey")        
+      })
+      
+      
+    }
+    
+  })
+  output$myPanel.hist <- renderUI({cols.hist()})
+  
+  colors.hist <- reactive({
+    df <- input.data2(); 
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+    df1 <- ddply(df,names(df.names) ,numcolwise(sum))
+    df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+    
+    df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
+    df1 <- df1[order(df1$chain,decreasing = F),]
+    df1$chain <- factor(df1$chain,levels = unique(df1$chain))
+    
+    num <- as.data.frame(unique(df1$chain))
+
+    lapply(1:dim(num)[1], function(i) {
+      input[[paste("col.hist", i, sep="_")]]
+    })
+  })
+
+  output$hist.table <- DT::renderDataTable( {
+    df <- input.data2(); 
+    df <- as.data.frame(df)
+    df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+    df1 <- ddply(df,names(df.names) ,numcolwise(sum))
+    
+    df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+    df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
+    df1 <- df1[order(df1$chain, decreasing = F),]
+    df1$chain <- factor(df1$chain,levels = unique(df1$chain))
+    df.col.2 <- as.data.frame(hist.col.table())
+    names(df.col.2) <- c("V1","col")
+    df.col.2
+    df1 <- subset(df1, get(input$group_column)==input$selected_group_len)
+    df.col.2[df.col.2$V1 %in% unique(df1$chain),]
+    
+    datatable(df.col.2[df.col.2$V1 %in% unique(df1$chain),], extensions = "Buttons", options = list(searching = TRUE,
+                                                                                        ordering = TRUE,
+                                                                                        buttons = c('copy','csv', 'excel'),
+                                                                                        dom = 'Bfrtip',
+                                                                                        pageLength=5, 
+                                                                                        lengthMenu=c(2,5,10,20,50,100), 
+                                                                                        scrollX = TRUE
+    ))
+  }, server = FALSE) 
+  
+  
+  
+  
+ hist.col.table <- function () {
+   df <- input.data2();
+   validate(
+     need(nrow(df)>0,
+          error_message_val1)
+   )
+   df <- as.data.frame(df)
+   df1 <- df
+   df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+   
+   df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
+   df1 <- df1[order(df1$chain),]
+   df1$chain <- factor(df1$chain,levels = unique(df1$chain))
+   
+   df.col.2 <- as.data.frame(unique(df1$chain))
+   names(df.col.2) <- "V1"
+   col2 <- unlist(colors.hist())
+   as.data.frame(col2)
+   df.col.2$col <- col2
+   df.col.2
+ }
+
   Chain1_length <- function () {
     df <- input.data2(); 
     validate(
@@ -2057,30 +2344,45 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     df <- as.data.frame(df)
-    if (input$graph_type == "histogram" & input$type.tree == "scTCR") {
+    
+    
+    if (input$graph_type == "histogram" & input$type.tree == "raw data") {
+      df <- as.data.frame(df)
       df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
       df1 <- ddply(df,names(df.names) ,numcolwise(sum))
+      
       df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
-      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
-      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
-        geom_histogram(fill = input$hist_col, bins = input$bin) + 
+      df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
+      df1 <- df1[order(df1$chain, decreasing = F),]
+      df1$chain <- factor(df1$chain,levels = unique(df1$chain))
+      df.col.2 <- as.data.frame(hist.col.table())
+      names(df.col.2) <- c("V1","col")
+      df2 <- merge(df.col.2,df1,by.x="V1",by.y=input$chain.hist.col,sort = F)
+      df1 <- subset(df2, get(input$group_column)==input$selected_group_len)
+      
+      df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
+
+      vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
+        geom_bar() + 
+        scale_fill_manual(values = df.col.hist$col) +
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = "none") +
-        
+              legend.position = input$hist.density.legend) +
         labs(y="Count",
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type),
-          axis.text.y = element_text(colour="black",family=input$font_type),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          legend.text = element_blank()
-        ) 
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
+        ) +
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
+      
     }
-    else if (input$graph_type == "density" & input$type.tree == "scTCR") {
+    else if (input$graph_type == "density" & input$type.tree == "raw data") {
       df <- as.data.frame(df)
       head(df)
       df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
@@ -2088,76 +2390,82 @@ server  <- function(input, output, session) {
       names(df1)
       
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
-      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
-      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
-        #geom_histogram(fill = input$hist_col, bins = input$bin) + 
-        geom_density(color = input$hist_col) +
-        #facet_wrap(~sub) +
+      
+      vals4$bar.len <- ggplot(df1,aes(x=len1,colour = get(input$group_column),fill = get(input$group_column))) +
+        geom_density(alpha = 0.25) +
+        scale_alpha(guide = 'none') + 
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = "none") +
-        #scale_fill_manual(values=c() +
-        
+              legend.position = input$hist.density.legend) +
         labs(y="CDF",
              x="",
              title="") +
-        # Add a line showing the alpha = 0.01 level
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type),
-          axis.text.y = element_text(colour="black",family=input$font_type),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          legend.text = element_blank()
-        )
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
+        )+
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
     }
-    else if (input$graph_type == "histogram" & input$type.tree == "bulk") {
+    else if (input$graph_type == "histogram" & input$type.tree == "Summarised data") {
+      
+      df <- as.data.frame(df)
       df1 <- df
-      df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
-      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
-      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
-        geom_histogram(fill = input$hist_col, bins = input$bin) + 
+      
+      df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+      df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
+      df1 <- df1[order(df1$chain, decreasing = F),]
+      df1$chain <- factor(df1$chain,levels = unique(df1$chain))
+      df.col.2 <- as.data.frame(hist.col.table())
+      names(df.col.2) <- c("V1","col")
+      df2 <- merge(df.col.2,df1,by.x="V1",by.y=input$chain.hist.col,sort = F)
+      df1 <- subset(df2, get(input$group_column)==input$selected_group_len)
+      
+      df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
+
+
+      vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
+        geom_bar() + 
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = "none") +
-        
+              legend.position = input$hist.density.legend) +
+        scale_fill_manual(values = df.col.hist$col) +
         labs(y="Count",
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type),
-          axis.text.y = element_text(colour="black",family=input$font_type),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          legend.text = element_blank()
-        ) 
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)) +
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
       
     }
     else {
       df1 <- df
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
-      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
-      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
-        #geom_histogram(fill = input$hist_col, bins = input$bin) + 
-        geom_density(color = input$hist_col) +
-        #facet_wrap(~sub) +
+
+      vals4$bar.len <- ggplot(df1,aes(x=len1, colour = get(input$group_column))) +
+        geom_density() +
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = "none") +
-        #scale_fill_manual(values=c() +
-        
+              legend.position = input$hist.density.legend) +
         labs(y="CDF",
              x="",
              title="") +
-        # Add a line showing the alpha = 0.01 level
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type),
-          axis.text.y = element_text(colour="black",family=input$font_type),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          legend.text = element_blank()
-        )
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
+        ) +
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
     }
 
@@ -2195,7 +2503,7 @@ server  <- function(input, output, session) {
   table.len.download <- reactive( {
     df <- input.data2()
     df <- as.data.frame(df)
-    if (input$type.tree == "scTCR") {
+    if (input$type.tree == "raw data") {
      
       df <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
       df2 <- df[,c(grep("JUNCTION",names(df)))]
@@ -2223,7 +2531,6 @@ server  <- function(input, output, session) {
     
   })
   
-  
   output$table_length <- downloadHandler(
     filename = function(){
       paste("TCR_Explore_length_plot_",".csv", sep = "")
@@ -2248,6 +2555,7 @@ server  <- function(input, output, session) {
       session,
       "selected_group_chain",
       choices=select_group()) }) # group
+  
   Chain_usage <- function () {
     df <- input.data2(); 
     validate(
@@ -2263,13 +2571,14 @@ server  <- function(input, output, session) {
     df2$chain <- factor(df2$chain, levels = unique(df2$chain),labels = df2$chain)
     
     if (input$graph_bar_type == "count") {
+    
       
-      vals5$bar.usage <- ggplot(df2,aes(x=chain,y=cloneCount)) +
-        geom_bar(stat="identity", position = "dodge",fill=input$colour_bar.usage) +
+      vals5$bar.usage <- ggplot(df2,aes(x=chain,y=cloneCount,fill=input$colour_bar.usage)) +
+        geom_bar(stat="identity", position = "dodge") +
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = "bottom") +
-        #scale_fill_manual(values=c("red","blue","darkgreen")) +
+              legend.position = "none") +
+        scale_fill_manual(values=input$colour_bar.usage) +
         labs(y="count",
              x="",
              title="") +
@@ -2313,7 +2622,6 @@ server  <- function(input, output, session) {
   }
   
   vals30 <- reactiveValues(bar.usage2=NULL)
-  
   
   Chain2_usage <- function () {
     df <- input.data2(); 
@@ -2363,7 +2671,6 @@ server  <- function(input, output, session) {
       selected = c("IFN","CD8")) 
   }) 
   
-  
   cols_stacked_bar <- reactive({
     dat <- input.data2();
     validate(
@@ -2403,7 +2710,9 @@ server  <- function(input, output, session) {
       }) }
     
   })
+  
   output$myPanel_cols_stacked_bar <- renderUI({cols_stacked_bar()})
+  
   colors_bar.stacked <- reactive({
     dat <- input.data2();
     validate(
@@ -2421,7 +2730,8 @@ server  <- function(input, output, session) {
       input[[paste("cols_stacked_bar", i, sep="_")]]
     })
   })
-    Chain3_usage <- function () {
+  
+  Chain3_usage <- function () {
     dat <- input.data2();
     validate(
       need(nrow(dat)>0,
@@ -2475,10 +2785,7 @@ server  <- function(input, output, session) {
       vals31$bar.usage3
       
     }
-    
 
-
-    
   }
   
   output$Chain1_usage <- renderPlot({
@@ -2614,9 +2921,14 @@ server  <- function(input, output, session) {
       need(nrow(df)>0,
            error_message_val1)
     )
+    
+    
+    
     df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
-    df_unique
+    df_unique$Unique_clones <- 1
+    unique2 <- as.data.frame(df_unique[names(df_unique) %in% c(input$group_column,"len1","Unique_clones"),])
+    as.data.frame(ddply(unique2,(c(input$group_column,"len1")),numcolwise(sum)))
     
     
   })
@@ -3479,7 +3791,7 @@ server  <- function(input, output, session) {
     dat
   })
   
-  # other ------
+  # simp cal other plots ------
   cols_simp.index <- reactive({
     dat <- inv.simpson.index();
     dat <- as.data.frame(dat)
@@ -4034,7 +4346,6 @@ server  <- function(input, output, session) {
   
   
   # creating the dot plot ----
-  
   input.data_CSV2 <-  reactive({switch(input$dataset_index.2,"test-csv"=test.data_csv2(),"own_csv_file" = own.data_CSV2())})
   test.data_csv2<- reactive({
     dataframe = read.csv("test-data/Index/colouring column2021.11.19.csv",header = T)
@@ -4198,11 +4509,9 @@ server  <- function(input, output, session) {
     })
   })
   
-  
   output$myPanel.FACS.index.shape <- renderUI({shape.FACS.index()})
   output$myPanel.FACS.index <- renderUI({cols.FACS.index()})
   output$myPanel.FACS.index.size <- renderUI({size.FACS.index()})
-  
   
   colors.FACS.index <- reactive({
     dat <- input.data_CSV2()
@@ -4261,7 +4570,6 @@ server  <- function(input, output, session) {
       input[[paste("size.FACS.index", i, sep="_")]]
     })
   })
-  
   
   dot_plot.complex <- reactive({
     index <- input.data_CSV2();

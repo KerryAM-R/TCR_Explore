@@ -1,0 +1,4 @@
+      96 alignments.vdjca.file
+      96 clones.clna.file
+      91 sorted.clones.txt
+       0 total

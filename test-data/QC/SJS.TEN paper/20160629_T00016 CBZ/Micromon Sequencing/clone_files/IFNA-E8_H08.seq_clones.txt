@@ -1,0 +1,2 @@
+cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+1.0	TRAV20*00		TRAJ30*00	TRAC*00	TGTGCTGTGGGAAGATCATCTTG	CAVG_IIL	lysagee	vsglrg

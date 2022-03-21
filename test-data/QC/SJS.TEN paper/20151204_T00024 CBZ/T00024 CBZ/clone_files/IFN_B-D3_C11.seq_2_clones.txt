@@ -1,0 +1,2 @@
+IFN_B-D3_C11.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+IFN_B-D3_C11.seq_clones.txt	1.0	TRBV3-1*00	TRBD2*00	TRBJ2-1*00		TGTGCCAGCAGCCAAGGACTAGCGGTGATCGACAATGAGCAGTTCTTC	CASSQGLAVIDNEQFF	ynnkel	lghdt

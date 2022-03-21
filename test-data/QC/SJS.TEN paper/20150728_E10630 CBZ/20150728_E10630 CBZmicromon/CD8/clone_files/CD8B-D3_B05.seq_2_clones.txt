@@ -1,0 +1,2 @@
+CD8B-D3_B05.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+CD8B-D3_B05.seq_clones.txt	1.0	TRBV2*00		TRBJ2-1*00		TGTGCCAGCCGCATACCAGGATCTGCCTACAATGAGCAGTTCTTC	CASRIPGSAYNEQFF	fynnei	snhly

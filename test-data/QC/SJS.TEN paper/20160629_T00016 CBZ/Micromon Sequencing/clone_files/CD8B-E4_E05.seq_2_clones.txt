@@ -1,0 +1,2 @@
+CD8B-E4_E05.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+CD8B-E4_E05.seq_clones.txt	1.0	TRBV4-1*00	TRBD2*00	TRBJ2-5*00		TGCGCCAGCAGCCACCTAGCGGGAGCTCAAGAGACCCAGTACTTC	CASSHLAGAQETQYF	ysyekl	mghra
