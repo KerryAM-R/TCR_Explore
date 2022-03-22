@@ -583,16 +583,25 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                       column(3,selectInput( "bar.stacked_colour.choise",label = h5("Colour"),choices = c(
                                                       "default","rainbow","random","grey"))), 
                                                       
-                                                      column(6,
-                                                             wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 250px",
-                                                                       uiOutput('myPanel_cols_stacked_bar'))),
+
 
                                                       ),
-                                                    
-                                                     
                                                     ),
+                 fluidRow(
+         
+                   conditionalPanel(
+                     condition = "input.stat == 'stacked'",
+                     column(3,
+                            wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 400px",
+                                      uiOutput('myPanel_cols_stacked_bar'))),
+                   ), 
+                   column(9,plotOutput("Chain1_usage",height="400px")),
+                 ),
                                                   
-                                                  plotOutput("Chain1_usage",height="400px"),
+                    
+                      
+                 
+                                                  
                                                   fluidRow(
                                                     column(3,numericInput("width_chain.usage", "Width of PDF", value=10)),
                                                     column(3,numericInput("height_chain.usage", "Height of PDF", value=8)),
@@ -1541,12 +1550,7 @@ server  <- function(input, output, session) {
     
     
   })
-  # subject,epitope,count,v_a_gene,j_a_gene,cdr3_a_aa,cdr3_a_nucseq,v_b_gene,j_b_gene,cdr3_b_aa,cdr3_b_nucseq,clone_id
-  # [1] "cloneCount"          "Indiv.group"         "Indiv"               "group"               "clone"               "V.GENE.and.allele_A" "J.GENE.and.allele_A"
-  # [8] "JUNCTION_A"          "JUNCTION..AA._A"     "V.GENE_A"            "V.GENE.and.allele_B" "J.GENE.and.allele_B" "D.GENE.and.allele_B" "JUNCTION_B"         
-  # [15] "JUNCTION..AA._B"     "V.GENE_B"            "AJ"                  "BJ"                  "AJBJ"                "AJ_aCDR3"            "BJ_bCDR3"           
-  # [22] "AJ_aCDR3_BJ_bCDR3"   
-  # 
+
   chain_table_summary.TCRdist3.ab <- reactive({
     df <- input.data2()
     validate(
@@ -1717,7 +1721,7 @@ server  <- function(input, output, session) {
       session,
       "fill2",
       choices=names(input.data2()),
-      selected = "AJ" )
+      selected = "AVJ" )
     
   })
   observe({
@@ -1725,7 +1729,7 @@ server  <- function(input, output, session) {
       session,
       "sub_group2",
       choices=names(input.data2()),
-      selected = "AJBJ")
+      selected = "AVJ.BVJ")
     
   })
 
@@ -1951,7 +1955,7 @@ server  <- function(input, output, session) {
       session,
       "chain1",
       choices=names(input.data2()),
-      selected = "AJ")
+      selected = "AVJ")
     
   }) # chain 1
   observe({
@@ -1959,7 +1963,7 @@ server  <- function(input, output, session) {
       session,
       "chain2",
       choices=names(input.data2()),
-      selected = "BJ")
+      selected = "BVJ")
     
   }) # chain 2
   output$table_display <- renderTable({
@@ -2216,7 +2220,7 @@ server  <- function(input, output, session) {
       session,
       "chain.hist.col",
       choices=names(input.data2()),
-      selected = "AJ")
+      selected = "AVJ")
     
   })
   
@@ -2553,7 +2557,7 @@ server  <- function(input, output, session) {
       session,
       "variable_chain",
       choices=names(input.data2()),
-      selected = "AJ")
+      selected = "AVJ")
     
   })
   observe({
@@ -3553,7 +3557,7 @@ server  <- function(input, output, session) {
       session,
       "group.heatmap",
       choices=names(input.data2()),
-      selected = "AJ")
+      selected = "AVJ")
     
   })
   # x-axis heatmap
@@ -3562,7 +3566,7 @@ server  <- function(input, output, session) {
       session,
       "heatmap_2",
       choices=names(input.data2()),
-      selected = "BJ")
+      selected = "BVJ")
     
   })
   # group 
@@ -3577,7 +3581,6 @@ server  <- function(input, output, session) {
   vals14 <- reactiveValues(heatmap_clonal3=NULL)
   
   heatmap_matrix2 <- function() {
-    # group by chain dat <- read.csv("test-data/Group/Merged_A-B_2021.08.02.csv")
     dat <- input.data2();
     validate(
       need(nrow(dat)>0,
@@ -4208,7 +4211,6 @@ server  <- function(input, output, session) {
     
   })
   
-  
   observe({
     updateSelectInput(
       session,
@@ -4216,7 +4218,6 @@ server  <- function(input, output, session) {
       choices=names(input.data_CSV1()),
       selected = "Indiv")
   })
-  
   observe({
     updateSelectInput(
       session,
@@ -4245,7 +4246,6 @@ server  <- function(input, output, session) {
       choices=names(input.data_CSV1()),
       selected = "CDR3b.Sequence")
   })
-  
   observe({
     updateSelectInput(
       session,
