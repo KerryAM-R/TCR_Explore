@@ -746,17 +746,21 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          tabPanel("Upset plot",
                                                   fluidRow(
                                                     column(3,selectInput("upset.select",label = h5("Select chain"), choices = "", selected = "")),
-                                                    column(3,selectInput("upset.group.select",label = h5("Group column (max 31 groups)"), choices = "",selected= ""))),
+                                                    column(3,selectInput("upset.group.select",label = h5("Group column (max 31 groups)"), choices = "",selected= "")),
+                                                    ),
                                                   
                                                   selectInput("order.of.group",label = h5("Group column (max 31 groups)"), choices = "",selected= "", multiple = T, width = "1200px"),
                                                   
                                                   
                                                   
-                                                  tags$head(tags$style("#upset.datatable  {white-space: nowrap;  }")),
-                                                  div(DT::dataTableOutput("upset.datatable")),
+
+                                                  fluidRow(
+                                                    column(3,numericInput("upset.text.size","Size of text",value = 20)),
+                                                    column(3,numericInput("upset.font.size","Size of number",value = 12)),
+                                                  ),
+                                                  
                                                   plotOutput("UpSet.plot", height = "600px"),
                                                   fluidRow(
-                                                    
                                                     column(3,numericInput("width_upset", "Width of PDF", value=10)),
                                                     column(3,numericInput("height_upset", "Height of PDF", value=8)),
                                                     column(3),
@@ -768,7 +772,9 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,numericInput("height_png_upset","Height of PNG", value = 1200)),
                                                     column(3,numericInput("resolution_PNG_upset","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_upset','Download PNG'))
-                                                  )
+                                                  ),
+                                                  tags$head(tags$style("#upset.datatable  {white-space: nowrap;  }")),
+                                                  div(DT::dataTableOutput("upset.datatable")),
                                          )
                                        ))
                               
@@ -777,7 +783,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                           )
                  ),
                  # UI Index data graphs -----
-                 tabPanel("FACS Index data",
+                 tabPanel("Paired TCR with Index data",
                           sidebarLayout(
                             sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 850px; position:relative;", width=3,
                                          tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
@@ -861,7 +867,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             mainPanel(tabsetPanel(id = "tabselected",
                               
                  # merging FACS file with clone file -----
-                              tabPanel("Combined scTCR with Index data",value = 1,
+                              tabPanel("Merging paired TCR with Index data",value = 1,
                                        div(DT::dataTableOutput("FACS.CSV")),
                                        # div(DT::dataTableOutput("merged.clone")),
                                        div(DT::dataTableOutput("merged.index.clone")),
@@ -870,14 +876,14 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               ),
                               
                  # UI complex dotplot add columns if needed -----
-                              tabPanel("Adding columns for colouring",value = 2,
+                              tabPanel("Data cleaning steps",value = 2,
                                        
                                        selectInput("string.data","Recommended selecting for ab TCR data: Indiv (or group),TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. \nDo not select flurochrome columns, clone, cloneCount, LocX or LocY, row or column","",multiple = T, width = "1200px"),
                                        div(DT::dataTableOutput("table.index.1")),
                                        
                                        ),
                  # UI complex dotplot -----
-                              tabPanel("Complex dotplot",value = 3,
+                              tabPanel("TCR with Index data plot",value = 3,
                                       
                                        
                                        fluidRow(column(3,
@@ -4738,7 +4744,7 @@ server  <- function(input, output, session) {
     
     df.x <- make_comb_mat(mat)
     ht = draw(UpSet(df.x,
-                    row_names_gp =  gpar(fontfamily = 'serif'),
+                    row_names_gp =  gpar(fontfamily = 'serif', fontsize = input$upset.text.size),
                     column_names_gp = gpar(fontfamily = 'serif'),
                     top_annotation = upset_top_annotation(df.x,
                                                           annotation_name_gp = gpar(fontfamily = 'serif')
@@ -4753,7 +4759,7 @@ server  <- function(input, output, session) {
     cs = comb_size(df.x)
     decorate_annotation("intersection_size", {
       grid.text(cs[od], x = seq_along(cs), y = unit(cs[od], "native") + unit(2, "pt"), 
-                default.units = "native", just = "bottom", gp = gpar(fontsize = 12, fontfamily = 'serif')
+                default.units = "native", just = "bottom", gp = gpar(fontsize = input$upset.font.size, fontfamily = 'serif')
       ) })
 
   }
