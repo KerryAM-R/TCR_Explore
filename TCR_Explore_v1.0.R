@@ -168,6 +168,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
                                                     selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
                                                     
+                                                    
                                                     conditionalPanel(condition="input.QC_panel==2",
                                                                      downloadButton('downloadTABLE.QC1','Download paired chain file')
                                                                      ),
@@ -232,6 +233,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(6,radioButtons('quote', 'Quote', c(None='', 'Double Quote'='"', 'Single Quote'="'"), '"'))
                                          ),
                                          
+                                         colourInput("one.colour.default","One colour","grey"),
                                          selectInput("group_column",label = h4("Column of group"), ""),
                                          selectInput("type.tree",label = h4("Type of input"), choices =  c("raw data","Summarised data")),
 
@@ -275,7 +277,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          selectInput("string.data.tree.order","Order of group in graph",choices = "",multiple = T, width = "1200px"),
                                          
                                          fluidRow( 
-                                           column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","grey"))),
+                                           column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","one colour"))),
                                            column(2, selectInput("fill2",label = h5("Colour treemap by"),"" )),
                                            column(2, selectInput("sub_group2",label = h5("Separate panels by"),"" )),
                                            # column(3,selectInput( "wrap",label = h5("Group"),"" )),
@@ -309,21 +311,36 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(2,selectInput( "chain1",label = h5("Chain one"),"" )),
                                            column(2,selectInput( "chain2",label = h5("Chain two"),"" )),
                                            column(2,style = "margin-top: 15px;", numericInput("chord.transparancy","Transparancy",value = 0.5, min=0,max=0.9)),
-                                           column(2,tableOutput("table_display")),
+                                           # column(2,tableOutput("table_display")),
                                            
                                          ),
                                          fluidRow(
-                                           column(3, selectInput("circ.lab",label = h5("Add label"),choices = c("yes","no"))),
-                                           column(3,selectInput( "colour_cir",label = h5("Colour"),choices = c("rainbow","random","grey"))),  
+                                           column(3, selectInput("circ_lab",
+                                                                 label = h5("Type of label"),
+                                                                 choices = c("Label","colour one clone (label)","colour one clone (no label)","no labels"))),
+                                           column(3,selectInput( "colour_cir",label = h5("Colour"),choices = c("default","rainbow","random","one colour"))),  
                                            column(3,style = "margin-top: 15px;", numericInput("seed.numb.chord","Random colour generator",value = 123)),
                                          ),
+                                         
+                                         conditionalPanel(
+                                           condition = "input.circ_lab == 'colour one clone (label)' || input.circ_lab == 'colour one clone (no label)'",
+                                                          fluidRow(column(2,selectInput("string.data.circ.order","Chains to highlight",choices = "",multiple = F)),
+                                                                   column(2, colourInput("colour.chord.line","Line colour","black")),
+                                                                   column(2, sliderInput("line.chord.type","Line type (0 = no line)",min=0,max=6,value=1)),
+                                 column(2,numericInput("thickness.chord.line","Thickness of line", value = 2)),
+                                 column(2, sliderInput("unselected.chord.transparacy","Transparancy unselected",min=0,max=1,value=0.75,step = 0.05)),
+                                  column(2, sliderInput("selected.chord.transparacy","Transparancy selected",min=0,max=1,value=0,step = 0.05)),
+
+                                                                   ),
+                                           
+                                           
+                                                          ),
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 600px",
                                                                    uiOutput('myPanel_circ'))),
                                                   column(9,plotOutput("Circular",height="600px"))),
                                          h4("Exporting the Circular plot"),
                                          fluidRow(
-                                           
                                            column(3,numericInput("width_circ", "Width of PDF", value=10)),
                                            column(3,numericInput("height_circ", "Height of PDF", value=8)),
                                            column(3),
@@ -339,20 +356,15 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          # tableOutput("out.col.table1")
                                          
                                 ),
-                                
-                                
                  # UI Pie ----
                                 tabPanel("Pie chart",
                                          fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this group"),"")),
-                                                  column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
+                                                  column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","one colour"))),
                                                   column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
                                                   column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 3)),
                                                   column(2,  numericInput("size.circ",label = h5("Size of legend text"), value = 6))
                                                   
                                          ),
-                                         
-                                         
-                                         
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
                                                                    uiOutput('myPanel_pie'))),
@@ -373,12 +385,6 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                 
                                 
                               )),
-                              
-                              
-                              
-                              
-                              
-                              
                               tabPanel("Motif analysis",
                                        p("This section contains 4 tabs for motif analysis"),
                                        tabsetPanel(
@@ -1772,7 +1778,7 @@ server  <- function(input, output, session) {
     
     else {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col", i, sep="_"), paste(num[i,]), "grey")        
+        colourInput(paste("col", i, sep="_"), paste(num[i,]), input$one.colour.default)        
       })
       
       
@@ -1943,6 +1949,22 @@ server  <- function(input, output, session) {
     #names(df2) <- "V1"
     df2
   }
+  
+  selected_chain_1 <- function () {
+    df <- input.data2();
+    
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    
+    df2 <- as.data.frame(unique(df[names(df) %in% input$chain1]))
+    df2 <- as.data.frame(df2)
+    #names(df2) <- "V1"
+    df2
+  }
+  
+  
   observe({
     updateSelectInput(
       session,
@@ -1955,7 +1977,7 @@ server  <- function(input, output, session) {
       session,
       "chain1",
       choices=names(input.data2()),
-      selected = "AVJ")
+      selected = "AV")
     
   }) # chain 1
   observe({
@@ -1963,7 +1985,7 @@ server  <- function(input, output, session) {
       session,
       "chain2",
       choices=names(input.data2()),
-      selected = "BVJ")
+      selected = "AJ")
     
   }) # chain 2
   output$table_display <- renderTable({
@@ -1995,12 +2017,24 @@ server  <- function(input, output, session) {
     df.col.2 <- rbind(df.col1,df.col.j)
     df.col.2
     
+    
+    
     palette_rainbow <- rev(rainbow(length(t(df.col.2))))
+    
+    
     
     if (input$colour_cir == "rainbow") {
       lapply(1:dim(df.col.2)[1], function(i) {
         colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), palette_rainbow[i])        
       }) }
+    
+    else if (input$colour_cir == "default") {
+      lapply(1:dim(df.col.2)[1], function(i) {
+        col.gg <- gg_fill_hue(dim(df.col.2)[1])
+        colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), col.gg[i])        
+      })
+    }
+    
     
     else if (input$colour_cir == "random") {
       
@@ -2008,13 +2042,25 @@ server  <- function(input, output, session) {
         palette2 <- distinctColorPalette(dim(df.col.2)[1])
         colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), palette2[i])        
       }) }
+    
     else  {
       lapply(1:dim(df.col.2)[1], function(i) {
-        colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), "grey")        
+        colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), input$one.colour.default)        
       }) }
     
   })
   output$myPanel_circ <- renderUI({cols_circ()})
+  
+  
+  observe({
+    updateSelectInput(
+      session,
+      "string.data.circ.order",
+      choices=selected_chain_1(),
+      selected = c("AV4","AV22","AV19")) 
+  }) 
+  
+  
   colors_cir <- reactive({
     dat <- input.data2();
     validate(
@@ -2128,18 +2174,58 @@ server  <- function(input, output, session) {
     
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     
-    
     par(mar = rep(0, 4), cex=0.8, family = input$font_type)
     
-    if (input$circ.lab=="yes") {
-      
-      
+    if (input$circ_lab=="Label") {
       circos.clear()
       #par(new = TRUE) # <- magic
       circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
       chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
                    order = df.col.2$V1,
                    transparency = input$chord.transparancy,
+                   # transparency = 0.5,
+                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
+      # we go back to the first track and customize sector labels
+      circos.track(track.index = 1, panel.fun = function(x, y) {
+        circos.par(track.margin=c(0,0)) 
+        xlim = get.cell.meta.data("xlim")
+        sector.index = get.cell.meta.data("sector.index")
+        #text direction (dd) and adjusmtents (aa)
+        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
+        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
+        aa = c(1, 0.5)
+        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
+        circos.text(x = mean(xlim), y = 0.1, labels = sector.index, facing = dd, adj = aa)
+        
+      }, bg.border = NA)
+      
+    }
+    # 'colour one clone (label)' || 'colour one clone (no label)''
+    else if (input$circ_lab =="colour one clone (label)") {
+      lwd_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      lwd_mat[hierarchy == c(input$string.data.circ.order)] = input$thickness.chord.line
+      lwd_mat
+      
+      border_mat = matrix(NA, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      border_mat[hierarchy == c(input$string.data.circ.order)] = input$colour.chord.line
+      border_mat
+      
+      alpha_mat = matrix(input$unselected.chord.transparacy, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      alpha_mat[hierarchy == c(input$string.data.circ.order)] = input$selected.chord.transparacy
+      alpha_mat
+      
+      lty_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      lty_mat
+      lty_mat[hierarchy == c(input$string.data.circ.order)] = input$line.chord.type
+      circos.clear()
+      #par(new = TRUE) # <- magic
+      circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
+                   order = df.col.2$V1,
+                   link.lty = lty_mat,
+                   link.lwd = lwd_mat,
+                   link.border = border_mat,
+                   transparency = alpha_mat[1:dim(alpha_mat)[1]],
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       # we go back to the first track and customize sector labels
       circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -2160,6 +2246,51 @@ server  <- function(input, output, session) {
         
       }, bg.border = NA)
       
+      
+      
+      
+    }
+    
+    else if (input$circ_lab =="colour one clone (no label)") {
+      lwd_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      lwd_mat[hierarchy == c(input$string.data.circ.order)] = input$thickness.chord.line
+      lwd_mat
+      
+      border_mat = matrix(NA, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      border_mat[hierarchy == c(input$string.data.circ.order)] = input$colour.chord.line
+      border_mat
+      
+      alpha_mat = matrix(input$unselected.chord.transparacy, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      alpha_mat[hierarchy == c(input$string.data.circ.order)] = input$selected.chord.transparacy
+      alpha_mat
+      
+      lty_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
+      lty_mat
+      lty_mat[hierarchy == c(input$string.data.circ.order)] = input$line.chord.type
+      circos.clear()
+      #par(new = TRUE) # <- magic
+      circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
+                   order = df.col.2$V1,
+                   link.lty = lty_mat,
+                   link.lwd = lwd_mat,
+                   link.border = border_mat,
+                   transparency = alpha_mat[1:dim(alpha_mat)[1]],
+                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
+      # we go back to the first track and customize sector labels
+      circos.track(track.index = 1, panel.fun = function(x, y) {
+        circos.par(track.margin=c(0,0)) 
+        xlim = get.cell.meta.data("xlim")
+        sector.index = get.cell.meta.data("sector.index")
+        #text direction (dd) and adjusmtents (aa)
+        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
+        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
+        aa = c(1, 0.5)
+        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
+        
+      }, bg.border = NA)
+      
+      
     }
     
     else {
@@ -2173,7 +2304,11 @@ server  <- function(input, output, session) {
       
     }
     
-  } 
+  }
+  
+  
+  
+  
   output$Circular <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
@@ -2265,7 +2400,7 @@ server  <- function(input, output, session) {
     }
     else {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), "grey")        
+        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), input$one.colour.default)        
       })
       
       
@@ -2716,7 +2851,7 @@ server  <- function(input, output, session) {
       }) }
     else  {
       lapply(1:length(num), function(i) {
-        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), "grey")        
+        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), input$one.colour.default)        
       }) }
     
   })
@@ -3417,7 +3552,7 @@ server  <- function(input, output, session) {
       session,
       "pie_chain",
       choices=names(input.data2()),
-      selected = "AJBJ")
+      selected = "AV")
     
   })
   
@@ -3451,7 +3586,7 @@ server  <- function(input, output, session) {
     
     else {
       lapply(1:length(num), function(i) {
-        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), "grey")        
+        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), input$one.colour.default)        
       })
       
       
@@ -3829,7 +3964,7 @@ server  <- function(input, output, session) {
     
     else {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), "grey")
+        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), input$one.colour.default)
       })
       
       
