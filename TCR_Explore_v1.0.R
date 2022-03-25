@@ -330,10 +330,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                  column(2,numericInput("thickness.chord.line","Thickness of line", value = 2)),
                                  column(2, sliderInput("unselected.chord.transparacy","Transparancy unselected",min=0,max=1,value=0.75,step = 0.05)),
                                   column(2, sliderInput("selected.chord.transparacy","Transparancy selected",min=0,max=1,value=0,step = 0.05)),
-
                                                                    ),
-                                           
-                                           
                                                           ),
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 600px",
@@ -2300,6 +2297,7 @@ server  <- function(input, output, session) {
       circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
       chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
                    order = df.col.2$V1,
+                   transparency = input$chord.transparancy,
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       
     }
