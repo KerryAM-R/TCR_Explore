@@ -365,7 +365,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                 ),
                  # UI Pie ----
                                 tabPanel("Pie chart",
-                                         fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this group"),"")),
+                                         fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this chain"),"")),
                                                   column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","one colour"))),
                                                   column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
                                                   column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 3)),
