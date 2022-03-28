@@ -92,42 +92,50 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 70, width = 120,style = "margin:-25px 10px"), position = "fixed-top",collapsible = TRUE,
+ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 60, width = 102.8571,
+                                  
+                                  style = "margin:-25px 10px"
+                                  
+                                  ),
+                 
+                 position = "static-top",collapsible = F, 
                  tags$head(
                    tags$style(HTML(' .navbar {
                           height: 80px;
                           min-height:80px !important;
                         }
                       .navbar-nav > li > a, .navbar-brand {
-                            padding-top:30px !important; 
+                            padding-top:30px !important;
                             padding-bottom:30px !important;
                             height: 20px;
                             }'))),
                  
-                 navbarMenu("TCR_Explore workflow",
-                            tabPanel("Overview",
-                                     fluidRow(includeMarkdown("README.md")),
-                                     # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
-                            ),     
-                            tabPanel("QC",
-                                     h3("Tutorial video of Quality control processes"),
-                                     uiOutput("video"),
-                                     fluidRow(includeMarkdown("READMEQC.md")),
-                                     
-                                     # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
-                            ),     
-                            tabPanel("scTCR plots",
-                                     fluidRow(includeMarkdown("README.scTCR.md"))),
-                            tabPanel("FACS index QC and plots",
-                                     fluidRow(includeMarkdown("README.FACS.md"))),
+                 tabPanel("TCR_Explore workflow",
                             
-                            tabPanel("Session info", 
-                                     tabPanel("Session info", verbatimTextOutput("sessionInfo"))
-                            )
-                            
-                            #          fluidRow(includeMarkdown("README.FACS.md"))
-                            # )
-                            
+                              navlistPanel(id = "Markdown_panel",widths = c(2, 10),
+                              tabPanel("Overview",
+                                      includeMarkdown("README.md"),
+                                       # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
+                              ),     
+                              tabPanel("Quality control",
+                                       h3("Tutorial video of Quality control processes"),
+                                       uiOutput("video"),
+                                       fluidRow(includeMarkdown("READMEQC.md")),
+                                       
+                                       # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
+                              ),     
+                              tabPanel("TCR analysis Markdown",
+                                       includeMarkdown("README.scTCR.md")),
+                              
+                              tabPanel("Paired index quality control and plot",
+                                       includeMarkdown("README.FACS.md")),
+                              
+                              tabPanel("Session info", 
+                                       tabPanel("Session info", 
+                                                div(style="width:700px",
+                                                verbatimTextOutput("sessionInfo")))
+                              )
+                       )
                  ),
                  # QC ----
                  navbarMenu("QC",
@@ -219,8 +227,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
   ")),
                           
                           sidebarLayout(
-                            sidebarPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 700px; position:relative;", width=3,
-                                         tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
+                            sidebarPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
+                                         # tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
                                          #textInput(inputId = "lab1", label = "Group label of file 1",value = "Ex.vivo"),
                                          tags$head(tags$style(HTML(".shiny-notification {position:fixed;top: 50%;left: 30%;right: 30%;}"))),
                                          tags$head(tags$style(HTML('.progress-bar {background-color: purple;}'))),
@@ -315,16 +323,18 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            
                                          ),
                                          fluidRow(
-                                           column(3, selectInput("circ_lab",
+                                           column(2, selectInput("circ_lab",
                                                                  label = h5("Type of label"),
                                                                  choices = c("Label","colour one clone (label)","colour one clone (no label)","no labels"))),
-                                           column(3,selectInput( "colour_cir",label = h5("Colour"),choices = c("default","rainbow","random","one colour"))),  
-                                           column(3,style = "margin-top: 15px;", numericInput("seed.numb.chord","Random colour generator",value = 123)),
+                                           column(2,selectInput( "colour_cir",label = h5("Colour"),choices = c("default","rainbow","random","one colour"))),  
+                                           column(2,style = "margin-top: 15px;", numericInput("seed.numb.chord","Random colour generator",value = 123)),
                                          ),
                                          
                                          conditionalPanel(
                                            condition = "input.circ_lab == 'colour one clone (label)' || input.circ_lab == 'colour one clone (no label)'",
-                                                          fluidRow(column(2,selectInput("string.data.circ.order","Chains to highlight",choices = "",multiple = F)),
+                                           selectInput("string.data.circ.order","Chains to highlight",choices = "",multiple = T,width = "800"),
+                                           
+                                                          fluidRow(
                                                                    column(2, colourInput("colour.chord.line","Line colour","black")),
                                                                    column(2, sliderInput("line.chord.type","Line type (0 = no line)",min=0,max=6,value=1)),
                                  column(2,numericInput("thickness.chord.line","Thickness of line", value = 2)),
@@ -798,7 +808,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                  tabPanel("Paired TCR with Index data",
                           sidebarLayout(
                             sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 850px; position:relative;", width=3,
-                                         tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
+                                         # tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
                                          
                                          conditionalPanel(condition="input.tabselected==1",
                                                           selectInput("dataset3", "FACS file:", choices = c("test-FACS", "own_FACS")),
@@ -964,7 +974,7 @@ server  <- function(input, output, session) {
   })
   
   output$video <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 1080, height = 720)
+    tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 800, height = 533.3333)
   })
   
   
@@ -2006,6 +2016,7 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     # dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     
@@ -2067,6 +2078,7 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     # dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     
@@ -2086,6 +2098,7 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
@@ -2107,6 +2120,7 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
@@ -2148,6 +2162,7 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     hierarchy$cloneCount <- 1
     chain1 <- as.data.frame(ddply(hierarchy,names(hierarchy)[-c(2,3)],numcolwise(sum)))
     chain1 <- chain1[order(chain1$cloneCount, decreasing = T),]
@@ -2170,7 +2185,9 @@ server  <- function(input, output, session) {
     names(grid.col3) <- names(grid.col2)
     
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    
+    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- as.matrix(table(hierarchy[,1], hierarchy[,2]))
+ 
     par(mar = rep(0, 4), cex=0.8, family = input$font_type)
     
     if (input$circ_lab=="Label") {
@@ -2199,21 +2216,33 @@ server  <- function(input, output, session) {
     }
     # 'colour one clone (label)' || 'colour one clone (no label)''
     else if (input$circ_lab =="colour one clone (label)") {
-      lwd_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      lwd_mat[hierarchy == c(input$string.data.circ.order)] = input$thickness.chord.line
+      lwd_mat = hierarchy
+      
+      # line thickness
+      lwd_mat[lwd_mat>0] <- 1
+      lwd_mat[lwd_mat==0] <- 0
+      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat>0] <- input$thickness.chord.line
+      lwd_mat[lwd_mat==1] <- 0
       lwd_mat
       
-      border_mat = matrix(NA, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      border_mat[hierarchy == c(input$string.data.circ.order)] = input$colour.chord.line
+      # boarder colour
+      border_mat <- lwd_mat
+      border_mat[border_mat==1] <- 0
+      border_mat[border_mat>0] <- input$colour.chord.line
+      
+      border_mat[border_mat==0] <- NA
+      
       border_mat
       
-      alpha_mat = matrix(input$unselected.chord.transparacy, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      alpha_mat[hierarchy == c(input$string.data.circ.order)] = input$selected.chord.transparacy
-      alpha_mat
+      # line type 
+      lty_mat = lwd_mat
+      lty_mat[lty_mat>0] <- 1
       
-      lty_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      lty_mat
-      lty_mat[hierarchy == c(input$string.data.circ.order)] = input$line.chord.type
+      
+      alpha_mat <- lwd_mat
+      alpha_mat[alpha_mat==0] <- input$unselected.chord.transparacy
+      alpha_mat[alpha_mat>1] <- input$selected.chord.transparacy
+      lwd_mat[lwd_mat==0] <- input$line.chord.type
       circos.clear()
       #par(new = TRUE) # <- magic
       circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
@@ -2222,7 +2251,7 @@ server  <- function(input, output, session) {
                    link.lty = lty_mat,
                    link.lwd = lwd_mat,
                    link.border = border_mat,
-                   transparency = alpha_mat[1:dim(alpha_mat)[1]],
+                   transparency = alpha_mat,
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       # we go back to the first track and customize sector labels
       circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -2249,21 +2278,34 @@ server  <- function(input, output, session) {
     }
     
     else if (input$circ_lab =="colour one clone (no label)") {
-      lwd_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      lwd_mat[hierarchy == c(input$string.data.circ.order)] = input$thickness.chord.line
+      lwd_mat = hierarchy
+      
+      # line thickness
+      lwd_mat[lwd_mat>0] <- 1
+      lwd_mat[lwd_mat==0] <- 0
+      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat>0] <- input$thickness.chord.line
+      lwd_mat[lwd_mat==1] <- 0
       lwd_mat
       
-      border_mat = matrix(NA, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      border_mat[hierarchy == c(input$string.data.circ.order)] = input$colour.chord.line
+      # boarder colour
+      border_mat <- lwd_mat
+      border_mat[border_mat==1] <- 0
+      border_mat[border_mat>0] <- input$colour.chord.line
+      
+      border_mat[border_mat==0] <- NA
+      
       border_mat
       
-      alpha_mat = matrix(input$unselected.chord.transparacy, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      alpha_mat[hierarchy == c(input$string.data.circ.order)] = input$selected.chord.transparacy
-      alpha_mat
+      # line type 
+      lty_mat = lwd_mat
+      lty_mat[lty_mat>0] <- 1
       
-      lty_mat = matrix(1, nrow = nrow(hierarchy), ncol = ncol(hierarchy))
-      lty_mat
-      lty_mat[hierarchy == c(input$string.data.circ.order)] = input$line.chord.type
+      
+      alpha_mat <- lwd_mat
+      alpha_mat[alpha_mat==0] <- input$unselected.chord.transparacy
+      alpha_mat[alpha_mat>1] <- input$selected.chord.transparacy
+      lwd_mat[lwd_mat==0] <- input$line.chord.type
+      
       circos.clear()
       #par(new = TRUE) # <- magic
       circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
@@ -2276,7 +2318,7 @@ server  <- function(input, output, session) {
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       # we go back to the first track and customize sector labels
       circos.track(track.index = 1, panel.fun = function(x, y) {
-        circos.par(track.margin=c(0,0)) 
+        circos.par(track.margin=c(0,0))
         xlim = get.cell.meta.data("xlim")
         sector.index = get.cell.meta.data("sector.index")
         #text direction (dd) and adjusmtents (aa)
@@ -2284,12 +2326,12 @@ server  <- function(input, output, session) {
         dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
         aa = c(1, 0.5)
         if(theta < 90 || theta > 270)  aa =c(0, 0.5)
-        
+
       }, bg.border = NA)
-      
-      
+
+
     }
-    
+
     else {
       
       circos.clear()
@@ -2297,16 +2339,12 @@ server  <- function(input, output, session) {
       circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
       chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
                    order = df.col.2$V1,
-                   transparency = input$chord.transparancy,
+                   
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       
     }
     
   }
-  
-  
-  
-  
   output$Circular <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {

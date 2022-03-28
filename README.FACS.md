@@ -1,3 +1,13 @@
+<script type="text/javascript">
+  // When the document is fully rendered...
+  $(document).ready(function() {
+    // ...select all header elements...
+    $('h1, h2, h3, h4, h5').each(function() {
+      // ...and add an id to them corresponding to their 'titles'
+      $(this).attr('id', $(this).html());
+    });
+  });
+</script>
 # single cell TCR data analysis
 
 Please contact: Nicole.Mifsud@monash.edu or Kerry.Mullan@monash.edu to report errors.
