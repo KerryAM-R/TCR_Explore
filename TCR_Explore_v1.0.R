@@ -2314,7 +2314,7 @@ server  <- function(input, output, session) {
                    link.lty = lty_mat,
                    link.lwd = lwd_mat,
                    link.border = border_mat,
-                   transparency = alpha_mat[1:dim(alpha_mat)[1]],
+                   transparency = alpha_mat,
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       # we go back to the first track and customize sector labels
       circos.track(track.index = 1, panel.fun = function(x, y) {
