@@ -282,7 +282,13 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            
                                            column(3,  numericInput("nrow.tree",label = h5("Rows"), value = 1))
                                          ),
-                                         selectInput("string.data.tree.order","Order of group in graph",choices = "",multiple = T, width = "1200px"),
+                                         
+                                         fluidRow(
+                                           column(6, selectInput("string.data.tree.order","Order of group in graph",choices = "",multiple = T, width = "600px")),
+                                           column(2, colourInput("strip.colour.tree","Strip colour",value = "lightgrey")),
+                                           column(2,  colourInput("strip.text.colour.tree","Text strip colour",value = "black")),
+                                           column(2, numericInput("panel.text.size.tree","Size of panel text", value = 20))
+                                         ),
                                          
                                          fluidRow( 
                                            column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","one colour"))),
@@ -312,26 +318,30 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          ),
                                 ),
                  # UI circular plot -----
-                                tabPanel("Chord diagram", 
+                                tabPanel("Chord diagram",
+                                         h5("If you see this error: 'not enough space for cells at track index '1'. 
+                                           Adjust Text size (cex)"),
+                                         p(" "),
                                          fluidRow(
                                            
                                            column(2,selectInput( "group_selected2",label = h5("Group"),"" )),
                                            column(2,selectInput( "chain1",label = h5("Chain one"),"" )),
                                            column(2,selectInput( "chain2",label = h5("Chain two"),"" )),
-                                           column(2,style = "margin-top: 15px;", numericInput("chord.transparancy","Transparancy",value = 0.5, min=0,max=0.9)),
+                                           column(2,style = "margin-top: 15px;", sliderInput("chord.transparancy","Transparancy",value = 0.5,step = 0.05, min=0,max=1)),
+                                           column(2,style = "margin-top: 15px;", numericInput("CHORD.cex","Text size (cex)",value = 1, min=0,step = 0.05)),
                                            # column(2,tableOutput("table_display")),
                                            
                                          ),
                                          fluidRow(
                                            column(2, selectInput("circ_lab",
                                                                  label = h5("Type of label"),
-                                                                 choices = c("Label","colour one clone (label)","colour one clone (no label)","no labels"))),
+                                                                 choices = c("Label","colour selected clone/s (label)","colour selected clone/s (no label)","no labels"))),
                                            column(2,selectInput( "colour_cir",label = h5("Colour"),choices = c("default","rainbow","random","one colour"))),  
                                            column(2,style = "margin-top: 15px;", numericInput("seed.numb.chord","Random colour generator",value = 123)),
                                          ),
                                          
                                          conditionalPanel(
-                                           condition = "input.circ_lab == 'colour one clone (label)' || input.circ_lab == 'colour one clone (no label)'",
+                                           condition = "input.circ_lab == 'colour selected clone/s (label)' || input.circ_lab == 'colour selected clone/s (no label)'",
                                            selectInput("string.data.circ.order","Chains to highlight",choices = "",multiple = T,width = "800"),
                                            
                                                           fluidRow(
@@ -366,11 +376,17 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                  # UI Pie ----
                                 tabPanel("Pie chart",
                                          fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this chain"),"")),
-                                                  column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","one colour"))),
-                                                  column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
-                                                  column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 3)),
+                                                  column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","one colour"), selected = "random")),
+                                                  column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "none")),
+                                                  column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 1)),
                                                   column(2,  numericInput("size.circ",label = h5("Size of legend text"), value = 6))
                                                   
+                                         ),
+                                         fluidRow(
+                                                column(6, selectInput("string.data.pie.order","Order of group in graph",choices = "",multiple = T, width = "600px")),
+                                                column(2, colourInput("strip.colour.pie","Strip colour",value = "lightgrey")),
+                                                column(2,  colourInput("strip.text.colour.pie","Text strip colour",value = "black")),
+                                                column(2, numericInput("panel.text.size.pie","Size of panel text", value = 20))
                                          ),
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
@@ -389,8 +405,6 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_pie','Download PNG'))
                                          ),
                                 ),
-                                
-                                
                               )),
                               tabPanel("Motif analysis",
                                        p("This section contains 4 tabs for motif analysis"),
@@ -461,9 +475,11 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   h5("Select amino acid column and CDR3 length"),
                                                   verbatimTextOutput("length"),
                                                   fluidRow(
-                                                    column(3,selectInput( "aa.or.nt2",label = h5("Amino acid CDR3 column"),"" )),
-                                                    column(3, numericInput("len","CDR3 amino acid length", value = 15)),                               
-                                                    column(3,selectInput( "group_selected_motif",label = h5("Group"),"" ))
+                                                    column(2,selectInput( "aa.or.nt2",label = h5("Amino acid CDR3 column"),"" )),
+                                                    column(2,style = "margin-top: 15px;",numericInput("len","CDR3 amino acid length", value = 15)),                               
+                                                    column(2,selectInput( "group_selected_motif",label = h5("Group 1 (Bottom)"),"" )),
+                                                    column(2,selectInput( "group_selected_motif2",label = h5("Group 2 (top)"),"" )),
+                                                    column(2, selectInput("comarpison.aa.motif",label = h5("Type of comparison"), choices= c("single.group1","compare two groups")))
                                                   ),
                                                   fluidRow(
                                                     column(6,div(DT::dataTableOutput("length.table"))),
@@ -541,14 +557,11 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif_align','Download PNG'))
                                                   )
                                          ),
-                                         
-                                         
                                        )
-                                       
-                                       
                               ),
-                              
-                              
+                 
+                 # diversity and chain usage -----
+
                               tabPanel("Diversity and chain usage",
                                        tabsetPanel(
                  # UI bar graphs ----- 
@@ -724,14 +737,14 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   # gini index is created from Lorentz Surface Calculation pone.0125373.s004.xlsx
                                                   
                                          )
-                 #####   
+                   
                                          
                                        )
                                        
                                        
                               ),
                               
-                              
+                 ##### Overlap ----          
                               tabPanel("Overlap",
                                        tabsetPanel(
                  # UI heatmap -----
@@ -1841,7 +1854,10 @@ server  <- function(input, output, session) {
         geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))
+        theme(strip.text = element_text(size = input$panel.text.size.tree, family = input$font_type))+
+        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
+        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
+        
       vals22$Treemap22
       
     }
@@ -1861,7 +1877,9 @@ server  <- function(input, output, session) {
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))
+        theme(strip.text = element_text(size = 20, family = input$font_type))+
+        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
+        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
       vals22$Treemap22
       
       
@@ -1881,7 +1899,9 @@ server  <- function(input, output, session) {
         geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))
+        theme(strip.text = element_text(size = 20, family = input$font_type))+
+        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
+        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
       vals22$Treemap22
       
     }
@@ -1898,7 +1918,9 @@ server  <- function(input, output, session) {
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))
+        theme(strip.text = element_text(size = 20, family = input$font_type))+
+        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
+        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
       vals22$Treemap22
       
     }
@@ -2188,12 +2210,12 @@ server  <- function(input, output, session) {
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     hierarchy <- as.matrix(table(hierarchy[,1], hierarchy[,2]))
  
-    par(mar = rep(0, 4), cex=0.8, family = input$font_type)
+    par(mar = rep(0, 4), cex=input$CHORD.cex, family = input$font_type)
     
     if (input$circ_lab=="Label") {
       circos.clear()
       #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
       chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
                    order = df.col.2$V1,
                    transparency = input$chord.transparancy,
@@ -2214,38 +2236,39 @@ server  <- function(input, output, session) {
       }, bg.border = NA)
       
     }
-    # 'colour one clone (label)' || 'colour one clone (no label)''
-    else if (input$circ_lab =="colour one clone (label)") {
-      lwd_mat = hierarchy
+    # 'colour selected clone/s (label)' || 'colour selected clone/s (no label)''
+    else if (input$circ_lab =="colour selected clone/s (label)") {
       
       # line thickness
-      lwd_mat[lwd_mat>0] <- 1
-      lwd_mat[lwd_mat==0] <- 0
-      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat>0] <- input$thickness.chord.line
-      lwd_mat[lwd_mat==1] <- 0
-      lwd_mat
-      
+      lwd_mat = hierarchy
+      lwd_mat[lwd_mat>0] <- "x"
+      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- input$thickness.chord.line
+      lwd_mat[!rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- 0
+      lwd_mat[lwd_mat==0] <- 1
+
+
       # boarder colour
-      border_mat <- lwd_mat
-      border_mat[border_mat==1] <- 0
-      border_mat[border_mat>0] <- input$colour.chord.line
-      
+      border_mat <- hierarchy
+      border_mat[border_mat>0] <- 1
+      border_mat[rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- input$colour.chord.line
+      border_mat[!rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- 0
       border_mat[border_mat==0] <- NA
-      
       border_mat
       
       # line type 
-      lty_mat = lwd_mat
-      lty_mat[lty_mat>0] <- 1
-      
-      
-      alpha_mat <- lwd_mat
-      alpha_mat[alpha_mat==0] <- input$unselected.chord.transparacy
-      alpha_mat[alpha_mat>1] <- input$selected.chord.transparacy
-      lwd_mat[lwd_mat==0] <- input$line.chord.type
+      lty_mat = hierarchy
+      lty_mat[lty_mat>0] <- input$line.chord.type
+
+      # transparancy 
+      alpha_mat <- hierarchy
+      alpha_mat[alpha_mat>0] <- 1
+      alpha_mat[rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$selected.chord.transparacy
+      alpha_mat[!rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$unselected.chord.transparacy
+      alpha_mat
+
       circos.clear()
       #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
       chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
                    order = df.col.2$V1,
                    link.lty = lty_mat,
@@ -2264,51 +2287,42 @@ server  <- function(input, output, session) {
         aa = c(1, 0.5)
         if(theta < 90 || theta > 270)  aa =c(0, 0.5)
         circos.text(x = mean(xlim), y = 0.1, labels = sector.index, facing = dd, adj = aa)
-        
-        
-        #circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
-        #            facing = "clockwise", niceFacing = TRUE, adj = c(0, 0))
-        
-        
       }, bg.border = NA)
-      
-      
-      
-      
     }
     
-    else if (input$circ_lab =="colour one clone (no label)") {
+    else if (input$circ_lab =="colour selected clone/s (no label)") {
       lwd_mat = hierarchy
       
       # line thickness
-      lwd_mat[lwd_mat>0] <- 1
-      lwd_mat[lwd_mat==0] <- 0
-      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat>0] <- input$thickness.chord.line
-      lwd_mat[lwd_mat==1] <- 0
-      lwd_mat
+      lwd_mat = hierarchy
+      lwd_mat[lwd_mat>0] <- "x"
+      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- input$thickness.chord.line
+      lwd_mat[!rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- 0
+      lwd_mat[lwd_mat==0] <- 1
+      
       
       # boarder colour
-      border_mat <- lwd_mat
-      border_mat[border_mat==1] <- 0
-      border_mat[border_mat>0] <- input$colour.chord.line
-      
+      border_mat <- hierarchy
+      border_mat[border_mat>0] <- 1
+      border_mat[rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- input$colour.chord.line
+      border_mat[!rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- 0
       border_mat[border_mat==0] <- NA
-      
       border_mat
       
       # line type 
-      lty_mat = lwd_mat
-      lty_mat[lty_mat>0] <- 1
+      lty_mat = hierarchy
+      lty_mat[lty_mat>0] <- input$line.chord.type
       
-      
-      alpha_mat <- lwd_mat
-      alpha_mat[alpha_mat==0] <- input$unselected.chord.transparacy
-      alpha_mat[alpha_mat>1] <- input$selected.chord.transparacy
-      lwd_mat[lwd_mat==0] <- input$line.chord.type
+      # transparancy 
+      alpha_mat <- hierarchy
+      alpha_mat[alpha_mat>0] <- 1
+      alpha_mat[rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$selected.chord.transparacy
+      alpha_mat[!rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$unselected.chord.transparacy
+      alpha_mat
       
       circos.clear()
       #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
       chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
                    order = df.col.2$V1,
                    link.lty = lty_mat,
@@ -2334,9 +2348,7 @@ server  <- function(input, output, session) {
 
     else {
       
-      circos.clear()
-      #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+
       chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
                    order = df.col.2$V1,
                    
@@ -3053,7 +3065,7 @@ server  <- function(input, output, session) {
     
     
   }
-  # motif -----
+  # motif amino acid-----
   observe({
     updateSelectInput(
       session,
@@ -3064,7 +3076,14 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group_selected_motif",
-      choices=select_group()) })
+      choices=select_group(),
+      selected = "CD8") })
+  observe({
+    updateSelectInput(
+      session,
+      "group_selected_motif2",
+      choices=select_group(),
+      selected = "IFN") })
   
   output$Motif <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
     df <- input.data2();
@@ -3140,13 +3159,77 @@ server  <- function(input, output, session) {
     motif
   })
   
+  
+  Motif_compare_aa_group1 <- reactive({
+    df <- input.data2();
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
+    
+    df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
+    df_subset <- subset(df_unique,df_unique$len1==input$len)
+    df_subset <- subset(df_subset,get(input$group_column)==input$group_selected_motif)
+    
+    motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt2,names(df_subset))], ""))))
+    motif_count <- aa.count.function(cbind(x=1,y=2,motif), input$len)
+    motif_count1_aa<-pcm2pfm(motif_count)
+    as.data.frame(motif_count1_aa)
+  })
+
+  
+  Motif_compare_aa_group2 <- reactive({
+    df <- input.data2();
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
+    
+    df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
+    df_subset <- subset(df_unique,df_unique$len1==input$len)
+    df_subset <- subset(df_subset,get(input$group_column)==input$group_selected_motif2)
+    
+    motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt2,names(df_subset))], ""))))
+    motif_count <- aa.count.function(cbind(x=1,y=2,motif), input$len)
+    motif_count2_aa<-pcm2pfm(motif_count)
+    as.data.frame(motif_count2_aa)
+  })
+  
+  output$Motif.aa.single.length <- renderPlot({
+    
+  
+  })
+  
   output$Motif_plot <- renderPlot( {
-    motif <- Motif_plot2()
-    withProgress(message = 'Figure is being generated...',
-                 detail = '', value = 0, {
-                   test_fun()
-                 })
-    plot(motif)
+    
+    if (input$comarpison.aa.motif == "single.group1") {
+      motif <- Motif_plot2()
+      withProgress(message = 'Figure is being generated...',
+                   detail = '', value = 0, {
+                     test_fun()
+                   })
+      plot(motif)
+      
+    }
+    
+    else {
+      motif_count1_aa <- Motif_compare_aa_group1()
+      motif_count2_aa <- Motif_compare_aa_group2()
+      diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
+                                         pwm2 = as.data.frame(motif_count2_aa), 
+                                         alphabet = ASN
+                                         
+                                         )
+      
+      diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
+
+    }
+    
+
   })
   
   output$downloadPlot_motif <- downloadHandler(
@@ -3156,7 +3239,28 @@ server  <- function(input, output, session) {
     },
     content = function(file) {
       pdf(file, width=input$width_motif,height=input$height_motif, onefile = FALSE) # open the pdf device
-      plot(Motif_plot2())
+      if (input$comarpison.aa.motif == "single.group1") {
+        motif <- Motif_plot2()
+        withProgress(message = 'Figure is being generated...',
+                     detail = '', value = 0, {
+                       test_fun()
+                     })
+        plot(motif)
+        
+      }
+      
+      else {
+        motif_count1_aa <- Motif_compare_aa_group1()
+        motif_count2_aa <- Motif_compare_aa_group2()
+        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
+                                           pwm2 = as.data.frame(motif_count2_aa), 
+                                           alphabet = ASN
+                                           
+        )
+        
+        diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
+        
+      }
       dev.off()}, contentType = "application/pdf" )
   
   output$downloadPlotPNG_motif <- downloadHandler(
@@ -3168,7 +3272,28 @@ server  <- function(input, output, session) {
       png(file, width = input$width_png_motif, 
           height = input$height_png_motif, 
           res = input$resolution_PNG_motif)
-      plot(Motif_plot2())
+      if (input$comarpison.aa.motif == "single.group1") {
+        motif <- Motif_plot2()
+        withProgress(message = 'Figure is being generated...',
+                     detail = '', value = 0, {
+                       test_fun()
+                     })
+        plot(motif)
+        
+      }
+      
+      else {
+        motif_count1_aa <- Motif_compare_aa_group1()
+        motif_count2_aa <- Motif_compare_aa_group2()
+        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
+                                           pwm2 = as.data.frame(motif_count2_aa), 
+                                           alphabet = ASN
+                                           
+        )
+        
+        diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
+        
+      }
       dev.off()},   contentType = "application/png" # MIME type of the image
   )
   
@@ -3317,9 +3442,7 @@ server  <- function(input, output, session) {
       selected = "IFN")
     
   })
-  
-  
-  
+
   chain_muscle <- reactive({
     df <- input.data2();
     
@@ -3588,9 +3711,17 @@ server  <- function(input, output, session) {
       session,
       "pie_chain",
       choices=names(input.data2()),
-      selected = "AV")
+      selected = "AVJ_aCDR3_BVJ_bCDR3")
     
   })
+  
+  observe({
+    updateSelectInput(
+      session,
+      "string.data.pie.order",
+      choices=select_group(),
+      selected = c("CD8","IFN")) 
+  }) 
   
   
   cols_pie <- reactive({
@@ -3661,6 +3792,8 @@ server  <- function(input, output, session) {
     df <- as.data.frame(ddply(dat,(c(input$group_column,input$pie_chain)),numcolwise(sum)))
     names(df) <- c("group","chain","cloneCount")
     
+    df$group <- factor(df[,names(df) %in% input$group_column],levels = input$string.data.pie.order)
+    
     palette <- cols
     a <- unique(df$chain)
     df$chain <- factor(df$chain,levels = a,labels=a)
@@ -3673,7 +3806,6 @@ server  <- function(input, output, session) {
       coord_polar("y", start=0) + 
       facet_wrap(~group,nrow = input$nrow.pie) +
       theme(
-        strip.text = element_text(size = 20, family = input$font_type),
         axis.text = element_blank(),
             axis.ticks = element_blank(),
             panel.grid  = element_blank(),
@@ -3682,7 +3814,11 @@ server  <- function(input, output, session) {
             legend.text = element_text(size = input$size.circ, family = input$font_type),
             legend.title = element_blank(),
             axis.title = element_blank()) +
-      guides(color = "none", size = "none")
+      guides(color = "none", size = "none")+
+      theme(strip.text = element_text(size = input$panel.text.size.pie, family = input$font_type))+
+      theme(panel.background = element_blank()) +
+      theme(strip.background =element_rect(fill=input$strip.colour.pie))+
+      theme(strip.text = element_text(colour = input$strip.text.colour.pie))
     vals9$pie
     
   }
