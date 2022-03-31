@@ -1,5 +1,5 @@
 runApp <- function(...) {
-## volcano plots
+## packages required ----
 require("tidyverse")
 require("ggplot2") #Best plots
 require("ggrepel") #Avoid overlapping labels
@@ -33,9 +33,8 @@ font_add_google("Press Start 2P", "Game")
 
 showtext_auto() 
 
-
 font <- as.data.frame(font_families())
-font
+
 names(font) <- "Fonts"
 test_fun <- function()
 {
@@ -109,6 +108,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             padding-bottom:30px !important;
                             height: 20px;
                             }'))),
+                 # read.me files
+                 
                  
                  tabPanel("TCR_Explore workflow",
                             
@@ -120,16 +121,17 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               tabPanel("Quality control",
                                        h3("Tutorial video of Quality control processes"),
                                        uiOutput("video"),
-                                       fluidRow(includeMarkdown("READMEQC.md")),
+                                       fluidRow(includeMarkdown(system.file("extdata","READMEQC.md",package = "TCR_Explore"))),
                                        
                                        # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                               ),     
                               tabPanel("TCR analysis Markdown",
-                                       includeMarkdown("README.scTCR.md")),
+                                       fluidRow(includeMarkdown(system.file("extdata","README.scTCR.md",package = "TCR_Explore"))),
+                              ),
                               
                               tabPanel("Paired index quality control and plot",
-                                       includeMarkdown("README.FACS.md")),
-                              
+                                       fluidRow(includeMarkdown(system.file("extdata","README.FACS.md",package = "TCR_Explore"))),
+                              ),
                               tabPanel("Session info", 
                                        tabPanel("Session info", 
                                                 div(style="width:700px",
@@ -966,8 +968,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                           )
                  )
 )
-##### 
 
+# Server -----
 server  <- function(input, output, session) {
   # reactive variables -----
   vals <- reactiveValues(Treemap=NULL)
@@ -994,7 +996,7 @@ server  <- function(input, output, session) {
   # IMGT only  -----
   input.data_IMGT.xls3 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls3(), "own_data" = own.data.IMGT3())})
   test.data_ab.xls3 <- reactive({
-    dataframe = read_excel("Raw_data/vquest-2.xls") 
+    dataframe = read_excel(system.file("extdata","Raw_data/vquest-2.xls",package ="TCR_Explore")) 
   })
   own.data.IMGT3 <- reactive({
     inFile_IMGT3 <- input$file_IMGT3
@@ -1009,7 +1011,7 @@ server  <- function(input, output, session) {
   })
   input.data_IMGT.xls4 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls4(), "own_data" = own.data.IMGT4())})
   test.data_ab.xls4 <- reactive({
-    dataframe = read_xls("Raw_data/vquest-2.xls",sheet = 2) 
+    dataframe = read_xls(system.file("extdata","Raw_data/vquest-2.xls",package ="TCR_Explore"),sheet = 2) 
   })
   
   own.data.IMGT4 <- reactive({
@@ -1212,7 +1214,7 @@ server  <- function(input, output, session) {
   # table of IMGT for pairing -----
   input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own1" = own.data.csv3())})
   test.data.ab.csv3 <- reactive({
-    dataframe = read.csv("test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",header=T) 
+    dataframe = read.csv(system.file("extdata","test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",package ="TCR_Explore"),header=T) 
   })
   own.data.csv3 <- reactive({
     inFile12 <- input$file_IMGT_afterQC
@@ -1489,8 +1491,6 @@ server  <- function(input, output, session) {
     TSV.file.chain()
   })
   
-  
-  
   output$chain_table_IMGT.QC1 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
     df1 <- input.data.IMGT_afterQC();
     df1 <- as.data.frame(df1)
@@ -1530,8 +1530,7 @@ server  <- function(input, output, session) {
       write.table(df, file, quote=FALSE, sep='\t', row.names = F)
       
     } )
-  
-  
+
   # summarised table -----
   output$names.in.file3 <- renderPrint( {
     df <- input.data2()
@@ -1640,7 +1639,23 @@ server  <- function(input, output, session) {
     }
     
       })
-  
+  # TCR analysis file inport -----
+  input.data2 <- reactive({switch(input$dataset,"test-data" = test.data2(),"own" = own.data2())})
+  test.data2 <- reactive({
+    dataframe = read.csv(system.file("extdata","test-data/Group/paired_unsummarised2021.09.22.csv",package = "TCR_Explore"),header=T) 
+  })
+  own.data2 <- reactive({
+    inFile2 <- input$file2 
+    if (is.null(inFile2)) return(NULL)
+    
+    else {
+      dataframe <- read.csv(
+        inFile2$datapath,
+        header=TRUE,
+        sep=input$sep,
+        quote=input$quote)}
+    
+  })
   # summary table download file -----
   output$downloadTABLE.QC3 <- downloadHandler(
     filename = function(){
@@ -1717,23 +1732,7 @@ server  <- function(input, output, session) {
   
   
   # Tree map ------
-  input.data2 <- reactive({switch(input$dataset,"test-data" = test.data2(),"own" = own.data2())})
-  test.data2 <- reactive({
-    dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
-  })
-  own.data2 <- reactive({
-    inFile2 <- input$file2 
-    if (is.null(inFile2)) return(NULL)
-    
-    else {
-      dataframe <- read.csv(
-        inFile2$datapath,
-        header=TRUE,
-        sep=input$sep,
-        quote=input$quote)}
-    
-  })
-  
+
   observe({
     updateSelectInput(
       session,
@@ -4382,7 +4381,8 @@ server  <- function(input, output, session) {
   # FACS index data -----
   input.data_FACS <- reactive({switch(input$dataset3,"test-FACS" = test.data_FACS(), "own_FACS" = own.data_FACS())})
   test.data_FACS <- reactive({
-    read.FCS("test-data/Index/Murine Lymph Node_INX_780 Fib index 2_001_018.fcs")
+    
+    read.FCS( system.file("extdata","test-data/Index/Murine Lymph Node_INX_780 Fib index 2_001_018.fcs",package = "TCR_Explore"))
   })
   own.data_FACS <- reactive({
     input$file_FACS
@@ -4437,7 +4437,7 @@ server  <- function(input, output, session) {
   })
   input.data.clone.file <- reactive({switch(input$data_clone.index, "gd.test.clone" = test.data.gd.index.csv2(),"own.clone.file" = own.data.clone.file.csv())})
   test.data.gd.index.csv2 <- reactive({
-    dataframe = read.csv("test-data/Index/DR4-780 TCR sequence data.csv",header=T) 
+    dataframe = read.csv( system.file("extdata","test-data/Index/DR4-780 TCR sequence data.csv",package = "TCR_Explore"),header=T) 
   })
   
   own.data.clone.file.csv <- reactive({
@@ -4494,7 +4494,9 @@ server  <- function(input, output, session) {
   # colouring columns -----
   input.data_CSV1 <-  reactive({switch(input$dataset7,"test-csv"=test.data_csv1(),"own_csv" = own.data_CSV1())})
   test.data_csv1 <- reactive({
-    dataframe = read.csv("test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",header = T, fileEncoding = "UTF-8")
+    
+   
+    dataframe = read.csv( system.file("extdata","test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",package = "TCR_Explore"),header = T, fileEncoding = "UTF-8")
   })
   own.data_CSV1 <- reactive({
     inFile_CSV1 <- input$file_FACS.csv1
@@ -4661,7 +4663,10 @@ server  <- function(input, output, session) {
   # creating the dot plot ----
   input.data_CSV2 <-  reactive({switch(input$dataset_index.2,"test-csv"=test.data_csv2(),"own_csv_file" = own.data_CSV2())})
   test.data_csv2<- reactive({
-    dataframe = read.csv("test-data/Index/colouring column2021.11.19.csv",header = T)
+    
+    
+    
+    dataframe = read.csv(system.file("extdata","test-data/Index/colouring column2021.11.19.csv",package = "TCR_Explore"),header = T)
   })
   own.data_CSV2 <- reactive({
     inFile_CSV2 <- input$file_FACS.csv2

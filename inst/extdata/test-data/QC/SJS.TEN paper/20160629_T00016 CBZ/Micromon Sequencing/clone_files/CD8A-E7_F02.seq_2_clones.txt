@@ -1,0 +1,2 @@
+CD8A-E7_F02.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+CD8A-E7_F02.seq_clones.txt	1.0	TRAV1-2*00		TRAJ33*00	TRAC*00	TGTGCTGTGAGAGATAGCAAATATCAGTTAATTTGG	CAVRDSKYQLIW	nvldgl	tsgfng

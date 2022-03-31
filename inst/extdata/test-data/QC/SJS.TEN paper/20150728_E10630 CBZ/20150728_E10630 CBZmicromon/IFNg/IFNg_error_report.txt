@@ -1,0 +1,12 @@
+alignment failed
+
+Lack of sequences
+IFNA-B9_F07.seq_clna_report.txt:Reads dropped due to the lack of a clone sequence, percent of total: 1 (100%)
+IFNA-D10_D08.seq_clna_report.txt:Reads dropped due to the lack of a clone sequence, percent of total: 1 (100%)
+IFNA-F9_A09.seq_clna_report.txt:Reads dropped due to the lack of a clone sequence, percent of total: 1 (100%)
+
+Out of frame
+IFNB	D7_C11.seq	1.0	TRBV20	1	TRBD1	TRBJ2	7	No_TRC	TGCAGTGCTCGGAGCCCCCGGAGCTCCTACGAGCAGTACTTC	CSARSPRSSYEQYF	snegska	dfqatt
+IFNB	E1_E11.seq	1.0	TRBV20	1	TRBD2	TRBJ2	7	No_TRC	TGCAGTGCTAGATCTCCCAGGAGCTCCTACGAGCAGTACTTC	CSARSPRSSYEQYF	snegska	dfqatt
+
+presence of stop codon

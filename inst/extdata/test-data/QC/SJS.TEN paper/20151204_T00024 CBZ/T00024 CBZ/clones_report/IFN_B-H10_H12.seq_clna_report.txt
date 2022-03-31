@@ -1,0 +1,22 @@
+Analysis date: Fri Jul 30 16:05:22 AEST 2021
+Input file(s): IFN_B-H10_H12.seq_alignments.vdjca
+Output file(s): IFN_B-H10_H12.seq_clones.clna
+Version: 3.0.12; built=Thu Nov 21 00:38:34 AEDT 2019; rev=cad6564; lib=repseqio.v1.6
+Command line arguments: assemble --write-alignments -r IFN_B-H10_H12.seq_clna_report.txt IFN_B-H10_H12.seq_alignments.vdjca IFN_B-H10_H12.seq_clones.clna -f
+Analysis time: 16.87s
+Final clonotype count: 0
+Average number of reads per clonotype: NaN
+Reads used in clonotypes, percent of total: 0 (0%)
+Reads used in clonotypes before clustering, percent of total: 0 (0%)
+Number of reads used as a core, percent of used: 0 (NaN%)
+Mapped low quality reads, percent of used: 0 (NaN%)
+Reads clustered in PCR error correction, percent of used: 0 (NaN%)
+Reads pre-clustered due to the similar VJC-lists, percent of used: 0 (NaN%)
+Reads dropped due to the lack of a clone sequence, percent of total: 1 (100%)
+Reads dropped due to low quality, percent of total: 0 (0%)
+Reads dropped due to failed mapping, percent of total: 0 (0%)
+Reads dropped with low quality clones, percent of total: 0 (0%)
+Clonotypes eliminated by PCR error correction: 0
+Clonotypes dropped as low quality: 0
+Clonotypes pre-clustered due to the similar VJC-lists: 0
+======================================

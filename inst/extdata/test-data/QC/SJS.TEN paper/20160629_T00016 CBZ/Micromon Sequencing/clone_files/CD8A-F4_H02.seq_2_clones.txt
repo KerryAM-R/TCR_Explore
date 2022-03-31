@@ -1,0 +1,2 @@
+CD8A-F4_H02.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+CD8A-F4_H02.seq_clones.txt	1.0	TRAV22*00		TRAJ40*00	TRAC*00	TGTGCTGTTCCTCAAGCCTCAGGAACCTACAAATACATCTTT	CAVPQASGTYKYIF	ipsgt	dsvnn

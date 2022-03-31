@@ -1,0 +1,2 @@
+IFN_A-G4_D09.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+IFN_A-G4_D09.seq_clones.txt	1.0	TRAV8-6*00		TRAJ22*00	TRAC*00	GCTGCTGTGACTATCAATGGTTGAGCAAGGCAACTGACCTTT	AAVTING*ARQLTF	ylsgstlv	ssvsvy

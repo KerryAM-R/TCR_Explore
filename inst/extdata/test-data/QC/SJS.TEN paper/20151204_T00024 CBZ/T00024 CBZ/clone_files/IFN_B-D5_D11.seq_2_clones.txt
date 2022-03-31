@@ -1,0 +1,2 @@
+IFN_B-D5_D11.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+IFN_B-D5_D11.seq_clones.txt	1.0	TRBV28*00	TRBD1*00	TRBJ1-2*00		TGTGCCTCAGGGGACAGTCCCTTTCCCCTTCAAGGCTACACCTTC	CASGDSPFPLQGYTF	sydvkm	mdhen

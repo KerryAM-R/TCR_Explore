@@ -1,0 +1,2 @@
+IFNB-D5_H10.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+IFNB-D5_H10.seq_clones.txt	1.0	TRBV24-1*00		TRBJ1-1*00		TGTGCCACCAGTGAAACGGACGTCCTGCGGCCTGAAGCTTTCTTT	CATSETDVLRPEAFF	sfdvkd	kghdr

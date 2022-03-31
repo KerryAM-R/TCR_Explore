@@ -1,0 +1,2 @@
+IFN_B-D2_B11.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+IFN_B-D2_B11.seq_clones.txt	1.0	TRBV30*00	TRBD1*00	TRBJ1-2*00		TGTGCCTGGCTAGGCGCGGGAAAGGTGGATGGCTACACCTTC	CAWLGAGKVDGYTF	svgig	gtsnpn

@@ -1,0 +1,2 @@
+cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
+1.0	TRBV20-1*00	TRBD2*00	TRBJ2-3*00		TGCAGTCCTACTAGCGGAACGCAGTATTTT	CSPTSGTQYF	snegska	dfqatt
