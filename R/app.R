@@ -91,7 +91,7 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 60, width = 102.8571,
+ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR.Explore", height = 60, width = 102.8571,
                                   
                                   style = "margin:-25px 10px"
                                   
@@ -121,16 +121,16 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               tabPanel("Quality control",
                                        h3("Tutorial video of Quality control processes"),
                                        uiOutput("video"),
-                                       fluidRow(includeMarkdown(system.file("extdata","READMEQC.md",package = "TCR_Explore"))),
+                                       fluidRow(includeMarkdown(system.file("extdata","READMEQC.md",package = "TCR.Explore"))),
                                        
                                        # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                               ),     
                               tabPanel("TCR analysis Markdown",
-                                       fluidRow(includeMarkdown(system.file("extdata","README.scTCR.md",package = "TCR_Explore"))),
+                                       fluidRow(includeMarkdown(system.file("extdata","README.scTCR.md",package = "TCR.Explore"))),
                               ),
                               
                               tabPanel("Paired index quality control and plot",
-                                       fluidRow(includeMarkdown(system.file("extdata","README.FACS.md",package = "TCR_Explore"))),
+                                       fluidRow(includeMarkdown(system.file("extdata","README.FACS.md",package = "TCR.Explore"))),
                               ),
                               tabPanel("Session info", 
                                        tabPanel("Session info", 
@@ -996,7 +996,7 @@ server  <- function(input, output, session) {
   # IMGT only  -----
   input.data_IMGT.xls3 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls3(), "own_data" = own.data.IMGT3())})
   test.data_ab.xls3 <- reactive({
-    dataframe = read_excel(system.file("extdata","Raw_data/vquest-2.xls",package ="TCR_Explore")) 
+    dataframe = read_excel(system.file("extdata","Raw_data/vquest-2.xls",package ="TCR.Explore")) 
   })
   own.data.IMGT3 <- reactive({
     inFile_IMGT3 <- input$file_IMGT3
@@ -1011,7 +1011,7 @@ server  <- function(input, output, session) {
   })
   input.data_IMGT.xls4 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls4(), "own_data" = own.data.IMGT4())})
   test.data_ab.xls4 <- reactive({
-    dataframe = read_xls(system.file("extdata","Raw_data/vquest-2.xls",package ="TCR_Explore"),sheet = 2) 
+    dataframe = read_xls(system.file("extdata","Raw_data/vquest-2.xls",package ="TCR.Explore"),sheet = 2) 
   })
   
   own.data.IMGT4 <- reactive({
@@ -1214,7 +1214,7 @@ server  <- function(input, output, session) {
   # table of IMGT for pairing -----
   input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own1" = own.data.csv3())})
   test.data.ab.csv3 <- reactive({
-    dataframe = read.csv(system.file("extdata","test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",package ="TCR_Explore"),header=T) 
+    dataframe = read.csv(system.file("extdata","test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",package ="TCR.Explore"),header=T) 
   })
   own.data.csv3 <- reactive({
     inFile12 <- input$file_IMGT_afterQC
@@ -1642,7 +1642,7 @@ server  <- function(input, output, session) {
   # TCR analysis file inport -----
   input.data2 <- reactive({switch(input$dataset,"test-data" = test.data2(),"own" = own.data2())})
   test.data2 <- reactive({
-    dataframe = read.csv(system.file("extdata","test-data/Group/paired_unsummarised2021.09.22.csv",package = "TCR_Explore"),header=T) 
+    dataframe = read.csv(system.file("extdata","test-data/Group/paired_unsummarised2021.09.22.csv",package = "TCR.Explore"),header=T) 
   })
   own.data2 <- reactive({
     inFile2 <- input$file2 
@@ -4382,7 +4382,7 @@ server  <- function(input, output, session) {
   input.data_FACS <- reactive({switch(input$dataset3,"test-FACS" = test.data_FACS(), "own_FACS" = own.data_FACS())})
   test.data_FACS <- reactive({
     
-    read.FCS( system.file("extdata","test-data/Index/Murine Lymph Node_INX_780 Fib index 2_001_018.fcs",package = "TCR_Explore"))
+    read.FCS( system.file("extdata","test-data/Index/Murine Lymph Node_INX_780 Fib index 2_001_018.fcs",package = "TCR.Explore"))
   })
   own.data_FACS <- reactive({
     input$file_FACS
@@ -4437,7 +4437,7 @@ server  <- function(input, output, session) {
   })
   input.data.clone.file <- reactive({switch(input$data_clone.index, "gd.test.clone" = test.data.gd.index.csv2(),"own.clone.file" = own.data.clone.file.csv())})
   test.data.gd.index.csv2 <- reactive({
-    dataframe = read.csv( system.file("extdata","test-data/Index/DR4-780 TCR sequence data.csv",package = "TCR_Explore"),header=T) 
+    dataframe = read.csv( system.file("extdata","test-data/Index/DR4-780 TCR sequence data.csv",package = "TCR.Explore"),header=T) 
   })
   
   own.data.clone.file.csv <- reactive({
@@ -4496,7 +4496,7 @@ server  <- function(input, output, session) {
   test.data_csv1 <- reactive({
     
    
-    dataframe = read.csv( system.file("extdata","test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",package = "TCR_Explore"),header = T, fileEncoding = "UTF-8")
+    dataframe = read.csv( system.file("extdata","test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",package = "TCR.Explore"),header = T, fileEncoding = "UTF-8")
   })
   own.data_CSV1 <- reactive({
     inFile_CSV1 <- input$file_FACS.csv1
@@ -4666,7 +4666,7 @@ server  <- function(input, output, session) {
     
     
     
-    dataframe = read.csv(system.file("extdata","test-data/Index/colouring column2021.11.19.csv",package = "TCR_Explore"),header = T)
+    dataframe = read.csv(system.file("extdata","test-data/Index/colouring column2021.11.19.csv",package = "TCR.Explore"),header = T)
   })
   own.data_CSV2 <- reactive({
     inFile_CSV2 <- input$file_FACS.csv2
