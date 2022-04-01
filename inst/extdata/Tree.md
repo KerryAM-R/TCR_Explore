@@ -1,32 +1,3 @@
-<script type="text/javascript">
-  // When the document is fully rendered...
-  $(document).ready(function() {
-    // ...select all header elements...
-    $('h1, h2, h3, h4, h5').each(function() {
-      // ...and add an id to them corresponding to their 'titles'
-      $(this).attr('id', $(this).html());
-    });
-  });
-</script>
-# TCR repertoire analysis
-
-<a href="#TCR analysis section">TCR analysis section</a><br>
-<a href="#Motif analysis section">Motif analysis section</a><br>
-<a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
-<a href="#Group overlap analysis">Group overlap analysis</a>
-
-## Side panel.
-Upload the file. This can be from our QC section or alternative sources. 
-The other features in the side panel are 
-- 'Type of group'
-  + This is used to change the comparison. We recommend either using "group","indiv" or "group.indiv". 
-- 'Type of data'
-  + This segregates out if the original file was 'raw' or 'summarized'
-- 'Type of font' 
-  + Specify the font for the figures. the R default fonts are serif, sans and mono. Additional fonts were found on https://fonts.google.com (email Kerry if there is a specific font you would like to use.)
-
-<img src="inst/extdata/Images/upload.TCR.analysis.png" width="300">
-<img src="inst/extdata/Images/side.panel.png" width="300">
 
 ## TCR analysis section
 <a href="#summary table">summary table</a><br>
@@ -41,6 +12,10 @@ The other features in the side panel are
 The user can specify the type of summary table to download. 
 
 They can either select their own columns (general summary) or downlaod as TCRdist3 .csv output.
+
+<img src=system.file("extdata","README.scTCR.md",package = "TCR.Explore") width="600">
+
+
 
 <img src="inst/extdata/Images/general.summary.png" width="600">
 

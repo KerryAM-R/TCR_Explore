@@ -7,6 +7,3 @@ The other features in the side panel are
   + This segregates out if the original file was 'raw' or 'summarized'
 - 'Type of font' 
   + Specify the font for the figures. the R default fonts are serif, sans and mono. Additional fonts were found on https://fonts.google.com (email Kerry if there is a specific font you would like to use.)
-
-<img src="inst/extdata/Images/upload.TCR.analysis.png" width="300">
-<img src="inst/extdata/Images/side.panel.png" width="300">

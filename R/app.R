@@ -128,13 +128,16 @@ tabPanel("TCR_Explore workflow",
                       tabPanel("TCR analysis Markdown",
                                tabsetPanel(
                                             tabPanel("SidePanel",
-                                                     fluidPage(
-                                                       column(3,imageOutput("upload.panel1")),
-                                                       column(3,imageOutput("upload.panel2"))
-                                                              ),
-                                              includeMarkdown(system.file("extdata","README.scTCR.md",package = "TCR.Explore"))),
+
+                                              includeMarkdown(system.file("extdata","README.scTCR.md",package = "TCR.Explore")),
+                                              fluidPage(
+                                                column(4,imageOutput("upload.panel1")),
+                                                column(4,imageOutput("upload.panel2"))
+                                                      ),
+                                              
+                                            ),
                                             tabPanel("Overview of TCR analysis",
-                                                     
+                                                     includeMarkdown(system.file("extdata","Tree.md",package = "TCR.Explore")),
                                                      ),
                                             tabPanel("Motif analysis"),
                                             tabPanel("Diverity and chain"),
@@ -1004,7 +1007,7 @@ server  <- function(input, output, session) {
     return(list(
       src = system.file("www","Images/upload.TCR.analysis.png",package = "TCR.Explore"),
       contentType = "image/png",
-      width = "300px",
+      width = "200px",
       alt = "Face"
     ))
   }, deleteFile = FALSE)
@@ -1013,7 +1016,7 @@ server  <- function(input, output, session) {
     return(list(
       src = system.file("www","Images/side.panel.png",package = "TCR.Explore"),
       contentType = "image/png",
-      width = "300px",
+      width = "200px",
       alt = "Face"
     ))
   }, deleteFile = FALSE)

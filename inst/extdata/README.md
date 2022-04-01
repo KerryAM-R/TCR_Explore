@@ -1,6 +1,4 @@
 
-imageOutput("Logo", height = "200px")
-
 ### TCR_Explore Shiny R application
 Please contact: Nicole.Mifsud@monash.edu or Kerry.Mullan@monash.edu to report errors.
 
