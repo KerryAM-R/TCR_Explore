@@ -91,7 +91,7 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 60, width = 102.8571,
+ui <- navbarPage(title = tags$img(src = system.file("www","Logo.png",package = "TCR.Explore"),window_title="TCR_Explore", height = 60, width = 102.8571,
                                   
                                   style = "margin:-25px 10px"
                                   
