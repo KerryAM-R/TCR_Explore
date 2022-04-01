@@ -1,2 +1,0 @@
-IFNA-H10_H09.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-IFNA-H10_H09.seq_clones.txt	1.0	TRAV1-1*00		TRAJ22*00	TRAC*00	TGCGCTGTGTTGGCCCCCGGTTCTGCAAGGCAACTGACCTTT	CAVLAPGSARQLTF	naldgl	tsgfyg

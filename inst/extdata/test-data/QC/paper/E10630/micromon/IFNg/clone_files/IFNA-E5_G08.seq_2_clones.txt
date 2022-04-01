@@ -1,2 +1,0 @@
-IFNA-E5_G08.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-IFNA-E5_G08.seq_clones.txt	1.0	TRAV1-2*00		TRAJ20*00	TRAC*00	TGTGCTGCCTTTGGGGACTACAAGCTCAGCTTT	CAAFGDYKLSF	nvldgl	tsgfng

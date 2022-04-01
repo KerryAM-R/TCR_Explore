@@ -1,2 +1,0 @@
-CD8B-G10_E06.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-CD8B-G10_E06.seq_clones.txt	1.0	TRBV9*00		TRBJ1-3*00		TGTGCCAGCAGCGTAGACGGGCGCTCTGGAAACACCATATATTTT	CASSVDGRSGNTIYF	yyngee	sgdls

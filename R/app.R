@@ -137,7 +137,9 @@ tabPanel("TCR_Explore workflow",
                                               
                                             ),
                                             tabPanel("Overview of TCR analysis",
+                                                     imageOutput("treemap.panel3"),
                                                      includeMarkdown(system.file("extdata","Tree.md",package = "TCR.Explore")),
+                                                     
                                                      ),
                                             tabPanel("Motif analysis"),
                                             tabPanel("Diverity and chain"),
@@ -1020,6 +1022,16 @@ server  <- function(input, output, session) {
       alt = "Face"
     ))
   }, deleteFile = FALSE)
+  
+  output$treemap.panel3 <- renderImage({
+    return(list(
+      src = system.file("www","Images/treemap.png",package = "TCR.Explore"),
+      contentType = "image/png",
+      width = "600px",
+      alt = "Face"
+    ))
+  }, deleteFile = FALSE)
+
   
   # reactive variables -----
   vals <- reactiveValues(Treemap=NULL)
