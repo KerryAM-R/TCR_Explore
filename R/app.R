@@ -137,9 +137,9 @@ tabPanel("TCR_Explore workflow",
                                               
                                             ),
                                             tabPanel("Overview of TCR analysis",
-                                                     imageOutput("treemap.panel3"),
-                                                     includeMarkdown(system.file("extdata","Tree.md",package = "TCR.Explore")),
                                                      
+                                                     includeMarkdown(system.file("extdata","Tree.md",package = "TCR.Explore")),
+                                                     imageOutput("treemap.panel3"),
                                                      ),
                                             tabPanel("Motif analysis"),
                                             tabPanel("Diverity and chain"),
@@ -1027,7 +1027,7 @@ server  <- function(input, output, session) {
     return(list(
       src = system.file("www","Images/treemap.png",package = "TCR.Explore"),
       contentType = "image/png",
-      width = "600px",
+      width = "800px",
       alt = "Face"
     ))
   }, deleteFile = FALSE)
