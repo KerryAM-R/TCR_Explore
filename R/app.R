@@ -92,7 +92,6 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
 ui <- navbarPage(span( "TCR_Explore", style = "background-color: white; color: Black"),
-
                   position = "static-top",collapsible = F, 
                   tags$head(
                     tags$style(HTML(' .navbar {
