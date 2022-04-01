@@ -91,7 +91,7 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 60, width = 102.8571,
+ui <- navbarPage(title = tags$img(src = system.file("extdata", "Images/Logo.png",package = "TCR.Explore" ),window_title="TCR_Explore", height = 60, width = 102.8571,
                                   
                                   style = "margin:-25px 10px"
                                   
@@ -113,6 +113,7 @@ tabPanel("TCR_Explore workflow",
          
          navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                       tabPanel("Overview",
+                               tags$img(src = system.file("extdata", "Logo.png",package = "TCR.Explore" )),
                                includeMarkdown(system.file("extdata","README.md",package = "TCR.Explore")),
                                # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                       ),     
@@ -224,52 +225,7 @@ navbarMenu("QC",
 ),
 
 
-# UI TCR plots ----
 
-tabPanel("TCR analysis",
-         
-         tags$style(HTML("
-    .tabbable > .nav > li > a                  {background-color: white;  color:black}
-    .tabbable > .nav > li[class=active]    > a {background-color: darkred; color:white}
-  ")),
-         
-         sidebarLayout(
-           sidebarPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
-                        # tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
-                        #textInput(inputId = "lab1", label = "Group label of file 1",value = "Ex.vivo"),
-                        tags$head(tags$style(HTML(".shiny-notification {position:fixed;top: 50%;left: 30%;right: 30%;}"))),
-                        tags$head(tags$style(HTML('.progress-bar {background-color: purple;}'))),
-                        selectInput("dataset", "Choose a dataset:", choices = c("test-data", "own")),
-                        fileInput('file2', 'Select file for single samples',
-                                  accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                        
-                        fluidRow(
-                          column(6,radioButtons('sep', 'Separator', c( Tab='\t', Comma=','), ',')),
-                          column(6,radioButtons('quote', 'Quote', c(None='', 'Double Quote'='"', 'Single Quote'="'"), '"'))
-                        ),
-                        
-                        colourInput("one.colour.default","One colour","grey"),
-                        selectInput("group_column",label = h4("Column of group"), ""),
-                        selectInput("type.tree",label = h4("Type of input"), choices =  c("raw data","Summarised data")),
-                        
-                        selectInput("font_type",label = h4("Type of font"),choices = font,selected = "serif"),
-                        downloadButton("table_length","Download summarised table with length"),
-                        conditionalPanel(
-                          condition = "input.stat == 'stacked'",
-                          h4("Stacked bar plot"),
-                          fluidRow(
-                            column(3,numericInput("bar.stack.angle","Angle of text",value = 90)),
-                            column(3,numericInput("hight.bar.stack.adj","Position of text",value = 0)),
-                            column(6,selectInput("lines.bar.graph","Display black lines?",
-                                                 choices = c("yes","no"),
-                                                 selected = "no"))
-                          ),
-                        ),
-                        tags$hr()
-           ),
-           
-           mainPanel(tabsetPanel(
-             tabPanel("Overview of TCR pairing",tabsetPanel(
                # UI Summary table -----
                tabPanel("Summary table",
                         # verbatimTextOutput("names.in.file3"),

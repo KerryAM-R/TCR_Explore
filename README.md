@@ -1,4 +1,5 @@
-<img src="inst/extdata/Logo.png" width="200">
+<a href="https://github.com/KerryAM-R/TCR_Explore/tree/main/inst/extdata/Logo.png"><img src="https://raw.githubusercontent.com/github.com/KerryAM-R/TCR_Explore/tree/main/inst/extdata/Logo.png" width="630" height="252"/></a>  
+
 
 ### TCR_Explore Shiny R application
 
