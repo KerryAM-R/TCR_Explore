@@ -1,5 +1,6 @@
 
 ## volcano plots
+library("rmarkdown")
 require("tidyverse")
 require("ggplot2") #Best plots
 require("ggrepel") #Avoid overlapping labels
@@ -114,7 +115,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             
                               navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                               tabPanel("Overview",
-                                      includeMarkdown("README.md"),
+                                      includeMarkdown("Untitled.Rmd"),
                                        # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                               ),     
                               tabPanel("Quality control",

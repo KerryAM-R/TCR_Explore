@@ -1,5 +1,5 @@
 
-<img src="https://github.com/KerryAM-R/ggVolcanoR/blob/main/IMAGES/20_proteins.png" width="200">
+<img src="inst/extdata/Logo.png" width="200">
 
 ### TCR_Explore Shiny R application
 

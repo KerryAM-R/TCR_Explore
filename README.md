@@ -1,5 +1,5 @@
-<a href="https://github.com/KerryAM-R/TCR_Explore/tree/main/inst/extdata/Logo.png"><img src="https://raw.githubusercontent.com/github.com/KerryAM-R/TCR_Explore/tree/main/inst/extdata/Logo.png" width="630" height="252"/></a>  
 
+<img src="www/Logo.png" width="200">
 
 ### TCR_Explore Shiny R application
 
@@ -20,5 +20,3 @@ Graphical sections:
 - FACS index data
     + This section contains combining the paired TCR data from the QC section with the index sort data (FAC file)
     + Please see Workflow -> FACS index QC and plots for details 
-
-
