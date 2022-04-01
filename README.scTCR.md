@@ -15,6 +15,8 @@
 <a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
 <a href="#Group overlap analysis">Group overlap analysis</a>
 
+
+
 ## Side panel.
 Upload the file. This can be from our QC section or alternative sources. 
 The other features in the side panel are 
@@ -25,6 +27,7 @@ The other features in the side panel are
 - 'Type of font' 
   + Specify the font for the figures. the R default fonts are serif, sans and mono. Additional fonts were found on https://fonts.google.com (email Kerry if there is a specific font you would like to use.)
 
+<img src="www/Logo.png" width="200">
 <img src="www/upload.TCR.analysis.png" width="300">
 <img src="www/side.panel.png" width="300">
 
