@@ -113,7 +113,7 @@ tabPanel("TCR_Explore workflow",
          
          navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                       tabPanel("Overview",
-                               includeMarkdown(system.file("extdata","README.md",package = "TCR.Explore")),
+                               includeMarkdown(system.file("extdata","README.Rmd",package = "TCR.Explore")),
                                # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                       ),     
                       tabPanel("Quality control",
