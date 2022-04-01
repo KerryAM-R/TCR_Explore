@@ -1,13 +1,7 @@
----
-title: "TCR_Explore Shiny R application"
-output: html_document
-runtime: shiny
----
 
-```{r TCR.Explore, echo=FALSE, fig.cap="A caption", out.width = '200px'}
-knitr::include_graphics(system.file("www","Logo.png", package = "TCR.Explore"))
-```
+imageOutput("Logo", height = "200px")
 
+### TCR_Explore Shiny R application
 Please contact: Nicole.Mifsud@monash.edu or Kerry.Mullan@monash.edu to report errors.
 
 TCR_explore was designed to aid in the processing and analysis of TCR repertoire for both alpha beta and gamma-delta chains

@@ -91,50 +91,63 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = system.file("www","Logo.png",package = "TCR.Explore"),window_title="TCR_Explore", height = 60, width = 102.8571,
-                                  
-                                  style = "margin:-25px 10px"
-                                  
-),
+ui <- navbarPage(span( "TCR_Explore", style = "background-color: white; color: Black"),
 
-position = "static-top",collapsible = F, 
-tags$head(
-  tags$style(HTML(' .navbar {
-                          height: 80px;
-                          min-height:80px !important;
-                        }
-                      .navbar-nav > li > a, .navbar-brand {
-                            padding-top:30px !important;
-                            padding-bottom:30px !important;
-                            height: 20px;
-                            }'))),
+                  position = "static-top",collapsible = F, 
+                  tags$head(
+                    tags$style(HTML(' .navbar {
+                                            height: 80px;
+                                            min-height:80px !important;
+                                          }
+                                        .navbar-nav > li > a, .navbar-brand {
+                                              padding-top:30px !important;
+                                              padding-bottom:30px !important;
+                                              height: 20px;
+                                              }'))),
 
 tabPanel("TCR_Explore workflow",
          
          navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                       tabPanel("Overview",
-                               includeMarkdown(system.file("extdata","README.Rmd",package = "TCR.Explore")),
+                               imageOutput("Logo", height = "200px"),
+                               includeMarkdown(system.file("extdata","README.md",package = "TCR.Explore"))
+                               # includeMarkdown(system.file("extdata","README.Rmd",package = "TCR.Explore")),
                                # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
-                      ),     
+                      ), 
+                      # readme pages -----
                       tabPanel("Quality control",
                                h3("Tutorial video of Quality control processes"),
                                uiOutput("video"),
                                
+
                               
                                fluidRow(includeMarkdown(system.file("extdata","READMEQC.md",package = "TCR.Explore"))),
                                
                                # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                       ),     
                       tabPanel("TCR analysis Markdown",
+                               tabsetPanel(
+                                            tabPanel("SidePanel",
+                                                     fluidPage(
+                                                       column(3,imageOutput("upload.panel1")),
+                                                       column(3,imageOutput("upload.panel2"))
+                                                              ),
+                                              includeMarkdown(system.file("extdata","README.scTCR.md",package = "TCR.Explore"))),
+                                            tabPanel("Overview of TCR analysis",
+                                                     
+                                                     ),
+                                            tabPanel("Motif analysis"),
+                                            tabPanel("Diverity and chain"),
+                                            tabPanel("Overlap")
+                                            ),
                                
+                               ),
+                                
                                
-                               
-                               includeMarkdown(system.file("extdata","README.scTCR.md",package = "TCR.Explore"))),
                       
                       tabPanel("Paired index quality control and plot",
                                
-                               
-                               
+
                                includeMarkdown(system.file("extdata","README.FACS.md",package = "TCR.Explore"))),
                       
                       tabPanel("Session info", 
@@ -224,7 +237,7 @@ navbarMenu("QC",
 ),
 
 
-# UI TCR plots ----
+              # UI TCR plots ----
 
 tabPanel("TCR analysis",
          
@@ -835,7 +848,7 @@ tabPanel("Paired TCR with Index data",
                                          fileInput('file_FACS', 'Raw index FACS file',
                                                    accept=c('FACS files', '.fcs')),
                                          
-                                         selectInput("data_clone.index", "Unsummarised clone file:", choices = c("gd.test.clone" ,"own.clone.file")),
+                                         selectInput("data_clone.index", "Unsummarised clone file:", choices = c("ab.raw.780" ,"own.clone.file")),
                                          fileInput('file_diversity.index.2', 'Upload unsummarised clone file',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          textInput("name.colour2","Prefix of file name","ID.780_plate1.section1."),
@@ -976,6 +989,35 @@ tabPanel("Paired TCR with Index data",
 
 # Server -----
 server  <- function(input, output, session) {
+  # images -----
+  output$Logo <- renderImage({
+    return(list(
+      src = system.file("www","Logo.png",package = "TCR.Explore"),
+      contentType = "image/png",
+      height = "200px",
+      alt = "Face"
+    ))
+  }, deleteFile = FALSE)
+  
+  
+  output$upload.panel1 <- renderImage({
+    return(list(
+      src = system.file("www","Images/upload.TCR.analysis.png",package = "TCR.Explore"),
+      contentType = "image/png",
+      width = "300px",
+      alt = "Face"
+    ))
+  }, deleteFile = FALSE)
+  
+  output$upload.panel2 <- renderImage({
+    return(list(
+      src = system.file("www","Images/side.panel.png",package = "TCR.Explore"),
+      contentType = "image/png",
+      width = "300px",
+      alt = "Face"
+    ))
+  }, deleteFile = FALSE)
+  
   # reactive variables -----
   vals <- reactiveValues(Treemap=NULL)
   vals2 <- reactiveValues(Treemap2=NULL)
@@ -4431,7 +4473,7 @@ server  <- function(input, output, session) {
     req(samp)
     samp_index <- getIndexSort(samp)
     head(samp_index)
-    replace_ID <- read.csv("test-data/Index/Loc_to_ID.csv")
+    replace_ID <- read.csv(system.file("extdata","Loc_to_ID.csv",package = "TCR.Explore"))
     head(replace_ID)
     index_updated_ID <- merge(samp_index,replace_ID,by=c("XLoc","YLoc"))
     index_updated_ID
@@ -4440,7 +4482,7 @@ server  <- function(input, output, session) {
   output$merged.clone <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
     merged.index()
   })
-  input.data.clone.file <- reactive({switch(input$data_clone.index, "gd.test.clone" = test.data.gd.index.csv2(),"own.clone.file" = own.data.clone.file.csv())})
+  input.data.clone.file <- reactive({switch(input$data_clone.index, "ab.raw.780" = test.data.gd.index.csv2(),"own.clone.file" = own.data.clone.file.csv())})
   test.data.gd.index.csv2 <- reactive({
     dataframe = read.csv( system.file("extdata","test-data/Index/DR4-780 TCR sequence data.csv",package = "TCR.Explore"),header=T) 
   })
@@ -5140,3 +5182,5 @@ server  <- function(input, output, session) {
 
 shinyApp(ui, server)
 }
+
+
