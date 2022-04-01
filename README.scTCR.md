@@ -25,8 +25,8 @@ The other features in the side panel are
 - 'Type of font' 
   + Specify the font for the figures. the R default fonts are serif, sans and mono. Additional fonts were found on https://fonts.google.com (email Kerry if there is a specific font you would like to use.)
 
-<img src="www/Images/upload.TCR.analysis.png" width="300">
-<img src="www/Images/side.panel.png" width="300">
+<img src="www/upload.TCR.analysis.png" width="300">
+<img src="www/side.panel.png" width="300">
 
 ## TCR analysis section
 <a href="#summary table">summary table</a><br>
@@ -42,13 +42,13 @@ The user can specify the type of summary table to download.
 
 They can either select their own columns (general summary) or downlaod as TCRdist3 .csv output.
 
-<img src="www/Images/general.summary.png" width="600">
+<img src="www/general.summary.png" width="600">
 
 For the TCRdist3, there is a need to use our QC process as it matches the IMGT column names. 
 
 There is also a need to select if the input data is either alpha-beta (ab) or gamma-delta (gd) for the TCRdist3 column selection.
 
-<img src="www/Images/TCRdist3.summary.png" width="600">
+<img src="www/TCRdist3.summary.png" width="600">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -62,7 +62,7 @@ The user can specify:
 - Column to colour as well as column to separate the panel
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/Images/treemap.png" width="800">
+<img src="www/treemap.png" width="800">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -79,7 +79,7 @@ There are several features the user can specify:
 - Legend is not displayed for any of the graphs
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/Images/chord.png" width="800">
+<img src="www/chord.png" width="800">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -93,7 +93,7 @@ There are several features the user can specify:
 - Colour choices: default, random or one colour (specified in side panel) 
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/Images/pie.png" width="800">
+<img src="www/pie.png" width="800">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -117,7 +117,7 @@ The user can specify:
 - The user can also download the summarised table with the lengths or colours that were used 
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/Images/Length.colour.png" width="800">
+<img src="www/Length.colour.png" width="800">
 
 <a href="#Motif analysis section">Motif analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
