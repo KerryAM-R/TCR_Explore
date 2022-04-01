@@ -1,2 +1,0 @@
-cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-1.0	TRAV30*00		TRAJ20*00	TRAC*00	TGTGGCACAGAGATCAACGACTACAAGCTCAGCTTT	CGTEINDYKLSF	llkggeq	kalys

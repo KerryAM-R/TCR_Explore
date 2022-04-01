@@ -1,5 +1,6 @@
 
 ## TCR analysis section
+<a href="#Side panel">Side panel</a><br>
 <a href="#summary table">summary table</a><br>
 <a href="#Treemap">Treemap</a><br>
 <a href="#Chord diargram">Chord diargram</a><br>
@@ -12,8 +13,6 @@
 The user can specify the type of summary table to download. 
 
 They can either select their own columns (general summary) or downlaod as TCRdist3 .csv output.
-
-<img src=system.file("extdata","README.scTCR.md",package = "TCR.Explore") width="600">
 
 
 
