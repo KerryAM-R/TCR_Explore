@@ -3518,24 +3518,11 @@ server  <- function(input, output, session) {
     df_unique <- df_unique[1:3]
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% "chain"])
     x <- AAStringSet(df_unique$chain)
-    
-    if (dim(df_unique)[1] < 501) {
-      aln <- muscle(x)
-      df1 <- as.data.frame(aln@unmasked)
-      df_unique$chain1 <- df1$x
-      df_unique
-      
-    }
-    else {
-      x <- as.data.frame(c(">500 sequences",
-                          "Online tool cannot align >500 sequences",
-                          "Use local application as more sequences"
-                           ))
-      names(x) <- "error message"
-      x
-    } 
-    
-    
+    aln <- muscle(x)
+    df1 <- as.data.frame(aln@unmasked)
+    df_unique$chain1 <- df1$x
+    df_unique
+  
   })
   
   output$Motif_align <- DT::renderDataTable( {
