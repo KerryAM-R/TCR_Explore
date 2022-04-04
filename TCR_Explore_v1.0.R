@@ -1718,7 +1718,8 @@ server  <- function(input, output, session) {
   # Tree map ------
   input.data2 <- reactive({switch(input$dataset,"test-data" = test.data2(),"own" = own.data2())})
   test.data2 <- reactive({
-    dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
+    # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
+    dataframe = read.csv("inst/extdata/test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
   })
   own.data2 <- reactive({
     inFile2 <- input$file2 
@@ -4028,7 +4029,7 @@ server  <- function(input, output, session) {
       session,
       "group_column_simp2",
       choices=names(input.data2()),
-      selected = "AJ_aCDR3_BJ_bCDR3")
+      selected = "AVJ_aCDR3_BVJ_bCDR3")
     
   })
   
