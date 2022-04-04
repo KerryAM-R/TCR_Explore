@@ -1,2 +1,0 @@
-CD8A-F6_A03.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-CD8A-F6_A03.seq_clones.txt	1.0	TRAV9-2*00		TRAJ45*00	TRAC*00	TGTGCTCTGAGTCTATAGGAAGGAGGTGCTGACGGACTCACCTTT	CALSL*EGGADGLTF	atkaddk	atgyps

@@ -1,2 +1,0 @@
-IFNA-G7_E09.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-IFNA-G7_E09.seq_clones.txt	1.0	TRAV1-1*00		TRAJ32*00	TRAC*00	TGCGCTCCCCCATCCCCGCGAGGTGCTACAAACAAGCTCATCTTT	CAPPSPRGATNKLIF	naldgl	tsgfyg

@@ -1,2 +1,0 @@
-IFNB-E1_E11.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-IFNB-E1_E11.seq_clones.txt	1.0	TRBV20-1*00	TRBD2*00	TRBJ2-7*00		TGCAGTGCTAGATCTCCCAGGAGCTCCTACGAGCAGTACTTC	CSARSPRSSYEQYF	snegska	dfqatt

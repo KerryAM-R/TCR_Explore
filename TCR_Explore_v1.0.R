@@ -1505,8 +1505,6 @@ server  <- function(input, output, session) {
       df <- chain_merge_IMGTonly()
       df <- as.data.frame(df)
       df
-      # df2 <- as.data.frame(ddply(df,names(df)[2:14],numcolwise(sum)))
-      # df2
       
     }
   })
