@@ -7,7 +7,7 @@ TCR_Explore was designed as an open-access web server that analyses and visualis
 
 There are three main sections:
 - Quality control (QC) processes
- + Uses output files generated from IMGT
+ + Uses output files generated from IMGT^1
  + Workflow → QC tab
  + Creates a universal input file for TCR repertoire data analysis
  + Tutorial video available
@@ -29,3 +29,6 @@ Please contact: Kerry.Mullan@monash.edu or Nicole.Mifsud@monash.edu to report er
 Biomedicine Discovery Institute and Department of Biochemistry and Molecular Biology, Monash University, Melbourne, VIC 3800, Australia
 
 <img src="www/Monash-BDI-logo-2016-1.png" width="600">
+
+##### References:
+1.	Lefranc MP, Giudicelli V, Duroux P, Jabado-Michaloud J, Folch G, Aouinti S, et al. IMGT(R), the international ImMunoGeneTics information system(R) 25 years on. Nucleic Acids Res. 2015;43(Database issue):D413-22.
