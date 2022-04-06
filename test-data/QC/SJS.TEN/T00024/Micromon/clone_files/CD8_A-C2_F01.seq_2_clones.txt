@@ -1,2 +1,0 @@
-CD8_A-C2_F01.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-CD8_A-C2_F01.seq_clones.txt	1.0	TRAV14DV4*00		TRAJ42*00	TRAC*00	TGTGCAATGAGAGAGGGCGGAGGAAGCCAAGGAAATCTCATCTTT	CAMREGGGSQGNLIF	qgsydeqn	tsdqsyg

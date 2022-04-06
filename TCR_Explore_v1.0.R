@@ -93,9 +93,9 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 60, width = 102.8571,
+ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 90, width = 154.2857,
                                   
-                                  style = "margin:-25px 10px"
+                                  style = "margin:-35px 10px"
                                   
                                   ),
                  
@@ -111,24 +111,23 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             height: 20px;
                             }'))),
                  
-                 tabPanel("TCR_Explore workflow",
-                            
+                 tabPanel("Tutorials",
                               navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                               tabPanel("Overview",
                                       includeMarkdown("README.md"),
                                        # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                               ),     
-                              tabPanel("Quality control",
+                              tabPanel("Quality control information (includes video tutorial)",
                                        h3("Tutorial video of Quality control processes"),
                                        uiOutput("video"),
                                        fluidRow(includeMarkdown("READMEQC.md")),
                                        
                                        # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                               ),     
-                              tabPanel("TCR analysis Markdown",
+                              tabPanel("TCR analysis information",
                                        includeMarkdown("README.scTCR.md")),
                               
-                              tabPanel("Paired index quality control and plot",
+                              tabPanel("Paired TCR with Index data information",
                                        includeMarkdown("README.FACS.md")),
                               
                               tabPanel("Session info", 
@@ -169,7 +168,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     
                                                     conditionalPanel(condition="input.QC_panel==2 || input.QC_panel==3",
                                                     
-                                                    selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own1")),
+                                                    selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own_data1")),
                                                     
                                                     fileInput('file_IMGT_afterQC', 'Chromatogram checked file (.csv)',
                                                               accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
@@ -233,7 +232,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          #textInput(inputId = "lab1", label = "Group label of file 1",value = "Ex.vivo"),
                                          tags$head(tags$style(HTML(".shiny-notification {position:fixed;top: 50%;left: 30%;right: 30%;}"))),
                                          tags$head(tags$style(HTML('.progress-bar {background-color: purple;}'))),
-                                         selectInput("dataset", "Choose a dataset:", choices = c("test-data", "own")),
+                                         selectInput("dataset", "Choose a dataset:", choices = c("ab-test-data2", "own_data2")),
                                          fileInput('file2', 'Select file for single samples',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          
@@ -1026,13 +1025,19 @@ server  <- function(input, output, session) {
   })
   IMGT2 <- reactive({
     df1 <- input.data_IMGT.xls3();
-    df2 <- input.data_IMGT.xls4();
+    
+    validate(
+      need(nrow(df1)>0,
+           "Upload file")
+    )
     
     
     
     
     
     if (input$include.origin == "no" && input$sheet == "Summary+JUNCTION") {
+      df2 <- input.data_IMGT.xls4();
+      
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","JUNCTION (with frameshift)","CDR3-IMGT (with frameshift)","Sequence")]
       df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","V-REGION")]
       
@@ -1062,6 +1067,7 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
       
@@ -1073,6 +1079,8 @@ server  <- function(input, output, session) {
       
     }
     else if (input$include.origin == "yes" && input$sheet == "Summary+JUNCTION") {
+      
+      df2 <- input.data_IMGT.xls4();
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","JUNCTION (with frameshift)","CDR3-IMGT (with frameshift)","Sequence")]
       
       df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","3'V-REGION","P3'V","N-REGION","N1-REGION","P5'D","D-REGION", "P3'D","P5'D1","D1-REGION","P3'D1", "N2-REGION","P5'D2",    "D2-REGION","P3'D2",    "N3-REGION", "P5'D3","D3-REGION","P3'D3",    "N4-REGION","P5'J","5'J-REGION")]
@@ -1102,6 +1110,7 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
@@ -1141,6 +1150,7 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
@@ -1182,6 +1192,7 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
@@ -1211,7 +1222,7 @@ server  <- function(input, output, session) {
   
   
   # table of IMGT for pairing -----
-  input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own1" = own.data.csv3())})
+  input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own_data1" = own.data.csv3())})
   test.data.ab.csv3 <- reactive({
     dataframe = read.csv("test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",header=T) 
   })
@@ -1227,6 +1238,12 @@ server  <- function(input, output, session) {
   
   chain_merge_IMGTonly <- reactive({
     df1 <- input.data.IMGT_afterQC();
+    
+    validate(
+      need(nrow(df1)>0,
+           "Upload file")
+    )
+    
     df1 <- as.data.frame(df1)
     df <- subset(df1,df1$clone_quality=="pass")
     df <- as.data.frame(df)
@@ -1241,23 +1258,15 @@ server  <- function(input, output, session) {
     if (input$IMGT_chain2 =="ab" & input$sheet2 == "Summary+JUNCTION") {
       
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      head(df_name2)
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-      df_name3$V1 <- gsub("A","",df_name3$V1)
-      df_name3$V1 <- gsub("B","",df_name3$V1)
-      
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
       df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-      head(df_name5)
-      df2$ID <- df_name2$V1
       
+      df2$ID <- df_name2$V1
+      head(df2)
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name4$V2
-      names(df2)
-      
-      dim(df)
+      df2$clone <- df_name3$V2
       
       chain1 <- df2[grep("A",df2$V.GENE),]
       chain2 <- df2[grep("B",df2$V.GENE),]
@@ -1308,23 +1317,15 @@ server  <- function(input, output, session) {
     else if (input$IMGT_chain2 =="ab" & input$sheet2 == "Summary") {
       
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      head(df_name2)
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-      df_name3$V1 <- gsub("A","",df_name3$V1)
-      df_name3$V1 <- gsub("B","",df_name3$V1)
-      
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
       df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-      head(df_name5)
-      df2$ID <- df_name2$V1
       
+      df2$ID <- df_name2$V1
+      head(df2)
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name4$V2
-      names(df2)
-      
-      dim(df)
+      df2$clone <- df_name3$V2
       
       chain1 <- df2[grep("A",df2$V.GENE),]
       chain2 <- df2[grep("B",df2$V.GENE),]
@@ -1373,20 +1374,15 @@ server  <- function(input, output, session) {
     
     else if (input$IMGT_chain2 =="gd" & input$sheet2 == "Summary+JUNCTION") {
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      head(df_name2)
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-      df_name3$V1 <- gsub("G","",df_name3$V1)
-      df_name3$V1 <- gsub("D","",df_name3$V1)
-      
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
       df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-      head(df_name5)
-      df2$ID <- df_name2$V1
       
+      df2$ID <- df_name2$V1
+      head(df2)
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name4$V2
+      df2$clone <- df_name3$V2
       
       chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
       chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
@@ -1417,20 +1413,15 @@ server  <- function(input, output, session) {
     
     else  {
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      head(df_name2)
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
-      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
-      df_name3$V1 <- gsub("G","",df_name3$V1)
-      df_name3$V1 <- gsub("D","",df_name3$V1)
-      
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
       df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
-      head(df_name5)
-      df2$ID <- df_name2$V1
       
+      df2$ID <- df_name2$V1
+      head(df2)
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name4$V2
+      df2$clone <- df_name3$V2
       
       chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
       chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
@@ -1716,7 +1707,7 @@ server  <- function(input, output, session) {
   
   
   # Tree map ------
-  input.data2 <- reactive({switch(input$dataset,"test-data" = test.data2(),"own" = own.data2())})
+  input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2(),"own_data2" = own.data2())})
   test.data2 <- reactive({
     # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
     dataframe = read.csv("inst/extdata/test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 

@@ -1,2 +1,0 @@
-CD8_B-D6_C05.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-CD8_B-D6_C05.seq_clones.txt	1.0	TRBV5-7*00	TRBD1*00	TRBJ2-1*00		TGTGCCAGCAGCCCGGGACAGACCTCCGATGAGCAGTTCTTC	CASSPGQTSDEQFF	yyekee	sghts
