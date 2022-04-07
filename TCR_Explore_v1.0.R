@@ -136,7 +136,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          tabPanel("Overview of Pairing",
                                                   uiOutput("video2"),
                                          ),
-                                         tabPanel("Motif analysius",
+                                         tabPanel("Motif analysis",
                                                   uiOutput("video3"),
                                          ),
 
