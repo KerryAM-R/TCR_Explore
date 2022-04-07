@@ -132,7 +132,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               
                               tabPanel("Session info", 
                                        tabPanel("Session info", 
-                                                div(style="width:700px",
+                                                div(style="width:800px",
                                                 verbatimTextOutput("sessionInfo")))
                               )
                        )

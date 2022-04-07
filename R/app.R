@@ -4544,7 +4544,7 @@ server  <- function(input, output, session) {
   test.data_csv1 <- reactive({
     
    
-    dataframe = read.csv( system.file("extdata","test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",package = "TCR.Explore"),header = T, fileEncoding = "UTF-8")
+    dataframe = read.csv( system.file("extdata","test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",package = "TCR.Explore"),header = T)
   })
   own.data_CSV1 <- reactive({
     inFile_CSV1 <- input$file_FACS.csv1
