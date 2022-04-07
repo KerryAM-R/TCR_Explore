@@ -98,18 +98,6 @@ There is also a need to select if the input data is either alpha-beta (ab) or ga
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
-#### Video example
-<iframe
-    width="640"
-    height="480"
-    src="https://www.youtube.com/embed/UmX4kyB2wfg"
-    frameborder="0"
-    allow="autoplay; encrypted-media"
-    allowfullscreen
->
-</iframe>
-
-
 ### Motif analysis section
 
 <a href="#CDR3 length distribution">CDR3 length distribution</a><br>
