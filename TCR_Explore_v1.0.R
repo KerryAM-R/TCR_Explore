@@ -1011,27 +1011,27 @@ server  <- function(input, output, session) {
   })
   
   output$video <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 800, height = 533.3333)
+    tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 1000, height = 666.6666)
   })
   
   output$video2 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/bxC-OYBTFig", width = 800, height = 533.3333)
+    tags$iframe(src = "https://www.youtube.com/embed/bxC-OYBTFig",  width = 1000, height = 666.6666)
   })
 
   output$video3 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/nxq_SX6Rt9o", width = 800, height = 533.3333)
+    tags$iframe(src = "https://www.youtube.com/embed/nxq_SX6Rt9o", width = 1000, height = 666.6666)
   })
 
   output$video4 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/Y3HjPZzHnSc", width = 800, height = 533.3333)
+    tags$iframe(src = "https://www.youtube.com/embed/Y3HjPZzHnSc",  width = 1000, height = 666.6666)
   })
 
   output$video5 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/NY35nCEx_oY", width = 800, height = 533.3333)
+    tags$iframe(src = "https://www.youtube.com/embed/NY35nCEx_oY",  width = 1000, height = 666.6666)
   })
 
   output$video6 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/juZrSQDDhQA", width = 800, height = 533.3333)
+    tags$iframe(src = "https://www.youtube.com/embed/juZrSQDDhQA",  width = 1000, height = 666.6666)
   })
   
   # IMGT only  -----
