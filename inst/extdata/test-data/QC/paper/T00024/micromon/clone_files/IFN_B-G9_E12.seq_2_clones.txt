@@ -1,2 +1,0 @@
-IFN_B-G9_E12.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-IFN_B-G9_E12.seq_clones.txt	1.0	TRBV29-1*00	TRBD2*00	TRBJ2-7*00		TGCAGCGTCCTCCGAGCCTCCGAGCAGTACTTC	CSVLRASEQYF	anqgsea	sqvtm

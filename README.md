@@ -1,4 +1,3 @@
-
 <img src="www/Logo.png" width="200">
 
 ### TCR_Explore Shiny R application
@@ -13,7 +12,7 @@ There are three main sections:
  + Tutorial video available
 - TCR analysis 
     + User uploads the paired file generated from TCR_Explore QC process
-    + Alternatively the user can  upload a file from other outputs (e.g. iRepertiore), which need to include the following column names: cloneCount, Indiv, group, Indiv.group
+    + Alternatively the user can  upload a file from other outputs (e.g. iRepertoire), which need to include the following column names: cloneCount, Indiv, group, Indiv.group
     + Several analytical graph features available including Treemap, Chord diagram, Pie chart, Motif analysis, Diversity and chain usage, and Overlap for comparison of multiple datasets (Heatmap and Upset plots)
     + For more information on the functions, see the TCR analysis information tab
 - Paired TCR with Index data 

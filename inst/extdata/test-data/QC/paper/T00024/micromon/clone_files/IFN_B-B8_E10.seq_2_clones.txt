@@ -1,2 +1,0 @@
-IFN_B-B8_E10.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-IFN_B-B8_E10.seq_clones.txt	1.0	TRBV6-1*00		TRBJ2-7*00		TGTGCCAGCAGTGACCTTCGGTACGAGCAGTACTTC	CASSDLRYEQYF	sasegt	mnhns

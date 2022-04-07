@@ -15,7 +15,6 @@ require("circlize")
 require("motifStack")
 require("scales") # to access break formatting functions
 require("flowCore")
-require("readxl")
 require("RColorBrewer")
 require("randomcoloR") 
 require("colourpicker") # selectively colour
@@ -26,7 +25,10 @@ require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
 library("shinyWidgets")
 library("showtext")
+library("shinyFiles")
+library('shinyDirectoryInput')
 
+install.packages("shinyDirectoryInput")
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
 font_add_google("Press Start 2P", "Game")
@@ -87,7 +89,7 @@ angle <- c(0,90,180,270)
 error_message_val1 <- "No data found"
 error_message_val2 <- "Uploading file"
 error_message_val3 <- "Upload clone file"
-error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
+# error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
 # user interface  ----
@@ -104,25 +106,19 @@ ui <- navbarPage(span( "TCR_Explore", style = "background-color: white; color: B
                                               height: 20px;
                                               }'))),
 
-tabPanel("TCR_Explore workflow",
+tabPanel("Tutorials",
          
          navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                       tabPanel("Overview",
                                imageOutput("Logo", height = "200px"),
                                includeMarkdown(system.file("extdata","README.md",package = "TCR.Explore"))
-                               # includeMarkdown(system.file("extdata","README.Rmd",package = "TCR.Explore")),
-                               # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
+
                       ), 
                       # readme pages -----
-                      tabPanel("Quality control",
+                      tabPanel("Quality control tutorial (includes Video)",
                                h3("Tutorial video of Quality control processes"),
                                uiOutput("video"),
-                               
-
-                              
                                fluidRow(includeMarkdown(system.file("extdata","READMEQC.md",package = "TCR.Explore"))),
-                               
-                               # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                       ),     
                       tabPanel("TCR analysis Markdown",
                                tabsetPanel(
@@ -177,6 +173,14 @@ navbarMenu("QC",
                                 
                             }')
              )
+           ),
+           
+           tabPanel("Making fasta files",
+                    directoryInput('directory', label = 'select a directory'),
+                    verbatimTextOutput("dir", placeholder = TRUE),
+                    actionButton("do", "Click Me to make fasta file (50 per file)"),
+                    h4('Merging statistics'),
+                    uiOutput('textWithHTML') # ui output as a list of HTML p() tags
            ),
            
            # UI IMGT only ----
@@ -993,6 +997,45 @@ tabPanel("Paired TCR with Index data",
 
 # Server -----
 server  <- function(input, output, session) {
+  # making 50 fasta files -----
+  path = reactive({readDirectoryInput(session, 'directory')})
+  observeEvent(
+    ignoreNULL = TRUE,
+    eventExpr = {
+      input$directory
+    },
+    handlerExpr = {
+      if (input$directory > 0) {
+        # condition prevents handler execution on initial app launch
+        
+        # launch the directory selection dialog with initial path read from the widget
+        path = choose.dir(default = readDirectoryInput(session, 'directory'))
+        # update the widget value
+        updateDirectoryInput(session, 'directory', value = path)
+        setwd(path)
+        observeEvent(input$do, {
+
+        })
+        
+      }
+    }
+  )
+  
+  observeEvent(input$do, { output$textWithHTML <- renderUI({
+    system(command = system.file("extdata","test-data/scripts/alignment_211230.sh", package = "TCR.Explore"))
+    rawText <- readLines('time.txt') # get raw text
+    # split the text into a list of character vectors
+    #   Each element in the list contains one line
+    splitText <- stringi::stri_split(str = rawText, regex = '\\n')
+    
+    # wrap a paragraph tag around each element in the list
+    replacedText <- lapply(splitText, p)
+    
+    return(replacedText)
+    
+  })
+  })
+  
   # images -----
   output$Logo <- renderImage({
     return(list(
@@ -4542,8 +4585,6 @@ server  <- function(input, output, session) {
   # colouring columns -----
   input.data_CSV1 <-  reactive({switch(input$dataset7,"test-csv"=test.data_csv1(),"own_csv" = own.data_CSV1())})
   test.data_csv1 <- reactive({
-    
-   
     dataframe = read.csv( system.file("extdata","test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",package = "TCR.Explore"),header = T)
   })
   own.data_CSV1 <- reactive({

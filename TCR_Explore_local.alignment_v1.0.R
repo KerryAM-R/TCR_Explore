@@ -1,6 +1,5 @@
 
 ## volcano plots
-library("rmarkdown")
 require("tidyverse")
 require("ggplot2") #Best plots
 require("ggrepel") #Avoid overlapping labels
@@ -25,19 +24,9 @@ require("muscle") # aligning sequences
 require("DiffLogo") # comparing motif plots
 require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
-library("shinyWidgets")
-library("showtext")
+library("shinyFiles")
+library('shinyDirectoryInput')
 
-font_add_google("Gochi Hand", "gochi")
-font_add_google("Schoolbell", "bell")
-font_add_google("Press Start 2P", "Game")
-
-showtext_auto() 
-
-
-font <- as.data.frame(font_families())
-font
-names(font) <- "Fonts"
 test_fun <- function()
 {
   for (i in 1:15) {
@@ -91,75 +80,40 @@ error_message_val2 <- "Uploading file"
 error_message_val3 <- "Upload clone file"
 error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
-simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
+
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 90, width = 154.2857,
-                                  
-                                  style = "margin:-35px 10px"
-                                  
-                                  ),
-                 
-                 position = "static-top",collapsible = F, 
+ui <- navbarPage(title = tags$img(src = "Logo.png", height = 70, width = 120,style = "margin:-25px 10px"), position = "fixed-top",collapsible = TRUE,
                  tags$head(
                    tags$style(HTML(' .navbar {
                           height: 80px;
                           min-height:80px !important;
                         }
                       .navbar-nav > li > a, .navbar-brand {
-                            padding-top:30px !important;
+                            padding-top:30px !important; 
                             padding-bottom:30px !important;
                             height: 20px;
                             }'))),
                  
-                 tabPanel("Tutorials",
-                              navlistPanel(id = "Markdown_panel",widths = c(2, 10),
-                              tabPanel("Overview",
-                                      includeMarkdown("README.md"),
-                                       # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
-                              ),     
-                              tabPanel("Quality control information (includes video tutorial)",
-                                       h3("Tutorial video of Quality control processes"),
-                                       uiOutput("video"),
-                                       fluidRow(includeMarkdown("READMEQC.md")),
-                                       
-                                       # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
-                              ),     
-                              tabPanel("TCR analysis information",
-                                       includeMarkdown("README.scTCR.md")),
-
-                              tabPanel("Paired TCR with Index data information",
-                                       includeMarkdown("README.FACS.md")),
-                              
-                              
-                              tabPanel("Video examples",
-                                       tabsetPanel(
-                                         tabPanel("Overview of Pairing",
-                                                  uiOutput("video2"),
-                                         ),
-                                         tabPanel("Motif analysius",
-                                                  uiOutput("video3"),
-                                         ),
-
-                                         tabPanel("Diversity and chain usage",
-                                                  uiOutput("video4"),
-                                         ),
-
-                                         tabPanel("Overlap",
-                                                  uiOutput("video5"),
-                                         ),
-
-                                         tabPanel("Paired TCR with Index data",
-                                                  uiOutput("video6"),
-                                         ),
-                                       ),
-                              ),
-                              
-                              tabPanel("Session info", 
-                                       tabPanel("Session info", 
-                                                div(style="width:800px",
-                                                verbatimTextOutput("sessionInfo")))
-                              )
-                       )
+                 navbarMenu("TCR_Explore workflow",
+                 tabPanel("Overview",
+                          
+                          fluidRow(includeMarkdown("README.md"))
+                            ),     
+                 tabPanel("QC",
+                          fluidRow(includeMarkdown("READMEQC.md"))
+                 ),
+                 tabPanel("scTCR plots",
+                          fluidRow(includeMarkdown("README.scTCR.md"))),
+                 tabPanel("FACS index QC and plots",
+                          fluidRow(includeMarkdown("README.FACS.md"))),
+                 
+                 tabPanel("Session info", 
+                          tabPanel("Session info", verbatimTextOutput("sessionInfo"))
+                 )
+                 
+                 #          fluidRow(includeMarkdown("README.FACS.md"))
+                 # )
+                 
                  ),
                  # QC ----
                  navbarMenu("QC",
@@ -179,66 +133,131 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               )
                             ),
                             
+                            tabPanel("Making fasta files",
+                                     directoryInput('directory', label = 'select a directory'),
+                                     verbatimTextOutput("dir", placeholder = TRUE),
+                                     actionButton("do", "Click Me to make fasta file (50 per file)"),
+                                     h4('Merging statistics'),
+                                     uiOutput('textWithHTML') # ui output as a list of HTML p() tags
+                                     ),
+
                  # UI IMGT only ----
                             tabPanel("IMGT",
                                      sidebarLayout(
                                        sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
-                                                    conditionalPanel(condition="input.QC_panel==1",
-                                                                     selectInput("dataset_IMGT3", "Choose a dataset:", choices = c("ab-test-data1", "own_data")),
-                                                                     fileInput('file_IMGT3', 'Select file for IMGT datafile',
-                                                                               accept=c('xls/xlsx', '.xls')),
-                                                                     downloadButton('downloadTABLE_IMGTonly','Download table')
-                                                                     ),
                                                     
-                                                    conditionalPanel(condition="input.QC_panel==2 || input.QC_panel==3",
-                                                    
-                                                    selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own_data1")),
+                                                    selectInput("dataset_IMGT3", "Choose a dataset:", choices = c("ab-test-data1", "own_data")),
+                                                    fileInput('file_IMGT3', 'Select file for IMGT datafile',
+                                                              accept=c('xls/xlsx', '.xls')),
+                                                   
+                                                    selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own1")),
                                                     
                                                     fileInput('file_IMGT_afterQC', 'Chromatogram checked file (.csv)',
-                                                              accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                                             accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                                     h5("option for paired and TCRdist outputs"),
-                                                    selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
-                                                    selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
-                                                    
-                                                    
-                                                    conditionalPanel(condition="input.QC_panel==2",
-                                                                     downloadButton('downloadTABLE.QC1','Download paired chain file')
-                                                                     ),
-                                                    
-                                                    conditionalPanel(condition="input.QC_panel==3",
-                                                                    textInput("tcr_lab","ID for TCRdist","human_tcr"),
-                                                                    downloadButton('downloadTABLE.TSV','Download tsv file for TCRdist')
-                                                                     )
-                                                    
+                                                   selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
+                                                    selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary"))
+                                                 
                                        ),
                                        mainPanel(
-                                         tabsetPanel(id = "QC_panel",
-                                           tabPanel("IMGT create QC file",value = 1,
-                                                    h4("Fill in the 'clone_quality' column: pass or fail"), 
-                                                    h4("Add comments if desired"),
-                                                    fluidRow(column(4, selectInput("sheet","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
-                                                             column(8, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'), width = "800px")),
-                                                    ),
-                                                    tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
-                                                    div(DT::dataTableOutput("IMGT2_out")),
-                                                    
-                                           ),
-                                           tabPanel("Paired chain file",value = 2,
-                                                    tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
-                                                    div(DT::dataTableOutput("chain_table_IMGT.QC1"))
-                                           ),
-                                           tabPanel("TCRdist output file",value = 3,
-                                                    tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
-                                                    div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
-                                                    
-                                           )
-                                         )
+                                         tabsetPanel(
+                                             tabPanel("IMGT create QC file",
+                                                      h4("Fill in the 'clone_quality' column: pass or fail"), 
+                                                      h4("Add comments if desired"),
+                                                      fluidRow(column(4, selectInput("sheet","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
+                                                               column(8, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'), width = "800px")),
+                                             ),
+                                                      tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
+                                             div(DT::dataTableOutput("IMGT2_out")),
+                                             downloadButton('downloadTABLE_IMGTonly','Download table')
+                                             ),
+                                             tabPanel("Paired chain file",
+
+                                                      
+                                                      
+                                                      tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
+                                                      div(DT::dataTableOutput("chain_table_IMGT.QC1")),
+                                                      p(" "),
+                                                      downloadButton('downloadTABLE.QC1','Download paired chain file'),
+                                                      
+                                                      
+                                             ),
+                                             tabPanel("TCRdist output file",
+                                                      textInput("tcr_lab","ID for TCRdist","human_tcr"),
+                                                      
+                                                      tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
+                                                      div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
+                                                      
+                                                      
+                                                      h5(" "),
+                                                      downloadButton('downloadTABLE.TSV','Download tsv file for TCRdist')
+                                                      )
                                        )
-                                       
+                                       )
+                                     
                                      )
-                            ),
+                                     ),
                             
-                 ),
+                 # do MIXCR+IMGT ------           
+                 # tabPanel("IMGT+MiXCR",
+                 #          sidebarLayout(
+                 #            sidebarPanel(
+                 # # IMGT+MIXCR file -----
+                 #              id = "tPanel2",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
+                 #              selectInput("chain","alpha-beta or gamma-delta",choices = c("ab","gd")),
+                 #              
+                 #              selectInput("dataset_IMGT", "Choose a dataset:", choices = c("ab-test-data","gd-test-data", "own")),
+                 #              fileInput('file_IMGT1', 'Select file for IMGT datafile (sheet 1)',
+                 #                        accept=c('xls/xlsx', '.xls')),
+                 #              fileInput('file_IMGT2', 'Select MiXCR txt file',
+                 #                        accept=c('text/csv', 'text/comma-separated-values,text/plain', '.txt')),
+                 #              fluidRow(
+                 #                column(4,radioButtons('sep_IMGT2', 'Separator', c( Tab='\t', Comma=','), '\t')),
+                 #                column(4,radioButtons('quote_IMGT2', 'Quote', c(None='', 'Double Quote'='"', 'Single Quote'="'"), '"')),
+                 #                column(4, radioButtons("header_IMGT2",'header',c(yes=TRUE,no=FALSE)))
+                 #              ),
+                 #              
+                 #              # merged MIXCR/IMGT or IMGT file with QC 
+                 #              fileInput('file_IMGT.MiXCR', 'Select chromatogram checked file (.csv)',
+                 #                        accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                 #            ),
+                 #            mainPanel(
+                 #              tabsetPanel(
+                 #                tabPanel("IMGT+MiXCR",
+                 #                         h5("Pre-processed file"),
+                 #                         tags$head(tags$style("#unmerged_chain1  {white-space: nowrap;  }")),
+                 #                         div(DT::dataTableOutput("unmerged_chain1")),
+                 #                         tags$head(tags$style("#unmerged_chain2  {white-space: nowrap;  }")),
+                 #                         div(DT::dataTableOutput("unmerged_chain2")),
+                 #                         tags$head(tags$style("#merged_IMGT  {white-space: nowrap;  }")),
+                 #                         div(DT::dataTableOutput("merged_IMGT")),
+                 #                         downloadButton('downloadTABLE2','Download merged table')
+                 #                         
+                 #                ),
+                 #                tabPanel("Unsummarised merged A/B or G/D",
+                 #                         tags$head(tags$style("#chain_table  {white-space: nowrap;  }")),
+                 #                         div(DT::dataTableOutput("chain_table")),
+                 #                         downloadButton('downloadTABLE3','Download table'),
+                 #                         
+                 #                ),
+                 #                tabPanel("summarised file for records",
+                 #                         verbatimTextOutput("names.in.file2"),
+                 #                         fluidRow(column(12, textInput("string.data2","column names for summary","Indiv.group, V.GENE.and.allele_A, J.GENE.and.allele_A, JUNCTION..AA._A, V.GENE.and.allele_B, J.GENE.and.allele_B, D.GENE.and.allele_B, JUNCTION..AA._B", width = "1200px") )),
+                 #                         tags$head(tags$style("#chain_table2  {white-space: nowrap;  }")),
+                 #                         div(DT::dataTableOutput("chain_table2")),
+                 #                         downloadButton('downloadTABLE4','Download table'),
+                 #                )
+                 #                
+                 #              )
+                 #              
+                 #            )
+                 #          )
+                 #          
+                 # )     
+                 #            
+                  ),
+                 
+                 
                  
                  
                  # UI TCR plots ----
@@ -251,49 +270,34 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
   ")),
                           
                           sidebarLayout(
-                            sidebarPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
-                                         # tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
+                            sidebarPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 700px; position:relative;", width=3,
+                                         tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
                                          #textInput(inputId = "lab1", label = "Group label of file 1",value = "Ex.vivo"),
                                          tags$head(tags$style(HTML(".shiny-notification {position:fixed;top: 50%;left: 30%;right: 30%;}"))),
                                          tags$head(tags$style(HTML('.progress-bar {background-color: purple;}'))),
-                                         selectInput("dataset", "Choose a dataset:", choices = c("ab-test-data2", "own_data2")),
+                                         selectInput("dataset", "Choose a dataset:", choices = c("test-data", "own")),
                                          fileInput('file2', 'Select file for single samples',
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                         
+
                                          fluidRow(
                                            column(6,radioButtons('sep', 'Separator', c( Tab='\t', Comma=','), ',')),
                                            column(6,radioButtons('quote', 'Quote', c(None='', 'Double Quote'='"', 'Single Quote'="'"), '"'))
                                          ),
                                          
-                                         colourInput("one.colour.default","One colour","grey"),
-                                         selectInput("group_column",label = h4("Column of group"), ""),
-                                         selectInput("type.tree",label = h4("Type of input"), choices =  c("raw data","Summarised data")),
-
-                                         selectInput("font_type",label = h4("Type of font"),choices = font,selected = "serif"),
-                                         downloadButton("table_length","Download summarised table with length"),
-                                         conditionalPanel(
-                                           condition = "input.stat == 'stacked'",
-                                           h4("Stacked bar plot"),
-                                           fluidRow(
-                                             column(3,numericInput("bar.stack.angle","Angle of text",value = 90)),
-                                             column(3,numericInput("hight.bar.stack.adj","Position of text",value = 0)),
-                                             column(6,selectInput("lines.bar.graph","Display black lines?",
-                                                                  choices = c("yes","no"),
-                                                                  selected = "no"))
-                                           ),
+                                         selectInput("group_column",label = h5("Column of group"), ""),
+                                         selectInput("type.tree",label = h5("Type of input"), choices =  c("scTCR","bulk")),
+                                         tags$hr(),
+                                         selectInput("shannon.index", "Choose a dataset:", choices = c("ab.test.index", "own.index")),
+                                         fileInput('file_diversity.index', 'Diversity statistics file',
+                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          ),
-                                         tags$hr()
-                            ),
-                            
+
                             mainPanel(tabsetPanel(
                               tabPanel("Overview of TCR pairing",tabsetPanel(
-                 # UI Summary table -----
+                # UI Summary table -----
                                 tabPanel("Summary table",
-                                         # verbatimTextOutput("names.in.file3"),
-                                         fluidRow(
-                                           column(3,selectInput("type.chain","Alpha-beta or gamma-delta",choices = c("ab","gd"))),
-                                           column(3,selectInput("type.of.graph", "Summary table output",choices = c("general summary","TCRdist3")))
-                                         ),
+                                         verbatimTextOutput("names.in.file3"),
+                                         selectInput("type.chain","Alpha-beta or gamma-delta",choices = c("ab","gd")),
                                          fluidRow(column(12, selectInput("string.data3","column names for summary","",multiple = T, width = "1200px") )),
                                          tags$head(tags$style("#chain_table_IMGT.QC3  {white-space: nowrap;  }")),
                                          div(DT::dataTableOutput("chain_table_IMGT.QC3")),
@@ -307,20 +311,14 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(3,  numericInput("nrow.tree",label = h5("Rows"), value = 1))
                                          ),
                                          
-                                         fluidRow(
-                                           column(6, selectInput("string.data.tree.order","Order of group in graph",choices = "",multiple = T, width = "600px")),
-                                           column(2, colourInput("strip.colour.tree","Strip colour",value = "lightgrey")),
-                                           column(2,  colourInput("strip.text.colour.tree","Text strip colour",value = "black")),
-                                           column(2, numericInput("panel.text.size.tree","Size of panel text", value = 20))
-                                         ),
                                          
                                          fluidRow( 
-                                           column(2, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","one colour"))),
-                                           column(2, selectInput("fill2",label = h5("Colour treemap by"),"" )),
-                                           column(2, selectInput("sub_group2",label = h5("Separate panels by"),"" )),
-                                           # column(3,selectInput( "wrap",label = h5("Group"),"" )),
-                                           column(2,selectInput( "count2",label = h5("Count column"),"")),
-                                           column(2, selectInput("tree.lab",label = h5 ("Add label"),choices = c("yes","no")))
+                                           column(3, selectInput("tree_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
+                                           column(3, selectInput("fill2",label = h5("Colour treemap by"),"" )),
+                                           column(3, selectInput("sub_group2",label = h5("Separate panels by"),"" )),
+                                           column(3,selectInput( "wrap",label = h5("Group"),"sub" )),
+                                           column(3,selectInput( "count2",label = h5("Count column"),"")),
+                                           column(3, selectInput("tree.lab",label = h5 ("Add label"),choices = c("yes","no")))
                                            
                                          ),
                                          fluidRow(column(3,
@@ -341,47 +339,29 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_scTREE','Download PNG'))
                                          ),
                                 ),
-                 # UI circular plot -----
-                                tabPanel("Chord diagram",
-                                         h5("If you see this error: 'not enough space for cells at track index '1'. 
-                                           Adjust Text size (cex)"),
-                                         p(" "),
+                                # UI circular plot -----
+                                tabPanel("Chord diagram", 
                                          fluidRow(
                                            
                                            column(2,selectInput( "group_selected2",label = h5("Group"),"" )),
                                            column(2,selectInput( "chain1",label = h5("Chain one"),"" )),
                                            column(2,selectInput( "chain2",label = h5("Chain two"),"" )),
-                                           column(2,style = "margin-top: 15px;", sliderInput("chord.transparancy","Transparancy",value = 0.5,step = 0.05, min=0,max=1)),
-                                           column(2,style = "margin-top: 15px;", numericInput("CHORD.cex","Text size (cex)",value = 1, min=0,step = 0.05)),
-                                           # column(2,tableOutput("table_display")),
+                                           column(2,style = "margin-top: 15px;", numericInput("chord.transparancy","Transparancy",value = 0.5, min=0,max=0.9)),
+                                           column(2,tableOutput("table_display")),
                                            
                                          ),
                                          fluidRow(
-                                           column(2, selectInput("circ_lab",
-                                                                 label = h5("Type of label"),
-                                                                 choices = c("Label","colour selected clone/s (label)","colour selected clone/s (no label)","no labels"))),
-                                           column(2,selectInput( "colour_cir",label = h5("Colour"),choices = c("default","rainbow","random","one colour"))),  
-                                           column(2,style = "margin-top: 15px;", numericInput("seed.numb.chord","Random colour generator",value = 123)),
+                                           column(3, selectInput("circ.lab",label = h5("Add label"),choices = c("yes","no"))),
+                                           column(3,selectInput( "colour_cir",label = h5("Colour"),choices = c("rainbow","random","grey"))),  
+                                           column(3,style = "margin-top: 15px;", numericInput("seed.numb.chord","Random colour generator",value = 123)),
                                          ),
-                                         
-                                         conditionalPanel(
-                                           condition = "input.circ_lab == 'colour selected clone/s (label)' || input.circ_lab == 'colour selected clone/s (no label)'",
-                                           selectInput("string.data.circ.order","Chains to highlight",choices = "",multiple = T,width = "800"),
-                                           
-                                                          fluidRow(
-                                                                   column(2, colourInput("colour.chord.line","Line colour","black")),
-                                                                   column(2, sliderInput("line.chord.type","Line type (0 = no line)",min=0,max=6,value=1)),
-                                 column(2,numericInput("thickness.chord.line","Thickness of line", value = 2)),
-                                 column(2, sliderInput("unselected.chord.transparacy","Transparancy unselected",min=0,max=1,value=0.75,step = 0.05)),
-                                  column(2, sliderInput("selected.chord.transparacy","Transparancy selected",min=0,max=1,value=0,step = 0.05)),
-                                                                   ),
-                                                          ),
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 600px",
                                                                    uiOutput('myPanel_circ'))),
                                                   column(9,plotOutput("Circular",height="600px"))),
                                          h4("Exporting the Circular plot"),
                                          fluidRow(
+                                           
                                            column(3,numericInput("width_circ", "Width of PDF", value=10)),
                                            column(3,numericInput("height_circ", "Height of PDF", value=8)),
                                            column(3),
@@ -397,25 +377,24 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          # tableOutput("out.col.table1")
                                          
                                 ),
-                 # UI Pie ----
+                                
+                                
+                                # UI Pie ----
                                 tabPanel("Pie chart",
-                                         fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this chain"),"")),
-                                                  column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","one colour"), selected = "random")),
-                                                  column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "none")),
-                                                  column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 1)),
+                                         fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this group"),"")),
+                                                  column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
+                                                  column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
+                                                  column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 3)),
                                                   column(2,  numericInput("size.circ",label = h5("Size of legend text"), value = 6))
                                                   
                                          ),
-                                         fluidRow(
-                                                column(6, selectInput("string.data.pie.order","Order of group in graph",choices = "",multiple = T, width = "600px")),
-                                                column(2, colourInput("strip.colour.pie","Strip colour",value = "lightgrey")),
-                                                column(2,  colourInput("strip.text.colour.pie","Text strip colour",value = "black")),
-                                                column(2, numericInput("panel.text.size.pie","Size of panel text", value = 20))
-                                         ),
+                                         
+                                         
+                                         
                                          fluidRow(column(3,
                                                          wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
                                                                    uiOutput('myPanel_pie'))),
-                                                  column(9, plotOutput("pie_out",height="600px"))),
+                                                  column(9, plotOutput("pie_out",height="800px"))),
                                          fluidRow(
                                            column(3,numericInput("width_pie", "Width of PDF", value=10)),
                                            column(3,numericInput("height_pie", "Height of PDF", value=8)),
@@ -429,58 +408,32 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_pie','Download PNG'))
                                          ),
                                 ),
+                                
+                                
                               )),
+                              
+                              
+               
+                 
+                              
+                              
                               tabPanel("Motif analysis",
                                        p("This section contains 4 tabs for motif analysis"),
                                        tabsetPanel(
-                 # UI CDR3 length distribution graphs ----- 
+                                # UI CDR3 length distribution graphs ----- 
                                          tabPanel("CDR3 length distribution",
                                                   h5("length distribution plot requires an unsummarised dataset"),
-                                                  
-                                                  
-                                                  
                                                   fluidRow(
-                                                    column(3,selectInput('graph_type', 'Type of graph', graph_type)),
-                                                    
-                                                    column(3,selectInput( "aa.or.nt",label = h5("CDR3 length column"),"" )),
-                                                    column(2, selectInput("hist.density.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
+                                                    column(3,selectInput( "aa.or.nt",label = h5("Amino acid or nucleotide sequence column"),"" )),
+                                                    column(3,selectInput( "selected_group_len",label = h5("Group"),"" ))
                                                   ),
-  
                                                   fluidRow(
-                                                    column(3,numericInput("hist.text.sizer","size of text",value=30)),
-                                                    column(3, numericInput("xlow","x-axis (min)",value=1)),
-                                                    column(3, numericInput("xhigh","x-axis (max)",value=30)),
-                                                    column(3, numericInput("xbreaks","x-axis tick marks",value=1)),
-                                                    ),
-                                                  
-                                                  conditionalPanel(
-                                                    condition = "input.graph_type == 'histogram'",
-                                                    fluidRow(
-                                                      # column(3, numericInput("bin","Bins of histogram",value=30)),
-                                                      column(3,selectInput( "selected_group_len",label = h5("Group"),"" )),
-                                                      column(3,selectInput("chain.hist.col",label = h5 ("Colour by:"),"")),
-                                                      column(3,selectInput("hist_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","grey")))
-                                                    ),
-                                                    
+                                                    column(3, numericInput("bin","Bins of histogram",value=30)),
+                                                    column(3, colourInput("hist_col","Colour of histogram","red")),
+                                                    column(3, selectInput('graph_type', 'Type of graph', graph_type))
                                                   ),
-                                                  
-                                                  
-                                                  
-                                                  fluidRow(
-                                                    conditionalPanel(
-                                                      condition = "input.graph_type == 'histogram'",
-                                                    
-                                                    column(3,
-                                                                  wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
-                                                                            uiOutput('myPanel.hist')))),
-                                                           column(9, plotOutput("Chain1_length",height="600px"))),
-                                                  
-                                                  conditionalPanel(
-                                                    condition = "input.graph_type == 'histogram'",
-                                                    div(DT::dataTableOutput("hist.table")),
-                                                    
-                                                  ),
-                                                 
+                                                  plotOutput("Chain1_length"),
+                                                  downloadButton("table_length","Download length table"),
                                                   fluidRow(
                                                     column(3,numericInput("width_length", "Width of PDF", value=6)),
                                                     column(3,numericInput("height_length", "Height of PDF", value=4)),
@@ -494,16 +447,14 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_length','Download PNG'))
                                                   ),
                                          ),
-                 # UI motif -----
+                                # UI motif -----
                                          tabPanel("Motif (amino acid)",
                                                   h5("Select amino acid column and CDR3 length"),
                                                   verbatimTextOutput("length"),
                                                   fluidRow(
-                                                    column(2,selectInput( "aa.or.nt2",label = h5("Amino acid CDR3 column"),"" )),
-                                                    column(2,style = "margin-top: 15px;",numericInput("len","CDR3 amino acid length", value = 15)),                               
-                                                    column(2,selectInput( "group_selected_motif",label = h5("Group 1 (Bottom)"),"" )),
-                                                    column(2,selectInput( "group_selected_motif2",label = h5("Group 2 (top)"),"" )),
-                                                    column(2, selectInput("comarpison.aa.motif",label = h5("Type of comparison"), choices= c("single.group1","compare two groups")))
+                                                    column(3,selectInput( "aa.or.nt2",label = h5("Amino acid CDR3 column"),"" )),
+                                                    column(3, numericInput("len","CDR3 amino acid length", value = 15)),                               
+                                                    column(3,selectInput( "group_selected_motif",label = h5("Group"),"" ))
                                                   ),
                                                   fluidRow(
                                                     column(6,div(DT::dataTableOutput("length.table"))),
@@ -523,7 +474,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,numericInput("resolution_PNG_motif","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif','Download PNG'))
                                                   )),
-                 # UI motif NT -----
+                                         # UI motif NT -----
                                          tabPanel("Motif (nucleotide sequence)",
                                                   h5("Select nucleotide column and CDR3 length"),
                                                   verbatimTextOutput("length_nt"),
@@ -551,7 +502,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif_nt','Download PNG'))
                                                   )
                                          ),
-                 # motif align with muscle -----
+                                         # motif align with muscle -----
                                          tabPanel("Motif (AA or NT alignment)",
                                                   fluidRow(
                                                     column(3,selectInput("aa.or.nt4",label = h5("CDR3 column"),"")),
@@ -581,77 +532,37 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif_align','Download PNG'))
                                                   )
                                          ),
+                                         
+                                         
                                        )
-                              ),
-                 
-                 # diversity and chain usage -----
-
+                                       
+                                       
+                                       ),
+                              
+                              
                               tabPanel("Diversity and chain usage",
                                        tabsetPanel(
-                 # UI bar graphs ----- 
+                                         # UI bar graphs ----- 
                                          tabPanel("Chain bar graph",
+                                                  fluidRow(column(3,selectInput("count.percent",label = h5("Type of distribution"),choices=c("Indiviudal chains","cummulative frequency"))),
+                                                           column(3,selectInput( "selected_group_chain",label = h5("Group"),"" )),
+                                                  ),
+                                                  h5("Indiviudal chains"),
                                                   fluidRow(
-                                                    column(3,selectInput("stat",label = h5("Plot output"),choices=c("chains","frequency","stacked")),),
-                                                    column(3,selectInput( "selected_group_chain",label = h5("Group"),"" )),
                                                     column(3,selectInput( "variable_chain",label = h5("Select y-axis"),"" )),
+                                                    column(3,selectInput( "graph_bar_type",label = h5("Select x-axis"),choices = c("count","percentage"))),
+                                                    column(3,style = "margin-top: 10px;", numericInput("bar.numeric.size","Size of axis label", value = 12)),
+                                                    column(3,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black")),
+                                                  ),
+                                                  h5("Cummulative frequency"),
+                                                  fluidRow(
+                                                    column(3,numericInput("numeric.adjust","Adjust # clones label",value=-1)),
+                                                    column(3, colourInput("colour.numeric.bar","Colour numeric", value = "black")),
+                                                    column(3, numericInput("label.size","Size of numeric label", value = 6)),
+                                                    column(3, numericInput("label.size.axis","Size of axis label", value = 20)),
                                                   ),
                                                   
-
-                                                  
-                                                  
-                 # chain usage -----
-                                                  conditionalPanel(
-                                                    condition = "input.stat == 'chains'",
-                                                    h5("Individual chains"),
-                                                    fluidRow(
-                                                      
-                                                      column(3,selectInput( "graph_bar_type",label = h5("Select x-axis"),choices = c("count","percentage"))),
-                                                      column(3,style = "margin-top: 10px;", numericInput("bar.numeric.size","Size of axis label", value = 12)),
-                                                      column(3,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black"))),
-                                                    
-                                                  ),
-                 # cummulative freq  -----
-                                                  conditionalPanel(
-                                                    condition = "input.stat == 'frequency'",
-                                                    h5("Cummulative frequency"),
-                                                    fluidRow(
-                                                      column(3,numericInput("numeric.adjust","Adjust # clones label",value=-1)),
-                                                      column(3, colourInput("colour.numeric.bar","Colour numeric", value = "black")),
-                                                      column(3, numericInput("label.size","Size of numeric label", value = 6)),
-                                                      column(3, numericInput("label.size.axis","Size of axis label", value = 20)),
-                                                    ),
-                                                    
-                                                  ),
-                 # stacked bar graph  -----
-                                                  conditionalPanel(
-                                                   
-                                                    condition = "input.stat == 'stacked'",
-                                                    h5("Stacked bar plot"),
-                                                    selectInput("string.data2","Order of group in graph",choices = "",multiple = T, width = "1200px"),
-                                                    fluidRow(
-                                                      column(3, numericInput("label.size.axis2","Size of axis label", value = 20)),
-                                                      column(3,selectInput( "bar.stacked_colour.choise",label = h5("Colour"),choices = c(
-                                                      "default","rainbow","random","grey"))), 
-                                                      
-
-
-                                                      ),
-                                                    ),
-                 fluidRow(
-         
-                   conditionalPanel(
-                     condition = "input.stat == 'stacked'",
-                     column(3,
-                            wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 400px",
-                                      uiOutput('myPanel_cols_stacked_bar'))),
-                   ), 
-                   column(9,plotOutput("Chain1_usage",height="400px")),
-                 ),
-                                                  
-                    
-                      
-                 
-                                                  
+                                                  plotOutput("Chain1_usage",height="400px"),
                                                   fluidRow(
                                                     column(3,numericInput("width_chain.usage", "Width of PDF", value=10)),
                                                     column(3,numericInput("height_chain.usage", "Height of PDF", value=8)),
@@ -664,45 +575,19 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,numericInput("resolution_PNG_chain.usage","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_chain.usage','Download PNG'))
                                                   ),
-                                                  
-
                                          ),
                                          
                                          
-                 # UI inverse simpson index -----
+                                         # UI inverse simpson index -----
                                          tabPanel("Inverse Simpson Index",
                                                   p("Inverse simpson index; ∞=infinite diversity and 1=limited diversity"),
-                                                  fluidRow(
-                                                    column(3,selectInput("group_column_simp",label = h5("Group colum"),
-                                                                         choices = c("group","Indiv","Indiv.group"),
-                                                                         selected = "Indiv.group")),
-                                                    column(3,selectInput("group_column_simp2",label = h5("Unique clone column"),
-                                                                         "")),                            
-                                                    
-                                                    
-                                                  ),
-                                                  fluidRow(column(12, div(DT::dataTableOutput("table_display.diversity")))),
+                                                  fluidRow(column(9, div(DT::dataTableOutput("table_display.diversity")))),
                                                   downloadButton('downloadTABLE_simpson.inv','Download table'),
                                                   fluidRow(
                                                     column(3,selectInput("inv.simp_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
-                                                    column(3,selectInput("group.index",label = h5("Select x-axis"),
-                                                                         choices = simp.index.names,
-                                                                         selected = "V2")),
-                                                    column(3,selectInput("group2.index",label = h5("Colour by this group"),
-                                                                         choices = simp.index.names,
-                                                                         selected = "V1")),
-                                                    column(3,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
-                                                                         choices = simp.index.names,
-                                                                         selected = "total # clones"
-                                                    )),
-                                                    column(3,selectInput("scale_x_continuous_x",label = h5("Number abbreivation"),choices = c("scientific","natural"))),
-                                                    column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 2)),
-                                                    column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
-                                                    column(3,numericInput("legend.text.simp",label = h5("Legend columns"),value = 8)),
-                                                    
-
-                                                       
-                                                    ),
+                                                    column(3,selectInput("group.index",label = h5("Select x-axis"),"")),
+                                                    column(3,selectInput("group2.index",label = h5("Colour by this group"),"")),
+                                                    column(3,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),""))),
                                                   fluidRow(
                                                     column(3,
                                                            wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 400px",
@@ -710,33 +595,29 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(4,plotOutput("simpson.index1", height="400px")),
                                                     column(4,plotOutput("simpson.index2", height="400px"))),
                                                   fluidRow(
-                                                    
-                                                    
-                                                    column(2, numericInput("conf","confidence of T test", value =0.95, max = 0.99)),
-                                                    column(2,selectInput("group1_column",label = h5("Column of group"), 
-                                                                         choices = simp.index.names,
-                                                                         selected = "V2")),
-                                                    column(2,selectInput("group3_column",label = h5("Group selected"),
-                                                                         choices=c("group","Indiv","Indiv.group"),selected = "group")),
-                                                    column(2,selectInput( "group1_selected",label = h5("Group1"),"" )),
-                                                    column(2,selectInput( "group2_selected",label = h5("Group2"),"" )),
-                                                    column(2,  selectInput("tail",
-                                                                           label = "Please Select a relationship you want to test:",
-                                                                           choices = c("Two.tailed" = "two.sided", 
-                                                                                       "one.tailed(Less)" = "less",
-                                                                                       "one.tailed(Greater)" = "greater")))
-                                                  ),
+                                                 
+                                                         
+                                                         column(2, numericInput("conf","confidence of T test", value =0.95, max = 0.99)),
+                                                         column(2,selectInput("group1_column",label = h5("Column of group"), "")),
+                                                         column(2,selectInput( "group1_selected",label = h5("Group1"),"" )),
+                                                        column(2,selectInput( "group2_selected",label = h5("Group2"),"" )),
+                                                  column(4,  selectInput("tail",
+                                                                         label = "Please Select a relationship you want to test:",
+                                                                         choices = c("Two.tailed" = "two.sided", 
+                                                                                     "one.tailed(Less)" = "less",
+                                                                                     "one.tailed(Greater)" = "greater")))
+                                                         ),
                                                   
                                                   fluidRow(
                                                     column(2,   radioButtons("varequal",
-                                                                             "Assume equal variance:",
-                                                                             choices = c("Yes" = "y",
-                                                                                         "No" = "n"))),
-                                                    column(2,radioButtons("paired",
-                                                                          "Paired?",
-                                                                          choices = c("Yes" = "y",
-                                                                                      "No" = "n"))),
-                                                    
+                                                                 "Assume equal variance:",
+                                                                 choices = c("Yes" = "y",
+                                                                             "No" = "n"))),
+                                                  column(2,radioButtons("paired",
+                                                                        "Paired?",
+                                                                        choices = c("Yes" = "y",
+                                                                                    "No" = "n"))),
+                                                     
                                                   ),
                                                   p("The observed t test statistic :"),
                                                   textOutput('tvalue'),
@@ -761,14 +642,14 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   # gini index is created from Lorentz Surface Calculation pone.0125373.s004.xlsx
                                                   
                                          )
-                   
-                                         
+                                       #####   
+                                      
                                        )
-                                       
-                                       
-                              ),
+                                          
+                                          
+                                          ),
                               
-                 ##### Overlap ----          
+                              
                               tabPanel("Overlap",
                                        tabsetPanel(
                  # UI heatmap -----
@@ -780,11 +661,6 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,selectInput("group.heatmap",label = h5("Select y-axis"),"" )),
                                                     column(3, colourInput("col.heatmap",label = h5("Colour"), value = "red"))
                                                   ),
-                                                  fluidRow(
-                                                    column(3,numericInput("heat.font.size.row","Font size (row)",value=8)),
-                                                    column(3,numericInput("heat.font.size.col","Font size (col)",value=8)),
-                                                    
-                                                    ),
                                                   
                                                   plotOutput("heatmap_out2",height="800px"),
                                                   fluidRow(
@@ -805,21 +681,17 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          tabPanel("Upset plot",
                                                   fluidRow(
                                                     column(3,selectInput("upset.select",label = h5("Select chain"), choices = "", selected = "")),
-                                                    column(3,selectInput("upset.group.select",label = h5("Group column (max 31 groups)"), choices = "",selected= "")),
-                                                    ),
+                                                    column(3,selectInput("upset.group.select",label = h5("Group column (max 31 groups)"), choices = "",selected= ""))),
                                                   
                                                   selectInput("order.of.group",label = h5("Group column (max 31 groups)"), choices = "",selected= "", multiple = T, width = "1200px"),
                                                   
                                                   
                                                   
-
-                                                  fluidRow(
-                                                    column(3,numericInput("upset.text.size","Size of text",value = 20)),
-                                                    column(3,numericInput("upset.font.size","Size of number",value = 12)),
-                                                  ),
-                                                  
+                                                  tags$head(tags$style("#upset.datatable  {white-space: nowrap;  }")),
+                                                  div(DT::dataTableOutput("upset.datatable")),
                                                   plotOutput("UpSet.plot", height = "600px"),
                                                   fluidRow(
+                                                    
                                                     column(3,numericInput("width_upset", "Width of PDF", value=10)),
                                                     column(3,numericInput("height_upset", "Height of PDF", value=8)),
                                                     column(3),
@@ -831,167 +703,158 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,numericInput("height_png_upset","Height of PNG", value = 1200)),
                                                     column(3,numericInput("resolution_PNG_upset","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_upset','Download PNG'))
-                                                  ),
-                                                  tags$head(tags$style("#upset.datatable  {white-space: nowrap;  }")),
-                                                  div(DT::dataTableOutput("upset.datatable")),
+                                                  )
                                          )
                                        ))
-                              
+  
                             )
                             )
                           )
                  ),
                  # UI Index data graphs -----
-                 tabPanel("Paired TCR with Index data",
+                 tabPanel("FACS Index data",
                           sidebarLayout(
-                            sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 850px; position:relative;", width=3,
-                                         # tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
+                            sidebarPanel(id = "tPanel3",style = "overflow-y:scroll; max-height: 1000px; position:relative;", width=3,
+                                         tags$style(type="text/css", "body {padding-top: 80px; padding-left: 10px;}"),
+                                         selectInput("dataset3", "FACS file:", choices = c("test-FACS", "own_FACS")),
+                                         fileInput('file_FACS', 'Raw index FACS file',
+                                                   accept=c('FACS files', '.fcs')),
                                          
-                                         conditionalPanel(condition="input.tabselected==1",
-                                                          selectInput("dataset3", "FACS file:", choices = c("test-FACS", "own_FACS")),
-                                                          fileInput('file_FACS', 'Raw index FACS file',
-                                                                    accept=c('FACS files', '.fcs')),
-                                                          
-                                                          selectInput("data_clone.index", "Unsummarised clone file:", choices = c("ab.test.clone3" ,"own.clone.file")),
-                                                          fileInput('file_diversity.index.2', 'Upload unsummarised clone file',
-                                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                                          textInput("name.colour2","Prefix of file name","ID.780_plate1.section1."),
-                                                          downloadButton('downloadTABLE_FACS','Download table')
-                                                          ),
-                 # tab panel 2 (Other QC steps) ------
-                                         conditionalPanel(condition="input.tabselected==2",
-                                                          selectInput("dataset7", "Merged FACS and clone file for colouring", choices = c("test-csv" ,"own_csv")),
-                                                          fileInput('file_FACS.csv1', 'FACS+clone file',
-                                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                                          
-                                                          fluidRow(
-                                                            
-                                                            column(6,selectInput("V.gene.1",label = h5("V Gene 1"),"")),
-                                                            column(6,selectInput("CDR3.1",label = h5("CDR3 1"),"")),
-                                                            column(6,selectInput('V.gene.2', label = h5("V Gene 2"), "")),
-                                                            column(6,selectInput("CDR3.2",label = h5("CDR3 2"),"")),
-                                                            
-                                                          ),
-                                                          fluidRow(
-                                                            column(6,selectInput("group.col.dot",label = h5("Group"),"")),
-                                                            column(6,numericInput("numeric.cloneCount","Filter based on number of times a clone was observed: select 0 for all",value=1))
-                                                          ),
-                                                          verbatimTextOutput("NAMES.df"),
-                                                          textInput("name.colour","Prefix of file name","ID.780_"),
-                                                          downloadButton('downloadTABLE_cleaning','Download table')
-                                                          ),
-                 # conditional panel 3 -----
-                                         conditionalPanel(condition="input.tabselected==3",
-                                                          selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv_file")),
-                                                          fileInput('file_FACS.csv2', 'File for dot plot',
-                                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                                                          selectInput("font_type2","Type of font",choices = font,selected = "Times"),
-                                                          fluidRow(
-                                                            column(4,selectInput("x.axis2",label = h5("Select x-axis"),"")),
-                                                            column(4,selectInput("y.axis2",label = h5("Select y-axis"),"")),
-                                                            column(4,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
-                                                            ),
-                                                          fluidRow(
-                                                            column(4, selectInput("grid.lines.dot", label = h5("Add gridlines?"), choices = c("no","yes"))),
-                                                            column(4,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
-                                                            column(4,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"), selected = "random")),
+                                         selectInput("data_clone.index", "Unsummarised clone file:", choices = c("gd.test.clone" ,"own.clone.file")),
+                                         fileInput('file_diversity.index.2', 'Upload unsummarised clone file',
+                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                         selectInput("dataset7", "Merged FACS and clone file for colouring", choices = c("test-csv" ,"own_csv")),
+                                         fileInput('file_FACS.csv1', 'FACS+clone file',
+                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                         selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv_file")),
+                                         fileInput('file_FACS.csv2', 'File for dot plot',
+                                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                                         fluidRow(
+                                           column(4, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
+                                           column(4, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 )),
+                                           column(4, selectInput("int.type" ,label = h5("Line type"), choices = c("solid","dotted","dashed")))
+                                           ),
+                                         fluidRow(
+                                           column(4, colourInput("intercept.col",label = h5("Line colour"),value = "grey" )),
+                                           column(4, numericInput("min.y",label = h5("Min range (y-axis)"),value = 1 )),
+                                           column(4, numericInput("min.x",label = h5("min range (x-axis)"),value = 1 ))),                                        
+                                         
+                                         
+                                        fluidRow(
 
-                                                          ),
-                                                          fluidRow(
-                                                            column(4, numericInput("yintercept",label = h5("y-intercept line"),value = 1000 )),
-                                                            column(4, numericInput("xintercept",label = h5("x-intercept line"),value = 1000 )),
-                                                            column(4, selectInput("int.type" ,label = h5("Line type"), choices = c("solid","dotted","dashed")))
-                                                          ),
-                                                          fluidRow(
-                                                            column(4, colourInput("intercept.col",label = h5("Line colour"),value = "grey" )),
-                                                            column(4, numericInput("min.y",label = h5("Min range (y-axis)"),value = 1 )),
-                                                            column(4, numericInput("min.x",label = h5("min range (x-axis)"),value = 1 ))),                     
-                                                          fluidRow(
-                                                            column(4, numericInput("max.y",label = h5("Max range (y-axis)"),value = 5 )),
-                                                            column(4, numericInput("max.x",label = h5("Max range (x-axis)"),value = 5 )),  
-                                                            column(4, numericInput("leg.dot.size",label = h5("Legend dot size"),value = 5 ))),
-                                                          fluidRow(
-                                                            column(4, numericInput("axis.numeric.size",label = h5("Numeric text size"),value = 28 )),
-                                                            column(4, numericInput("axis.title.size",label = h5("Label text size"),value = 40 )),
-                                                            column(4, numericInput("dot.alpha",label = h5("Transparancy of point"),value = 1 )),
-                                                          ),
-                                                          fluidRow(
-                                                            column(4, selectInput("legend.dot",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
-                                                            column(4,numericInput("legend.size.cd","Legend text size",value=12)),
-                                                            column(4,numericInput("legend.column", "# of legend columns", value=1)),
-                                                          ),    
+                                            column(4, numericInput("max.y",label = h5("Max range (y-axis)"),value = 5 )),
+                                            column(4, numericInput("max.x",label = h5("Max range (x-axis)"),value = 5 )),  
+                                            column(4, numericInput("leg.dot.size",label = h5("Legend dot size"),value = 5 ))),
+                                        
+                                           fluidRow(
+                                           column(4, numericInput("axis.numeric.size",label = h5("Numeric text size"),value = 28 )),
+                                           column(4, numericInput("axis.title.size",label = h5("Label text size"),value = 40 )),
+                                           column(4, numericInput("dot.alpha",label = h5("Transparancy of point"),value = 1 )),
                                          ),
-   
-                            ),
-                            mainPanel(tabsetPanel(id = "tabselected",
-                              
-                 # merging FACS file with clone file -----
-                              tabPanel("Merging paired TCR with Index data",value = 1,
-                                       div(DT::dataTableOutput("FACS.CSV")),
-                                       # div(DT::dataTableOutput("merged.clone")),
-                                       div(DT::dataTableOutput("merged.index.clone")),
-                                       
+                                         
+                                         fluidRow(
+                                           
+                                           
+                                           column(4, selectInput("legend.dot",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
+                                           column(4,numericInput("legend.size.cd","Legend text size",value=12)),
+                                           column(4,numericInput("legend.column", "# of legend columns", value=1)),
+                                         ),
+                                         
 
+                            ),
+                            mainPanel(tabsetPanel(
+
+                 # merging FACS file with clone file -----
+                              tabPanel("Combined scTCR with Index data",
+                              div(DT::dataTableOutput("FACS.CSV")),
+                             # div(DT::dataTableOutput("merged.clone")),
+                              div(DT::dataTableOutput("merged.index.clone")),
+                             
+                             textInput("name.colour2","Prefix of file name","ID.780_plate1.section1."),
+                              downloadButton('downloadTABLE_FACS','Download table')
                               ),
-                              
+  
                  # UI complex dotplot add columns if needed -----
-                              tabPanel("Data cleaning steps",value = 2,
-                                       
-                                       selectInput("string.data","Recommended selecting for ab TCR data: Indiv (or group),TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. \nDo not select flurochrome columns, clone, cloneCount, LocX or LocY, row or column","",multiple = T, width = "1200px"),
-                                       div(DT::dataTableOutput("table.index.1")),
-                                       
-                                       ),
+                              tabPanel("Adding columns for colouring",
+
+                                selectInput("string.data","Recommended selecting for ab TCR data: Indiv (or group),TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. \nDo not select flurochrome columns, clone, cloneCount, LocX or LocY, row or column","",multiple = T, width = "1200px"),
+                               
+                                fluidRow(
+                                  column(2,selectInput("group.col.dot",label = h5("Group"),"")),
+                                  column(2,selectInput("V.gene.1",label = h5("V Gene 1"),"")),
+                                  column(2,selectInput("CDR3.1",label = h5("CDR3 1"),"")),
+                                  column(2,selectInput('V.gene.2', label = h5("V Gene 2"), "")),
+                                  column(2,selectInput("CDR3.2",label = h5("CDR3 1"),"")),
+                                 
+                                ),
+                                fluidRow(
+                                  column(6,numericInput("numeric.cloneCount","Filter based on number of times a clone was observed: select 0 for all",value=1))
+                                ),
+                                div(DT::dataTableOutput("table.index.1")),
+                                verbatimTextOutput("NAMES.df"),
+                                
+                                textInput("name.colour","Prefix of file name","ID.780_"),
+                                downloadButton('downloadTABLE_cleaning','Download table')),
                  # UI complex dotplot -----
-                              tabPanel("TCR with Index data plot",value = 3,
-                                      
-                                       
-                                       fluidRow(column(3,
-                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 250px",
-                                                                 h4("Colour"),
-                                                                 uiOutput('myPanel.FACS.index'),
-                                                       )),
-                                                
-                                                column(3,
-                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 250px",
-                                                                 h4("Shape"),
-                                                                 uiOutput('myPanel.FACS.index.shape')
-                                                                 
-                                                       )),
-                                                
-                                                column(3,
-                                                       wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 250px",
-                                                                 h4("Size"),
-                                                                 uiOutput('myPanel.FACS.index.size')
-                                                                 
-                                                       )),
-                                                column(3, tags$img(src = "shape.png", height = "250px"))
-                                                
-                                                
-                                       ),
-                                       fluidRow(column(12, plotOutput("dot_plot.complex2",height = "600px"))),
-                                       
-                                       textInput("name.colour3","Prefix of file name","ID.780_"),
-                                       
-                                       fluidRow(
-                                         column(3,numericInput("width_complex.dotplot", "Width of PDF", value=10)),
-                                         column(3,numericInput("height_complex.dotplot", "Height of PDF", value=8)),
-                                         column(3),
-                                         column(3,style = "margin-top: 25px;",downloadButton('downloadPlot_complex.dotplot','Download PDF'))
-                                       ),
-                                       fluidRow(
-                                         column(3,numericInput("width_png_complex.dotplot","Width of PNG", value = 1600)),
-                                         column(3,numericInput("height_png_complex.dotplot","Height of PNG", value = 1200)),
-                                         column(3,numericInput("resolution_PNG_complex.dotplot","Resolution of PNG", value = 144)),
-                                         column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_complex.dotplot','Download PNG'))
-                                       ),
-                              )
+                                tabPanel("Complex dotplot",
+                                         fluidRow(
+                                           column(2,selectInput("x.axis2",label = h5("Select x-axis"),"")),
+                                           column(2,selectInput("y.axis2",label = h5("Select y-axis"),"")),
+                                           column(2,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
+                                           column(2, selectInput("grid.lines.dot", label = h5("Add gridlines?"), choices = c("no","yes"))),
+                                           column(2,selectInput("group_complex_dot",label = h5("Colour by:"),"")),
+                                           column(2,selectInput( "FACS.index_colour.choise",label = h5("Colour"),choices = c("default","random","grey"), selected = "random")),
+                                           
+                                           
+                                         ),
+
+                                         fluidRow(column(3,
+                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
+                                                                   h4("Colour"),
+                                                                   uiOutput('myPanel.FACS.index'),
+                                                                   )),
+                                                  
+                                                  column(3,
+                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
+                                                                   h4("Shape"),
+                                                                   uiOutput('myPanel.FACS.index.shape')
+                                                                   
+                                                         )),
+                                                  
+                                                  column(3,
+                                                         wellPanel(id = "tPanel222",style = "overflow-y:scroll; max-height: 350px",
+                                                                   h4("Size"),
+                                                                   uiOutput('myPanel.FACS.index.size')
+                                                                   
+                                                         )),
+                                                  column(3, tags$img(src = "shape.png", height = "300px"))
+                                                  
+                                                  
+                                                  ),
+                                         fluidRow(column(12, plotOutput("dot_plot.complex2",height = "600px"))),
+                                         
+                                         textInput("name.colour3","Prefix of file name","ID.780_"),
+                                         
+                                           fluidRow(
+                                           column(3,numericInput("width_complex.dotplot", "Width of PDF", value=10)),
+                                           column(3,numericInput("height_complex.dotplot", "Height of PDF", value=8)),
+                                           column(3),
+                                           column(3,style = "margin-top: 25px;",downloadButton('downloadPlot_complex.dotplot','Download PDF'))
+                                         ),
+                                         fluidRow(
+                                           column(3,numericInput("width_png_complex.dotplot","Width of PNG", value = 1600)),
+                                           column(3,numericInput("height_png_complex.dotplot","Height of PNG", value = 1200)),
+                                           column(3,numericInput("resolution_PNG_complex.dotplot","Resolution of PNG", value = 144)),
+                                           column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_complex.dotplot','Download PNG'))
+                                         ),
+                                         )
                             )
                             )
                           )
                  )
-)
+                 )
 ##### 
-
+ 
 server  <- function(input, output, session) {
   # reactive variables -----
   vals <- reactiveValues(Treemap=NULL)
@@ -1010,30 +873,9 @@ server  <- function(input, output, session) {
     print(sessionInfo())
   })
   
-  output$video <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 800, height = 533.3333)
-  })
-  
-  output$video2 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/bxC-OYBTFig", width = 800, height = 533.3333)
-  })
 
-  output$video3 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/nxq_SX6Rt9o", width = 800, height = 533.3333)
-  })
 
-  output$video4 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/Y3HjPZzHnSc", width = 800, height = 533.3333)
-  })
 
-  output$video5 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/NY35nCEx_oY", width = 800, height = 533.3333)
-  })
-
-  output$video6 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/juZrSQDDhQA", width = 800, height = 533.3333)
-  })
-  
   # IMGT only  -----
   input.data_IMGT.xls3 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls3(), "own_data" = own.data.IMGT3())})
   test.data_ab.xls3 <- reactive({
@@ -1054,7 +896,7 @@ server  <- function(input, output, session) {
   test.data_ab.xls4 <- reactive({
     dataframe = read_xls("Raw_data/vquest-2.xls",sheet = 2) 
   })
-  
+
   own.data.IMGT4 <- reactive({
     inFile_IMGT4 <- input$file_IMGT3
     if (is.null(inFile_IMGT4)) return(NULL)
@@ -1068,19 +910,13 @@ server  <- function(input, output, session) {
   })
   IMGT2 <- reactive({
     df1 <- input.data_IMGT.xls3();
-    
-    validate(
-      need(nrow(df1)>0,
-           "Upload file")
-    )
+    df2 <- input.data_IMGT.xls4();
     
     
     
     
     
     if (input$include.origin == "no" && input$sheet == "Summary+JUNCTION") {
-      df2 <- input.data_IMGT.xls4();
-      
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","JUNCTION (with frameshift)","CDR3-IMGT (with frameshift)","Sequence")]
       df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","V-REGION")]
       
@@ -1110,7 +946,6 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
       
@@ -1122,8 +957,6 @@ server  <- function(input, output, session) {
       
     }
     else if (input$include.origin == "yes" && input$sheet == "Summary+JUNCTION") {
-      
-      df2 <- input.data_IMGT.xls4();
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","JUNCTION (with frameshift)","CDR3-IMGT (with frameshift)","Sequence")]
       
       df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","3'V-REGION","P3'V","N-REGION","N1-REGION","P5'D","D-REGION", "P3'D","P5'D1","D1-REGION","P3'D1", "N2-REGION","P5'D2",    "D2-REGION","P3'D2",    "N3-REGION", "P5'D3","D3-REGION","P3'D3",    "N4-REGION","P5'J","5'J-REGION")]
@@ -1153,7 +986,6 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
@@ -1193,7 +1025,6 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
@@ -1235,7 +1066,6 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
@@ -1247,7 +1077,7 @@ server  <- function(input, output, session) {
       df_chain1
       
     }
-    
+
   })
   
   output$IMGT2_out <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
@@ -1263,11 +1093,11 @@ server  <- function(input, output, session) {
       write.csv(df,file, row.names = FALSE)
     } )
   
-  
+
   # table of IMGT for pairing -----
-  input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own_data1" = own.data.csv3())})
+  input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own1" = own.data.csv3())})
   test.data.ab.csv3 <- reactive({
-    dataframe = read.csv("test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",header=T) 
+    dataframe = read.csv("test-data/QC/IMGT_only.QC2021.08.29.csv",header=T) 
   })
   own.data.csv3 <- reactive({
     inFile12 <- input$file_IMGT_afterQC
@@ -1281,12 +1111,6 @@ server  <- function(input, output, session) {
   
   chain_merge_IMGTonly <- reactive({
     df1 <- input.data.IMGT_afterQC();
-    
-    validate(
-      need(nrow(df1)>0,
-           "Upload file")
-    )
-    
     df1 <- as.data.frame(df1)
     df <- subset(df1,df1$clone_quality=="pass")
     df <- as.data.frame(df)
@@ -1301,15 +1125,23 @@ server  <- function(input, output, session) {
     if (input$IMGT_chain2 =="ab" & input$sheet2 == "Summary+JUNCTION") {
       
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
-      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name2)
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+      df_name3$V1 <- gsub("A","",df_name3$V1)
+      df_name3$V1 <- gsub("B","",df_name3$V1)
       
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name5)
       df2$ID <- df_name2$V1
-      head(df2)
+      
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
+      df2$clone <- df_name4$V2
+      names(df2)
+      
+      dim(df)
       
       chain1 <- df2[grep("A",df2$V.GENE),]
       chain2 <- df2[grep("B",df2$V.GENE),]
@@ -1327,30 +1159,15 @@ server  <- function(input, output, session) {
       merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
       names(merged_chain2)
       dat <- merged_chain2
-      dat$AV <- paste(dat$V.GENE_A)
-      dat$AJ <- paste(dat$J.GENE.and.allele_A,sep="")
-      dat$AVJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
-      dat$AV <- gsub("[*]0.","",dat$AV)
+      dat$AJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
+      dat$BJ <- paste(dat$V.GENE_B,".",dat$J.GENE.and.allele_B,sep="")
       dat$AJ <- gsub("[*]0.","",dat$AJ)
-      dat$AVJ <- gsub("[*]0.","",dat$AVJ)
-      
-      dat$BV <- paste(dat$V.GENE_B)
-      dat$BJ <- paste(dat$J.GENE.and.allele_B)
-      dat$BD <- paste(dat$D.GENE.and.allele_B)
-      dat$BVDJ <- paste(dat$V.GENE_B,".",dat$D.GENE.and.allele_B,".",dat$J.GENE.and.allele_B,sep="")
-      
-      dat$BV <- gsub("[*]0.","",dat$BV)
       dat$BJ <- gsub("[*]0.","",dat$BJ)
-      dat$BD <- gsub("[*]0.","",dat$BD)
-      dat$BVDJ <- gsub("[*]0.","",dat$BVDJ)
-    
       dat$AJ <- gsub("TR","",dat$AJ)
-      dat$AVJ <- gsub("TR","",dat$AJ)
-      
-      dat$AVJ.BVDJ <- paste(dat$AVJ,"_",dat$BVDJ,sep="")
-      dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$JUNCTION..AA._A,sep="_")
-      dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$JUNCTION..AA._B,sep="_")
-      dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
+      dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
+      dat$AJ_aCDR3 <- paste(dat$AJ,dat$JUNCTION..AA._A,sep="_")
+      dat$BJ_bCDR3 <- paste(dat$BJ,dat$JUNCTION..AA._B,sep="_")
+      dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
       head(dat)
       
       dat
@@ -1360,15 +1177,23 @@ server  <- function(input, output, session) {
     else if (input$IMGT_chain2 =="ab" & input$sheet2 == "Summary") {
       
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
-      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name2)
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+      df_name3$V1 <- gsub("A","",df_name3$V1)
+      df_name3$V1 <- gsub("B","",df_name3$V1)
       
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name5)
       df2$ID <- df_name2$V1
-      head(df2)
+      
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
+      df2$clone <- df_name4$V2
+      names(df2)
+      
+      dim(df)
       
       chain1 <- df2[grep("A",df2$V.GENE),]
       chain2 <- df2[grep("B",df2$V.GENE),]
@@ -1386,47 +1211,37 @@ server  <- function(input, output, session) {
       merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
       names(merged_chain2)
       dat <- merged_chain2
-      dat$AV <- paste(dat$V.GENE_A)
-      dat$AJ <- paste(dat$J.GENE.and.allele_A,sep="")
-      dat$AVJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
-      dat$AV <- gsub("[*]0.","",dat$AV)
+      dat$AJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
+      dat$BJ <- paste(dat$V.GENE_B,".",dat$J.GENE.and.allele_B,sep="")
       dat$AJ <- gsub("[*]0.","",dat$AJ)
-      dat$AVJ <- gsub("[*]0.","",dat$AVJ)
-      
-      dat$BV <- paste(dat$V.GENE_B)
-      dat$BJ <- paste(dat$J.GENE.and.allele_B)
-      dat$BD <- paste(dat$D.GENE.and.allele_B)
-      dat$BVDJ <- paste(dat$V.GENE_B,".",dat$D.GENE.and.allele_B,".",dat$J.GENE.and.allele_B,sep="")
-      
-      dat$BV <- gsub("[*]0.","",dat$BV)
       dat$BJ <- gsub("[*]0.","",dat$BJ)
-      dat$BD <- gsub("[*]0.","",dat$BD)
-      dat$BVDJ <- gsub("[*]0.","",dat$BVDJ)
-      
       dat$AJ <- gsub("TR","",dat$AJ)
-      dat$AVJ <- gsub("TR","",dat$AJ)
-      dat$AVJ.BVDJ <- paste(dat$AVJ,"_",dat$BVDJ,sep="")
-      dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$JUNCTION..AA._A,sep="_")
-      dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$JUNCTION..AA._B,sep="_")
-      dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
+      dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
+      dat$AJ_aCDR3 <- paste(dat$AJ,dat$AA.JUNCTION_A,sep="_")
+      dat$BJ_bCDR3 <- paste(dat$BJ,dat$AA.JUNCTION_B,sep="_")
+      dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
       head(dat)
-      
       dat
       
     }
     
     else if (input$IMGT_chain2 =="gd" & input$sheet2 == "Summary+JUNCTION") {
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
-      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name2)
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+      df_name3$V1 <- gsub("G","",df_name3$V1)
+      df_name3$V1 <- gsub("D","",df_name3$V1)
       
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name5)
       df2$ID <- df_name2$V1
-      head(df2)
+      
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
-      
+      df2$clone <- df_name4$V2
+
       chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
       chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
       chain1$ID <- gsub("G-","-",chain1$ID)
@@ -1453,18 +1268,23 @@ server  <- function(input, output, session) {
       dat$GJ_gCDR3_DJ_dCDR3 <- paste(dat$DJ_dCDR3,dat$GJ_gCDR3,sep=" & ")
       dat
     }
-    
+      
     else  {
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
-      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name2)
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+      df_name3$V1 <- gsub("G","",df_name3$V1)
+      df_name3$V1 <- gsub("D","",df_name3$V1)
       
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      head(df_name5)
       df2$ID <- df_name2$V1
-      head(df2)
+      
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
+      df2$clone <- df_name4$V2
       
       chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
       chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
@@ -1496,28 +1316,28 @@ server  <- function(input, output, session) {
   })
   
   TSV.file.chain <- reactive({
-    dat <- chain_merge_IMGTonly()
-    dat$id <- paste0(input$tcr_lab,1:dim(dat)[1]) 
-    
-    
-    
-    if (input$IMGT_chain2 == "ab") {
-      dat <-  dat[,c("id","group","Indiv","Sequence_A","Sequence_B")]
-      names(dat) <- c("id","epitope","subject","a_nucseq","b_nucseq")
-      dat$a_quals <- ""
-      dat$b_quals <- ""
-      dat 
-      
-    }
-    
-    else {
-      dat <-  dat[,c("id","group","Indiv","Sequence_G","Sequence_D")]
-      names(dat) <- c("id","epitope","subject","g_nucseq","d_nucseq")
-      dat$g_quals <- ""
-      dat$d_quals <- ""
-      dat
-    }
-    
+   dat <- chain_merge_IMGTonly()
+   dat$id <- paste0(input$tcr_lab,1:dim(dat)[1]) 
+   
+   
+   
+  if (input$IMGT_chain2 == "ab") {
+    dat <-  dat[,c("id","group","Indiv","Sequence_A","Sequence_B")]
+    names(dat) <- c("id","epitope","subject","a_nucseq","b_nucseq")
+    dat$a_quals <- ""
+    dat$b_quals <- ""
+    dat 
+     
+   }
+   
+   else {
+     dat <-  dat[,c("id","group","Indiv","Sequence_G","Sequence_D")]
+     names(dat) <- c("id","epitope","subject","g_nucseq","d_nucseq")
+     dat$g_quals <- ""
+     dat$d_quals <- ""
+     dat
+   }
+
   })
   
   output$chain_table_IMGT.tcrdist <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
@@ -1531,14 +1351,16 @@ server  <- function(input, output, session) {
     df1 <- as.data.frame(df1)
     a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
     if (dim(a)[1]>0) {
-      df <- as.data.frame("please complete QC analysis")
+ df <- as.data.frame("please complete QC analysis")
       names(df) <- " "
-      df
-    }
+     df
+  }
     else {
       df <- chain_merge_IMGTonly()
       df <- as.data.frame(df)
       df
+     # df2 <- as.data.frame(ddply(df,names(df)[2:14],numcolwise(sum)))
+     # df2
       
     }
   })
@@ -1561,7 +1383,7 @@ server  <- function(input, output, session) {
       df <- as.data.frame(df)
       
       write.table(df, file, quote=FALSE, sep='\t', row.names = F)
-      
+
     } )
   
   
@@ -1579,20 +1401,20 @@ server  <- function(input, output, session) {
   
   observe({
     
-    if (input$type.chain == 'ab') {
-      updateSelectInput(
-        session,
-        "string.data3",
+      if (input$type.chain == 'ab') {
+        updateSelectInput(
+          session,
+          "string.data3",
         choices=names(input.data2()),
         selected = c("group","JUNCTION_A"))
-    }
-    else {
-      updateSelectInput(
-        session,
-        "string.data3",
+      }
+      else {
+        updateSelectInput(
+          session,
+          "string.data3",
         choices=names(input.data2()),
         selected = c("group","JUNCTION_G")) 
-    }
+      }
   }) 
   
   chain_table_summary <- reactive({
@@ -1609,119 +1431,36 @@ server  <- function(input, output, session) {
     
     
   })
-
-  chain_table_summary.TCRdist3.ab <- reactive({
-    df <- input.data2()
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    df <- as.data.frame(df)
-    df2 <- df[,c("Indiv","group","cloneCount","V.GENE.and.allele_A","J.GENE.and.allele_A","JUNCTION..AA._A","JUNCTION_A","V.GENE.and.allele_B","J.GENE.and.allele_B","JUNCTION..AA._B","JUNCTION_B")] 
-
-    names(df2) <- c("subject","epitope","count","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq")
-    
-    df2$clone_id <- paste("clone")
-    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq","clone_id"),numcolwise(sum)))
-    df3 <- df3[,c(1,2,12,3:11)]
-    df3
-    
-  })
-  
-  
-  chain_table_summary.TCRdist3.gd <- reactive({
-    df <- input.data2()
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    df <- as.data.frame(df)
-    df2 <- df[,c("Indiv","group","cloneCount","V.GENE.and.allele_G","J.GENE.and.allele_G","JUNCTION..AA._G","JUNCTION_G","V.GENE.and.allele_D","J.GENE.and.allele_D","JUNCTION..AA._D","JUNCTION_D")] 
-    
-    names(df2) <- c("subject","epitope","count","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq")
-    
-    df2$clone_id <- paste("clone")
-    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq","clone_id"),numcolwise(sum)))
-    df3 <- df3[,c(1,2,12,3:11)]
-    df3
-    
-  })
   
   
   output$chain_table_IMGT.QC3 <- DT::renderDataTable(escape = FALSE, options = list(autoWidth = FALSE, lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
     df1 <- input.data.IMGT_afterQC();
     df1 <- as.data.frame(df1)
     
-    if (input$type.of.graph == "general summary") {
+    a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
+    if (dim(a)[1]>0) {
+      df <- as.data.frame("please complete QC analysis")
+      names(df) <- " "
+      df
+      
+    }
+    else {
+     
       chain_table_summary()
     }
-    
-    else if (input$type.of.graph == "TCRdist3" && input$type.chain == "ab") {
-      chain_table_summary.TCRdist3.ab()
-    }
-    
-    
-    else if (input$type.of.graph == "TCRdist3" && input$type.chain == "gd") {
-      chain_table_summary.TCRdist3.gd()
-    }
-    
-    
-    else {
-      
-      chain_table_summary.TCRdist3()
-      
-    }
-    
-      })
+  })
+
   
-  # summary table download file -----
   output$downloadTABLE.QC3 <- downloadHandler(
     filename = function(){
-      if (input$type.of.graph == "general summary") {
-        paste("paired_chain_CDR3",gsub("-", ".", Sys.Date()),".csv", sep = "")
-      }
-      
-      else if (input$type.of.graph == "TCRdist3" && input$type.chain == "ab") {
-        paste("paired_TCRdist.ab",gsub("-", ".", Sys.Date()),".csv", sep = "")
-      }
-        
-        else if (input$type.of.graph == "TCRdist3" && input$type.chain == "gd") {
-          paste("paired_TCRdist.gd",gsub("-", ".", Sys.Date()),".csv", sep = "")
-        }
-      
-      
-      else {
-        paste("paired_TCRdist",gsub("-", ".", Sys.Date()),".csv", sep = "")
-      }
-      
-      },
+      paste("paired_chain_CDR3",gsub("-", ".", Sys.Date()),".csv", sep = "")
+    },
     content = function(file){
-      
-      if (input$type.of.graph == "general summary") {
-        df <- chain_table_summary()
+      df <- chain_table_summary()
         write.csv(df,file, row.names = FALSE)
-      }
-      
-      else if (input$type.of.graph == "TCRdist3" && input$type.chain == "ab") {
-        df <- chain_table_summary.TCRdist3.ab()
-        write.csv(df,file, row.names = FALSE)
-      }
-      
-      else if (input$type.of.graph == "TCRdist3" && input$type.chain == "gd") {
-        df <- chain_table_summary.TCRdist3.gd()
-        write.csv(df,file, row.names = FALSE)
-      }
-      
-      
-      else {
-        df <- chain_table_summary()
-        write.csv(df,file, row.names = FALSE)
-      }
-
-      
     })
   
-  ## output VDJtools ----
+## output VDJtools ----
   # observe({
   #   updateSelectInput(
   #     session,
@@ -1750,10 +1489,9 @@ server  <- function(input, output, session) {
   
   
   # Tree map ------
-  input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2(),"own_data2" = own.data2())})
+  input.data2 <- reactive({switch(input$dataset,"test-data" = test.data2(),"own" = own.data2())})
   test.data2 <- reactive({
-    # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
-    dataframe = read.csv("inst/extdata/test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
+    dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
   })
   own.data2 <- reactive({
     inFile2 <- input$file2 
@@ -1781,7 +1519,7 @@ server  <- function(input, output, session) {
       session,
       "fill2",
       choices=names(input.data2()),
-      selected = "AVJ" )
+      selected = "AJ" )
     
   })
   observe({
@@ -1789,19 +1527,17 @@ server  <- function(input, output, session) {
       session,
       "sub_group2",
       choices=names(input.data2()),
-      selected = "AVJ.BVJ")
+      selected = "AJBJ")
     
   })
-
   observe({
     updateSelectInput(
       session,
-      "string.data.tree.order",
-      choices=select_group(),
-      selected = c("IFN","CD8")) 
-  }) 
-  
-  
+      "wrap",
+      choices=names(input.data2()),
+      selected = "group")
+    
+  })
   cols <- reactive({
     dat <- input.data2();
     dat <- as.data.frame(dat)
@@ -1810,14 +1546,9 @@ server  <- function(input, output, session) {
     col.gg <- gg_fill_hue(dim(num)[1])
     unique.col <- as.data.frame(unique(dat[grep(input$fill2,names(dat))]))
     
-    palette_rainbow <- rev(rainbow(dim(num)[1]))
     
-    if (input$tree_colour.choise == "rainbow") {
-      lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col", i, sep="_"), paste(num[i,]), palette_rainbow[i])        
-      }) }
     
-   else if (input$tree_colour.choise == "default") {
+    if (input$tree_colour.choise == "default") {
       lapply(1:dim(num)[1], function(i) {
         colourInput(paste("col", i, sep="_"), paste(num[i,]), col.gg[i])        
       })
@@ -1832,7 +1563,7 @@ server  <- function(input, output, session) {
     
     else {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col", i, sep="_"), paste(num[i,]), input$one.colour.default)        
+        colourInput(paste("col", i, sep="_"), paste(num[i,]), "grey")        
       })
       
       
@@ -1866,101 +1597,91 @@ server  <- function(input, output, session) {
       cols <- unlist(colors())
     }
     
-    if (input$tree.lab == "yes" & input$type.tree == "raw data") {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
-      df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
-      unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
-      names(unique.col) <- "V1"
-      unique.col$tree_palette <- cols
-      
-      
-      
-      df3 <- as.data.frame(merge(df2,unique.col,by.x=input$fill2,by.y = "V1"))
-      
-      
-      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
-      
-      vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
-                                          fill = get(input$fill2),
-                                          subgroup = get(input$sub_group2))) +
-        geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
-        geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
-                                   colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
-        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = input$panel.text.size.tree, family = input$font_type))+
-        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
-        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
-        
-      vals22$Treemap22
-      
-    }
-    else if (input$tree.lab == "no" & input$type.tree == "raw data") {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
+   
+    
+    if (input$tree.lab == "yes" & input$type.tree == "scTCR") {
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
       df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
       unique.col$tree_palette <- cols
       df3 <- as.data.frame(merge(df2,unique.col,by.x=input$fill2,by.y = "V1"))
       
-      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
-      
       vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
                                           fill = get(input$fill2),
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))+
-        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
-        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
-      vals22$Treemap22
-      
-      
-    }
-    else if (input$tree.lab == "yes" & input$type.tree == "Summarised data") {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
-      unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
-      names(unique.col) <- "V1"
-      unique.col$tree_palette <- cols
-      df3 <- as.data.frame(merge(df1,unique.col,by.x=input$fill2,by.y = "V1"), replace = FALSE)
-      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
-      vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
-                                          fill = get(input$fill2),
-                                          subgroup = get(input$sub_group2))) +
-        geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
-        geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
+        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = "serif",
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
-        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))+
-        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
-        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
+        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = "serif"))
       vals22$Treemap22
-      
+
     }
-    else {
-      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
+    
+    else if (input$tree.lab == "no" & input$type.tree == "scTCR") {
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
+      df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
       unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
       names(unique.col) <- "V1"
       unique.col$tree_palette <- cols
-      df3 <- as.data.frame(merge(df1,unique.col,by.x=input$fill2,by.y = "V1"), replace = FALSE)
-      df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
+      df3 <- as.data.frame(merge(df2,unique.col,by.x=input$fill2,by.y = "V1"))
+      
       vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
                                           fill = get(input$fill2),
                                           subgroup = get(input$sub_group2))) +
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
-        facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))+
-        theme(strip.background =element_rect(fill=input$strip.colour.tree))+
-        theme(strip.text = element_text(colour = input$strip.text.colour.tree))
+        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = "serif"))
+      vals22$Treemap22
+      
+      
+    }
+    
+    else if (input$tree.lab == "yes" & input$type.tree == "bulk") {
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
+      unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
+      names(unique.col) <- "V1"
+      unique.col$tree_palette <- cols
+      df3 <- as.data.frame(merge(df1,unique.col,by.x=input$fill2,by.y = "V1"), replace = FALSE)
+      
+      vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
+                                          fill = get(input$fill2),
+                                          subgroup = get(input$sub_group2))) +
+        geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
+        geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
+        geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = "serif",
+                                   colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
+        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = "serif"))
       vals22$Treemap22
       
     }
     
+    
+    else {
+      df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$wrap)]
+      unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
+      names(unique.col) <- "V1"
+      unique.col$tree_palette <- cols
+      df3 <- as.data.frame(merge(df1,unique.col,by.x=input$fill2,by.y = "V1"), replace = FALSE)
+      
+      vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
+                                          fill = get(input$fill2),
+                                          subgroup = get(input$sub_group2))) +
+        geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
+        geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
+        facet_wrap(~get(input$wrap),nrow = input$nrow.tree) +
+        theme(strip.text = element_text(size = 20, family = "serif"))
+      vals22$Treemap22
+
+    }
+
     
   })
+  
   output$Treemap2 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
@@ -1968,7 +1689,7 @@ server  <- function(input, output, session) {
                  })
     tree_plot_dynamic()
   })
-  # download Treeplots -----
+  
   output$downloadPlot_scTREE <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
@@ -2012,22 +1733,6 @@ server  <- function(input, output, session) {
     #names(df2) <- "V1"
     df2
   }
-  
-  selected_chain_1 <- function () {
-    df <- input.data2();
-    
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    
-    df2 <- as.data.frame(unique(df[names(df) %in% input$chain1]))
-    df2 <- as.data.frame(df2)
-    #names(df2) <- "V1"
-    df2
-  }
-  
-  
   observe({
     updateSelectInput(
       session,
@@ -2040,7 +1745,7 @@ server  <- function(input, output, session) {
       session,
       "chain1",
       choices=names(input.data2()),
-      selected = "AV")
+      selected = "AJ")
     
   }) # chain 1
   observe({
@@ -2048,7 +1753,7 @@ server  <- function(input, output, session) {
       session,
       "chain2",
       choices=names(input.data2()),
-      selected = "AJ")
+      selected = "BJ")
     
   }) # chain 2
   output$table_display <- renderTable({
@@ -2072,7 +1777,6 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     # dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     
@@ -2081,24 +1785,12 @@ server  <- function(input, output, session) {
     df.col.2 <- rbind(df.col1,df.col.j)
     df.col.2
     
-    
-    
     palette_rainbow <- rev(rainbow(length(t(df.col.2))))
     
-    
-    
     if (input$colour_cir == "rainbow") {
-      lapply(1:dim(df.col.2)[1], function(i) {
-        colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), palette_rainbow[i])        
-      }) }
-    
-    else if (input$colour_cir == "default") {
-      lapply(1:dim(df.col.2)[1], function(i) {
-        col.gg <- gg_fill_hue(dim(df.col.2)[1])
-        colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), col.gg[i])        
-      })
-    }
-    
+    lapply(1:dim(df.col.2)[1], function(i) {
+      colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), palette_rainbow[i])        
+    }) }
     
     else if (input$colour_cir == "random") {
       
@@ -2106,25 +1798,13 @@ server  <- function(input, output, session) {
         palette2 <- distinctColorPalette(dim(df.col.2)[1])
         colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), palette2[i])        
       }) }
-    
     else  {
       lapply(1:dim(df.col.2)[1], function(i) {
-        colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), input$one.colour.default)        
+        colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), "grey")        
       }) }
     
   })
   output$myPanel_circ <- renderUI({cols_circ()})
-  
-  
-  observe({
-    updateSelectInput(
-      session,
-      "string.data.circ.order",
-      choices=selected_chain_1(),
-      selected = c("AV4","AV22","AV19")) 
-  }) 
-  
-  
   colors_cir <- reactive({
     dat <- input.data2();
     validate(
@@ -2134,7 +1814,6 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     # dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     
@@ -2142,7 +1821,7 @@ server  <- function(input, output, session) {
     names(df.col.j) <- "V1"
     df.col.2 <- rbind(df.col1,df.col.j)
     df.col.2
-    
+
     lapply(1:dim(df.col.2)[1], function(i) {
       input[[paste("col.cir", i, sep="_")]]
     })
@@ -2154,7 +1833,6 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
@@ -2176,7 +1854,6 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
@@ -2209,7 +1886,7 @@ server  <- function(input, output, session) {
     
   })
   Circular_plot2 <- function () {
-    
+   
     dat <- input.data2();
     validate(
       need(nrow(dat)>0,
@@ -2218,7 +1895,6 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     hierarchy$cloneCount <- 1
     chain1 <- as.data.frame(ddply(hierarchy,names(hierarchy)[-c(2,3)],numcolwise(sum)))
     chain1 <- chain1[order(chain1$cloneCount, decreasing = T),]
@@ -2226,171 +1902,68 @@ server  <- function(input, output, session) {
     chain2 <- as.data.frame(ddply(hierarchy,names(hierarchy)[-c(1,3)],numcolwise(sum)))
     chain2 <- chain2[order(chain2$cloneCount, decreasing = T),]
     
-    
+   
     
     df.col1 <- as.data.frame(chain1[,1])
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(chain2[,1])
     names(df.col.j) <- "V1"
     df.col.2 <- rbind(df.col1,df.col.j)
-    
-    grid.col1 <- as.data.frame(col.table1())
-    grid.col2 <- grid.col1[,names(grid.col1) %in% df.col.2$V1]
-    grid.col2 <-grid.col2[,order(names(grid.col2))]
-    grid.col3 <- as.matrix(grid.col2)
-    names(grid.col3) <- names(grid.col2)
-    
-    hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
-    hierarchy <- as.matrix(table(hierarchy[,1], hierarchy[,2]))
+
+      grid.col1 <- as.data.frame(col.table1())
+      grid.col2 <- grid.col1[,names(grid.col1) %in% df.col.2$V1]
+      grid.col2 <-grid.col2[,order(names(grid.col2))]
+      grid.col3 <- as.matrix(grid.col2)
+      names(grid.col3) <- names(grid.col2)
+      
+      hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
+      
+      
+      par(mar = rep(0, 4), cex=0.8)
  
-    par(mar = rep(0, 4), cex=input$CHORD.cex, family = input$font_type)
-    
-    if (input$circ_lab=="Label") {
-      circos.clear()
-      #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   transparency = input$chord.transparancy,
-                   # transparency = 0.5,
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      # we go back to the first track and customize sector labels
-      circos.track(track.index = 1, panel.fun = function(x, y) {
-        circos.par(track.margin=c(0,0)) 
-        xlim = get.cell.meta.data("xlim")
-        sector.index = get.cell.meta.data("sector.index")
-        #text direction (dd) and adjusmtents (aa)
-        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
-        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
-        aa = c(1, 0.5)
-        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
-        circos.text(x = mean(xlim), y = 0.1, labels = sector.index, facing = dd, adj = aa)
+      if (input$circ.lab=="yes") {
         
-      }, bg.border = NA)
-      
-    }
-    # 'colour selected clone/s (label)' || 'colour selected clone/s (no label)''
-    else if (input$circ_lab =="colour selected clone/s (label)") {
-      
-      # line thickness
-      lwd_mat = hierarchy
-      lwd_mat[lwd_mat>0] <- "x"
-      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- input$thickness.chord.line
-      lwd_mat[!rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- 0
-      lwd_mat[lwd_mat==0] <- 1
+        
+        circos.clear()
+        #par(new = TRUE) # <- magic
+        circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+        chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
+                     order = df.col.2$V1,
+                     transparency = input$chord.transparancy,
+                     preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
+        # we go back to the first track and customize sector labels
+        circos.track(track.index = 1, panel.fun = function(x, y) {
+          circos.par(track.margin=c(0,0)) 
+          xlim = get.cell.meta.data("xlim")
+          sector.index = get.cell.meta.data("sector.index")
+          #text direction (dd) and adjusmtents (aa)
+          theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
+          dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
+          aa = c(1, 0.5)
+          if(theta < 90 || theta > 270)  aa =c(0, 0.5)
+          circos.text(x = mean(xlim), y = 0.1, labels = sector.index, facing = dd, adj = aa)
+          
+          
+          #circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
+          #            facing = "clockwise", niceFacing = TRUE, adj = c(0, 0))
+          
+          
+        }, bg.border = NA)
+        
+      }
 
+      else {
+        
+        circos.clear()
+        #par(new = TRUE) # <- magic
+        circos.par("canvas.xlim" = c(-2, 2), "canvas.ylim" = c(-1, 1))
+        chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
+                     order = df.col.2$V1,
+                     preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
 
-      # boarder colour
-      border_mat <- hierarchy
-      border_mat[border_mat>0] <- 1
-      border_mat[rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- input$colour.chord.line
-      border_mat[!rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- 0
-      border_mat[border_mat==0] <- NA
-      border_mat
-      
-      # line type 
-      lty_mat = hierarchy
-      lty_mat[lty_mat>0] <- input$line.chord.type
-
-      # transparancy 
-      alpha_mat <- hierarchy
-      alpha_mat[alpha_mat>0] <- 1
-      alpha_mat[rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$selected.chord.transparacy
-      alpha_mat[!rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$unselected.chord.transparacy
-      alpha_mat
-
-      circos.clear()
-      #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   link.lty = lty_mat,
-                   link.lwd = lwd_mat,
-                   link.border = border_mat,
-                   transparency = alpha_mat,
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      # we go back to the first track and customize sector labels
-      circos.track(track.index = 1, panel.fun = function(x, y) {
-        circos.par(track.margin=c(0,0)) 
-        xlim = get.cell.meta.data("xlim")
-        sector.index = get.cell.meta.data("sector.index")
-        #text direction (dd) and adjusmtents (aa)
-        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
-        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
-        aa = c(1, 0.5)
-        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
-        circos.text(x = mean(xlim), y = 0.1, labels = sector.index, facing = dd, adj = aa)
-      }, bg.border = NA)
-    }
+      }
     
-    else if (input$circ_lab =="colour selected clone/s (no label)") {
-      lwd_mat = hierarchy
-      
-      # line thickness
-      lwd_mat = hierarchy
-      lwd_mat[lwd_mat>0] <- "x"
-      lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- input$thickness.chord.line
-      lwd_mat[!rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- 0
-      lwd_mat[lwd_mat==0] <- 1
-      
-      
-      # boarder colour
-      border_mat <- hierarchy
-      border_mat[border_mat>0] <- 1
-      border_mat[rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- input$colour.chord.line
-      border_mat[!rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- 0
-      border_mat[border_mat==0] <- NA
-      border_mat
-      
-      # line type 
-      lty_mat = hierarchy
-      lty_mat[lty_mat>0] <- input$line.chord.type
-      
-      # transparancy 
-      alpha_mat <- hierarchy
-      alpha_mat[alpha_mat>0] <- 1
-      alpha_mat[rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$selected.chord.transparacy
-      alpha_mat[!rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$unselected.chord.transparacy
-      alpha_mat
-      
-      circos.clear()
-      #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   link.lty = lty_mat,
-                   link.lwd = lwd_mat,
-                   link.border = border_mat,
-                   transparency = alpha_mat,
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      # we go back to the first track and customize sector labels
-      circos.track(track.index = 1, panel.fun = function(x, y) {
-        circos.par(track.margin=c(0,0))
-        xlim = get.cell.meta.data("xlim")
-        sector.index = get.cell.meta.data("sector.index")
-        #text direction (dd) and adjusmtents (aa)
-        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
-        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
-        aa = c(1, 0.5)
-        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
-
-      }, bg.border = NA)
-
-
-    }
-
-    else {
-      
-
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      
-    }
-    
-  }
+  } 
   output$Circular <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
@@ -2425,145 +1998,14 @@ server  <- function(input, output, session) {
       session,
       "aa.or.nt",
       choices=names(input.data2()),
-      selected = "JUNCTION..AA._A") 
+      selected = "JUNCTION_B") 
   }) # amino acid or nucleotides column
   observe({
     updateSelectInput( 
       session,
       "selected_group_len",
       choices=select_group()) }) # group
-  observe({
-    updateSelectInput(
-      session,
-      "chain.hist.col",
-      choices=names(input.data2()),
-      selected = "AVJ")
-    
-  })
   
-  cols.hist <- reactive({
-    df <- input.data2(); 
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    df <- as.data.frame(df)
-    # 
-    # df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
-    df1 <- df
-    df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
-    
-    df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
-    df1 <- df1[order(df1$chain, decreasing = F),]
-    df1$chain <- factor(df1$chain,levels = unique(df1$chain))
-    
-    num <- as.data.frame(unique(df1$chain))
-    
-    col.gg <- gg_fill_hue(dim(num)[1])
-    unique.col <- as.data.frame(unique(df$chain))
-    
-    palette_rainbow <- rev(rainbow(dim(num)[1]))
-    
-    if (input$hist_colour.choise == "rainbow") {
-      lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), palette_rainbow[i])        
-      }) }
-    else if (input$hist_colour.choise == "default") {
-      lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), col.gg[i])        
-      })
-    }
-    else if (input$hist_colour.choise == "random") {
-      palette1 <- distinctColorPalette(dim(num)[1])
-      lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), palette1[i])        
-      })
-      
-    }
-    else {
-      lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.hist", i, sep="_"), paste(num[i,]), input$one.colour.default)        
-      })
-      
-      
-    }
-    
-  })
-  output$myPanel.hist <- renderUI({cols.hist()})
-  
-  colors.hist <- reactive({
-    df <- input.data2(); 
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    df <- as.data.frame(df)
-    df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
-    df1 <- ddply(df,names(df.names) ,numcolwise(sum))
-    df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
-    
-    df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
-    df1 <- df1[order(df1$chain,decreasing = F),]
-    df1$chain <- factor(df1$chain,levels = unique(df1$chain))
-    
-    num <- as.data.frame(unique(df1$chain))
-
-    lapply(1:dim(num)[1], function(i) {
-      input[[paste("col.hist", i, sep="_")]]
-    })
-  })
-
-  output$hist.table <- DT::renderDataTable( {
-    df <- input.data2(); 
-    df <- as.data.frame(df)
-    df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
-    df1 <- ddply(df,names(df.names) ,numcolwise(sum))
-    
-    df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
-    df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
-    df1 <- df1[order(df1$chain, decreasing = F),]
-    df1$chain <- factor(df1$chain,levels = unique(df1$chain))
-    df.col.2 <- as.data.frame(hist.col.table())
-    names(df.col.2) <- c("V1","col")
-    df.col.2
-    df1 <- subset(df1, get(input$group_column)==input$selected_group_len)
-    df.col.2[df.col.2$V1 %in% unique(df1$chain),]
-    
-    datatable(df.col.2[df.col.2$V1 %in% unique(df1$chain),], extensions = "Buttons", options = list(searching = TRUE,
-                                                                                        ordering = TRUE,
-                                                                                        buttons = c('copy','csv', 'excel'),
-                                                                                        dom = 'Bfrtip',
-                                                                                        pageLength=5, 
-                                                                                        lengthMenu=c(2,5,10,20,50,100), 
-                                                                                        scrollX = TRUE
-    ))
-  }, server = FALSE) 
-  
-  
-  
-  
- hist.col.table <- function () {
-   df <- input.data2();
-   validate(
-     need(nrow(df)>0,
-          error_message_val1)
-   )
-   df <- as.data.frame(df)
-   df1 <- df
-   df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
-   
-   df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
-   df1 <- df1[order(df1$chain),]
-   df1$chain <- factor(df1$chain,levels = unique(df1$chain))
-   
-   df.col.2 <- as.data.frame(unique(df1$chain))
-   names(df.col.2) <- "V1"
-   col2 <- unlist(colors.hist())
-   as.data.frame(col2)
-   df.col.2$col <- col2
-   df.col.2
- }
-
   Chain1_length <- function () {
     df <- input.data2(); 
     validate(
@@ -2573,43 +2015,31 @@ server  <- function(input, output, session) {
     df <- as.data.frame(df)
     
     
-    if (input$graph_type == "histogram" & input$type.tree == "raw data") {
-      df <- as.data.frame(df)
+    if (input$graph_type == "histogram" & input$type.tree == "scTCR") {
       df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
       df1 <- ddply(df,names(df.names) ,numcolwise(sum))
-      
       df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
-      df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
-      df1 <- df1[order(df1$chain, decreasing = F),]
-      df1$chain <- factor(df1$chain,levels = unique(df1$chain))
-      df.col.2 <- as.data.frame(hist.col.table())
-      names(df.col.2) <- c("V1","col")
-      df2 <- merge(df.col.2,df1,by.x="V1",by.y=input$chain.hist.col,sort = F)
-      df1 <- subset(df2, get(input$group_column)==input$selected_group_len)
-      
-      df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
-
-      vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
-        geom_bar() + 
-        scale_fill_manual(values = df.col.hist$col) +
+      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
+      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
+        geom_histogram(fill = input$hist_col, bins = input$bin) + 
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = input$hist.density.legend) +
+              legend.position = "none") +
+        
         labs(y="Count",
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
-        ) +
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+          axis.title.y = element_text(colour="black",family="serif"),
+          axis.text.y = element_text(colour="black",family="serif"),
+          axis.text.x = element_text(colour="black",family="serif",angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          legend.text = element_blank()
+        ) 
       vals4$bar.len
-      
     }
-    else if (input$graph_type == "density" & input$type.tree == "raw data") {
+    
+    else if (input$graph_type == "density" & input$type.tree == "scTCR") {
       df <- as.data.frame(df)
       head(df)
       df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
@@ -2617,85 +2047,85 @@ server  <- function(input, output, session) {
       names(df1)
       
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
-      
-      vals4$bar.len <- ggplot(df1,aes(x=len1,colour = get(input$group_column),fill = get(input$group_column))) +
-        geom_density(alpha = 0.25) +
-        scale_alpha(guide = 'none') + 
+      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
+      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
+        #geom_histogram(fill = input$hist_col, bins = input$bin) + 
+        geom_density(color = input$hist_col) +
+        #facet_wrap(~sub) +
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = input$hist.density.legend) +
+              legend.position = "none") +
+        #scale_fill_manual(values=c() +
+        
         labs(y="CDF",
              x="",
              title="") +
+        # Add a line showing the alpha = 0.01 level
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
-        )+
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+          axis.title.y = element_text(colour="black",family="serif"),
+          axis.text.y = element_text(colour="black",family="serif"),
+          axis.text.x = element_text(colour="black",family="serif",angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          legend.text = element_blank()
+        )
       vals4$bar.len
     }
-    else if (input$graph_type == "histogram" & input$type.tree == "Summarised data") {
-      
-      df <- as.data.frame(df)
+    
+    else if (input$graph_type == "histogram" & input$type.tree == "bulk") {
       df1 <- df
-      
-      df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
-      df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
-      df1 <- df1[order(df1$chain, decreasing = F),]
-      df1$chain <- factor(df1$chain,levels = unique(df1$chain))
-      df.col.2 <- as.data.frame(hist.col.table())
-      names(df.col.2) <- c("V1","col")
-      df2 <- merge(df.col.2,df1,by.x="V1",by.y=input$chain.hist.col,sort = F)
-      df1 <- subset(df2, get(input$group_column)==input$selected_group_len)
-      
-      df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
-
-
-      vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
-        geom_bar() + 
+      df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
+      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
+      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
+        geom_histogram(fill = input$hist_col, bins = input$bin) + 
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = input$hist.density.legend) +
-        scale_fill_manual(values = df.col.hist$col) +
+              legend.position = "none") +
+        
         labs(y="Count",
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)) +
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+          axis.title.y = element_text(colour="black",family="serif"),
+          axis.text.y = element_text(colour="black",family="serif"),
+          axis.text.x = element_text(colour="black",family="serif",angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          legend.text = element_blank()
+        ) 
       vals4$bar.len
       
     }
+    
     else {
       df1 <- df
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
-
-      vals4$bar.len <- ggplot(df1,aes(x=len1, colour = get(input$group_column))) +
-        geom_density() +
+      df1 <- subset(df1,get(input$group_column)==input$selected_group_len)
+      vals4$bar.len <- ggplot(df1,aes(x=len1)) +
+        #geom_histogram(fill = input$hist_col, bins = input$bin) + 
+        geom_density(color = input$hist_col) +
+        #facet_wrap(~sub) +
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = input$hist.density.legend) +
+              legend.position = "none") +
+        #scale_fill_manual(values=c() +
+        
         labs(y="CDF",
              x="",
              title="") +
+        # Add a line showing the alpha = 0.01 level
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
-        ) +
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+          axis.title.y = element_text(colour="black",family="serif"),
+          axis.text.y = element_text(colour="black",family="serif"),
+          axis.text.x = element_text(colour="black",family="serif",angle=90),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+          legend.text = element_blank()
+        )
       vals4$bar.len
     }
-
+    
+    
+    
+    
+    
   }
   
   output$Chain1_length <- renderPlot({
@@ -2730,33 +2160,18 @@ server  <- function(input, output, session) {
   table.len.download <- reactive( {
     df <- input.data2()
     df <- as.data.frame(df)
-    if (input$type.tree == "raw data") {
-     
-      df <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
-      df2 <- df[,c(grep("JUNCTION",names(df)))]
-      df3 <- df2
-      for (i in 1:dim(df3)[1]) {
-        df3[i,] <- nchar(df3[i,])
-        df3
-      }
-      names(df3) <- paste(names(df3),"length", sep="_")
-      df4 <- cbind(df,df3)
-      df4
+    df <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
+    df2 <- df[,c(grep("JUNCTION",names(df)))]
+    df3 <- df2
+    for (i in 1:dim(df3)[1]) {
+      df3[i,] <- nchar(df3[i,])
+      df3
     }
-   
-    else {
-      df1 <- df
-      for (i in 1:dim(df1)[1]) {
-        df1[i,] <- nchar(df1[i,])
-        df1
-      }
-      names(df1) <- paste(names(df1),"length", sep="_")
-      df4 <- cbind(df,df1)
-      df4
-    }
-    
-    
+    names(df3) <- paste(names(df3),"length", sep="_")
+    df4 <- cbind(df,df3)
+    df4
   })
+  
   
   output$table_length <- downloadHandler(
     filename = function(){
@@ -2767,14 +2182,14 @@ server  <- function(input, output, session) {
     }
   )
   
-  
+
   # bar plot -----
   observe({
     updateSelectInput(
       session,
       "variable_chain",
       choices=names(input.data2()),
-      selected = "AVJ")
+      selected = "AJ")
     
   })
   observe({
@@ -2782,8 +2197,7 @@ server  <- function(input, output, session) {
       session,
       "selected_group_chain",
       choices=select_group()) }) # group
-  
-  Chain_usage <- function () {
+  Chain1_usage <- function () {
     df <- input.data2(); 
     validate(
       need(nrow(df)>0,
@@ -2798,23 +2212,22 @@ server  <- function(input, output, session) {
     df2$chain <- factor(df2$chain, levels = unique(df2$chain),labels = df2$chain)
     
     if (input$graph_bar_type == "count") {
-    
       
-      vals5$bar.usage <- ggplot(df2,aes(x=chain,y=cloneCount,fill=input$colour_bar.usage)) +
-        geom_bar(stat="identity", position = "dodge") +
+      vals5$bar.usage <- ggplot(df2,aes(x=chain,y=cloneCount)) +
+        geom_bar(stat="identity", position = "dodge",fill=input$colour_bar.usage) +
         theme_bw()  +
         theme(legend.title = element_blank(),
-              legend.position = "none") +
-        scale_fill_manual(values=input$colour_bar.usage) +
+              legend.position = "bottom") +
+        #scale_fill_manual(values=c("red","blue","darkgreen")) +
         labs(y="count",
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$bar.numeric.size),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$bar.numeric.size),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=0,size = input$bar.numeric.size),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$bar.numeric.size),
-          legend.text = element_text(colour="black",family=input$font_type)
+          axis.title.y = element_text(colour="black",family="serif",size = input$bar.numeric.size),
+          axis.text.y = element_text(colour="black",family="serif",size = input$bar.numeric.size),
+          axis.text.x = element_text(colour="black",family="serif",angle=0,size = input$bar.numeric.size),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = input$bar.numeric.size),
+          legend.text = element_text(colour="black",family="serif")
         ) +
         coord_flip()
       vals5$bar.usage
@@ -2835,16 +2248,18 @@ server  <- function(input, output, session) {
              x="",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = 12),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = 12),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=0,size = 12),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = 12),
-          legend.text = element_text(colour="black",family=input$font_type)
+          axis.title.y = element_text(colour="black",family="serif",size = 12),
+          axis.text.y = element_text(colour="black",family="serif",size = 12),
+          axis.text.x = element_text(colour="black",family="serif",angle=0,size = 12),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = 12),
+          legend.text = element_text(colour="black",family="serif")
         ) +
         coord_flip()
       vals5$bar.usage
       
     }
+    
+
     
   }
   
@@ -2866,194 +2281,60 @@ server  <- function(input, output, session) {
     df3$percent <- df3$cloneCount/sum(df3$cloneCount)
     df4 <- as.data.frame(ddply(df3,names(df3)[2],numcolwise(sum)))
     df5 <- df4 %>% group_by(percent) %>% mutate(csum = cumsum(percent))
-    
-    vals30$bar.usage2 <- ggplot()+
-      geom_bar(aes(x=df3$cloneCount,y=df3$percent),stat="identity",fill=input$colour_bar.usage)+
-      geom_line(aes(x=df5$cloneCount,y=df5$csum))+
-      geom_point(aes(x=df5$cloneCount,y=df5$csum)) +
-      geom_text(aes(x=df5$cloneCount,y=df5$percent,label=df5$count2),vjust=input$numeric.adjust, family='serif',colour=input$colour.numeric.bar, size=input$label.size)+
-      xlab("Distinct CDR3")+
-      ylab("Frequency of repertoire")+
-      theme_bw()+
-      theme(
-        axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis),
-        axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis),
-        axis.text.x = element_text(colour="black",family=input$font_type,angle=0,size = input$label.size.axis),
-        axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis),
-        legend.text = element_text(colour="black",family=input$font_type)
-      ) 
-      
-    vals30$bar.usage2
 
+      vals30$bar.usage2 <-  ggplot()+
+        geom_bar(aes(x=df3$cloneCount,y=df3$percent),stat="identity",fill=input$colour_bar.usage)+
+        geom_line(aes(x=df5$cloneCount,y=df5$csum))+
+        geom_point(aes(x=df5$cloneCount,y=df5$csum)) +
+        geom_text(aes(x=df5$cloneCount,y=df5$percent,label=df5$count2),vjust=input$numeric.adjust, family='serif',colour=input$colour.numeric.bar, size=input$label.size)+
+        xlab("Distinct CDR3")+
+        ylab("Frequency of repertoire")+
+        theme_bw()+
+        theme(
+          axis.title.y = element_text(colour="black",family="serif",size = input$label.size.axis),
+          axis.text.y = element_text(colour="black",family="serif",size = input$label.size.axis),
+          axis.text.x = element_text(colour="black",family="serif",angle=0,size = input$label.size.axis),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family="serif",size = input$label.size.axis),
+          legend.text = element_text(colour="black",family="serif")
+        ) 
+      vals30$bar.usage2
+      
+      
+      
+   
+    
+    
     
   }
   
-  vals31 <- reactiveValues(bar.usage3=NULL)
-  
-  observe({
-    updateSelectInput(
-      session,
-      "string.data2",
-      choices=select_group(),
-      selected = c("IFN","CD8")) 
-  }) 
-  
-  cols_stacked_bar <- reactive({
-    dat <- input.data2();
-    validate(
-      need(nrow(dat)>0,
-           error_message_val1)
-    )
-    dat <- as.data.frame(dat)
-    df <- as.data.frame(ddply(dat,(c(input$group_column,input$variable_chain)),numcolwise(sum)))
-    names(df) <- c("group","chain","cloneCount")
-    
-    df <-df[order(df$chain),]
-    
-    num <- unique(df$chain)
-    col.gg <- gg_fill_hue(length(num))
-    
-    palette_rainbow <- rev(rainbow(length(t(num))))
-    
-    if (input$bar.stacked_colour.choise == "default") {
-      lapply(1:length(num), function(i) {
-        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), col.gg[i])        
-      })}
-    
-  else  if (input$bar.stacked_colour.choise == "rainbow") {
-    lapply(1:length(num), function(i) {
-        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), palette_rainbow[i])        
-      }) }
-    
-    else if (input$bar.stacked_colour.choise == "random") {
-      
-      lapply(1:length(num), function(i) {
-        palette1 <- distinctColorPalette(length(num))
-        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), palette1[i])        
-      }) }
-    else  {
-      lapply(1:length(num), function(i) {
-        colourInput(paste("cols_stacked_bar", i, sep="_"), paste(num[i]), input$one.colour.default)        
-      }) }
-    
-  })
-  
-  output$myPanel_cols_stacked_bar <- renderUI({cols_stacked_bar()})
-  
-  colors_bar.stacked <- reactive({
-    dat <- input.data2();
-    validate(
-      need(nrow(dat)>0,
-           error_message_val1)
-    )
-    dat <- as.data.frame(dat)
-    df <- as.data.frame(ddply(dat,(c(input$group_column,input$variable_chain)),numcolwise(sum)))
-    names(df) <- c("group","chain","cloneCount")
-    
-    df <-df[order(df$chain),]
-    
-    num <- unique(df$chain)
-    lapply(1:length(num), function(i) {
-      input[[paste("cols_stacked_bar", i, sep="_")]]
-    })
-  })
-  
-  Chain3_usage <- function () {
-    dat <- input.data2();
-    validate(
-      need(nrow(dat)>0,
-           error_message_val1)
-    )
-    dat <- as.data.frame(dat)
-    df <- as.data.frame(ddply(dat,(c(input$group_column,input$variable_chain)),numcolwise(sum)))
-    names(df) <- c("group","chain","cloneCount")
-    
-    df <-df[order(df$chain),]
-    df$group <- factor(df$group, levels = input$string.data2)
-    cols <- unlist(colors_bar.stacked())
-    palette <- cols
-    
-    if (input$lines.bar.graph == 'yes') {
-      vals31$bar.usage3 <-  ggplot(df, aes(fill=chain, y=cloneCount, x=group,colour="black")) +
-        geom_bar(position="fill", stat="identity") +
-        xlab("")+
-        ylab("Frequency")+
-        theme_bw()+
-        theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=input$bar.stack.angle,size = input$label.size.axis2, hjust=input$hight.bar.stack.adj),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis2),
-          legend.text = element_text(colour="black",family=input$font_type),
-          legend.title = element_blank()
-        )+ 
-        scale_fill_manual(values=palette) +
-        scale_color_manual(values="black", guide = "none")
-      vals31$bar.usage3
-      
-      
-    }
-    
-    else {
-      vals31$bar.usage3 <-  ggplot(df, aes(fill=chain, y=cloneCount, x=group)) +
-        geom_bar(position="fill", stat="identity") +
-        xlab("")+
-        ylab("Frequency")+
-        theme_bw()+
-        theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
-          axis.text.x = element_text(colour="black",family=input$font_type,angle=input$bar.stack.angle,size = input$label.size.axis2, hjust=input$hight.bar.stack.adj),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis2),
-          legend.text = element_text(colour="black",family=input$font_type),
-          legend.title = element_blank()
-        )+ 
-        scale_fill_manual(values=palette) 
-      vals31$bar.usage3
-      
-    }
-
-  }
   
   output$Chain1_usage <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    if (input$stat=="chains") {
-      print(Chain_usage())
-    }
-    
-    
-    else if (input$stat=="frequency") {
-      print(Chain2_usage())
+    if (input$count.percent=="Indiviudal chains") {
+      Chain1_usage()
     }
     
     else {
-      print(Chain3_usage())
+      Chain2_usage()
       
     }
     
   }) 
-  
-  # downloading bar plots =====
   output$downloadPlot_chain.usage <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
       paste("bar.plot_",gsub("/", "-", x), ".pdf", sep = "")
     }, content = function(file) {
       pdf(file, width=input$width_chain.usage,height=input$height_chain.usage, onefile = FALSE) # open the pdf device
-      if (input$stat=="chains") {
-        print(Chain_usage())
-      }
-      
-      
-      else if (input$stat=="frequency") {
-        print(Chain2_usage())
+      if (input$count.percent=="Indiviudal chains") {
+        print(Chain1_usage())
       }
       
       else {
-        print(Chain3_usage())
+        print(Chain2_usage())
         
       }
       dev.off()}, contentType = "application/pdf" )
@@ -3066,40 +2347,19 @@ server  <- function(input, output, session) {
     content = function(file) {
       
       png(file, width = input$width_png_chain.usage, height = input$height_png_chain.usage, res = input$resolution_PNG_chain.usage)
-      if (input$stat=="chains") {
-        print(Chain_usage())
-      }
-      
-      
-      else if (input$stat=="frequency") {
-        print(Chain2_usage())
+      if (input$count.percent=="Indiviudal chains") {
+        print(Chain1_usage())
       }
       
       else {
-        print(Chain3_usage())
+        print(Chain2_usage())
         
       }
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
   
-  # skewness of data (to be possibly added as stat) ------
-  skewness.data <- function () {
-    df <- input.data2(); 
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    df <- as.data.frame(df)
-    df <- subset(df, get(input$group_column)==input$selected_group_chain)
-    df2 <- as.data.frame(ddply(df,c(input$variable_chain),numcolwise(sum)))[1:2]
-    names(df2) <- c("chain","cloneCount")
-    
-    df2 <- df2[order(df2$cloneCount),]
-    df2$chain <- factor(df2$chain, levels = unique(df2$chain),labels = df2$chain)
-    
-    
-  }
-  # motif amino acid-----
+  
+  # motif -----
   observe({
     updateSelectInput(
       session,
@@ -3110,15 +2370,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group_selected_motif",
-      choices=select_group(),
-      selected = "CD8") })
-  observe({
-    updateSelectInput(
-      session,
-      "group_selected_motif2",
-      choices=select_group(),
-      selected = "IFN") })
-  
+      choices=select_group()) })
   output$Motif <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
     df <- input.data2();
     validate(
@@ -3155,16 +2407,11 @@ server  <- function(input, output, session) {
       need(nrow(df)>0,
            error_message_val1)
     )
-    
-    
-    
     df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
-    df_unique$Unique_clones <- 1
-    unique2 <- as.data.frame(df_unique[names(df_unique) %in% c(input$group_column,"len1","Unique_clones"),])
-    as.data.frame(ddply(unique2,(c(input$group_column,"len1")),numcolwise(sum)))
+    df_unique
     
-    
+
   })
   
   Motif_plot2 <- reactive({
@@ -3191,79 +2438,15 @@ server  <- function(input, output, session) {
                color=colorset(alphabet="AA",
                               colorScheme="chemistry"))
     motif
-  })
-  
-  
-  Motif_compare_aa_group1 <- reactive({
-    df <- input.data2();
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    df <- as.data.frame(df)
-    df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
-    
-    df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
-    df_subset <- subset(df_unique,df_unique$len1==input$len)
-    df_subset <- subset(df_subset,get(input$group_column)==input$group_selected_motif)
-    
-    motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt2,names(df_subset))], ""))))
-    motif_count <- aa.count.function(cbind(x=1,y=2,motif), input$len)
-    motif_count1_aa<-pcm2pfm(motif_count)
-    as.data.frame(motif_count1_aa)
-  })
-
-  
-  Motif_compare_aa_group2 <- reactive({
-    df <- input.data2();
-    validate(
-      need(nrow(df)>0,
-           error_message_val1)
-    )
-    df <- as.data.frame(df)
-    df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
-    
-    df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
-    df_subset <- subset(df_unique,df_unique$len1==input$len)
-    df_subset <- subset(df_subset,get(input$group_column)==input$group_selected_motif2)
-    
-    motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt2,names(df_subset))], ""))))
-    motif_count <- aa.count.function(cbind(x=1,y=2,motif), input$len)
-    motif_count2_aa<-pcm2pfm(motif_count)
-    as.data.frame(motif_count2_aa)
-  })
-  
-  output$Motif.aa.single.length <- renderPlot({
-    
-  
-  })
+    })
   
   output$Motif_plot <- renderPlot( {
-    
-    if (input$comarpison.aa.motif == "single.group1") {
-      motif <- Motif_plot2()
-      withProgress(message = 'Figure is being generated...',
-                   detail = '', value = 0, {
-                     test_fun()
-                   })
-      plot(motif)
-      
-    }
-    
-    else {
-      motif_count1_aa <- Motif_compare_aa_group1()
-      motif_count2_aa <- Motif_compare_aa_group2()
-      diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
-                                         pwm2 = as.data.frame(motif_count2_aa), 
-                                         alphabet = ASN
-                                         
-                                         )
-      
-      diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
-
-    }
-    
-
+    motif <- Motif_plot2()
+    withProgress(message = 'Figure is being generated...',
+                 detail = '', value = 0, {
+                   test_fun()
+                 })
+    plot(motif)
   })
   
   output$downloadPlot_motif <- downloadHandler(
@@ -3273,28 +2456,7 @@ server  <- function(input, output, session) {
     },
     content = function(file) {
       pdf(file, width=input$width_motif,height=input$height_motif, onefile = FALSE) # open the pdf device
-      if (input$comarpison.aa.motif == "single.group1") {
-        motif <- Motif_plot2()
-        withProgress(message = 'Figure is being generated...',
-                     detail = '', value = 0, {
-                       test_fun()
-                     })
-        plot(motif)
-        
-      }
-      
-      else {
-        motif_count1_aa <- Motif_compare_aa_group1()
-        motif_count2_aa <- Motif_compare_aa_group2()
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
-                                           pwm2 = as.data.frame(motif_count2_aa), 
-                                           alphabet = ASN
-                                           
-        )
-        
-        diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
-        
-      }
+      plot(Motif_plot2())
       dev.off()}, contentType = "application/pdf" )
   
   output$downloadPlotPNG_motif <- downloadHandler(
@@ -3306,31 +2468,10 @@ server  <- function(input, output, session) {
       png(file, width = input$width_png_motif, 
           height = input$height_png_motif, 
           res = input$resolution_PNG_motif)
-      if (input$comarpison.aa.motif == "single.group1") {
-        motif <- Motif_plot2()
-        withProgress(message = 'Figure is being generated...',
-                     detail = '', value = 0, {
-                       test_fun()
-                     })
-        plot(motif)
-        
-      }
-      
-      else {
-        motif_count1_aa <- Motif_compare_aa_group1()
-        motif_count2_aa <- Motif_compare_aa_group2()
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
-                                           pwm2 = as.data.frame(motif_count2_aa), 
-                                           alphabet = ASN
-                                           
-        )
-        
-        diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
-        
-      }
+      plot(Motif_plot2())
       dev.off()},   contentType = "application/png" # MIME type of the image
   )
-  
+
   # motif NT ------
   observe({
     updateSelectInput(
@@ -3362,7 +2503,7 @@ server  <- function(input, output, session) {
     motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt3,names(df_subset))], ""))))
     rownames(motif) <- 1:dim(motif)[1]
     motif
-  })
+    })
   output$length_nt <- renderPrint( {
     df <- input.data2();
     validate(
@@ -3375,7 +2516,7 @@ server  <- function(input, output, session) {
     df <- df[order(df$len1),]
     df_len <- unique(df$len1)
     cat("The dataset contains nucleotide CDR3 lengths of:",  df_len)
-  })
+    })
   output$length.table_nt <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
     df <- input.data2();
     df <- as.data.frame(df)
@@ -3398,7 +2539,7 @@ server  <- function(input, output, session) {
     df_subset <- subset(df_subset,get(input$group_column)==input$group_selected)
     motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt3,names(df_subset))], ""))))
     motif
-  })
+    })
   
   
   
@@ -3456,26 +2597,28 @@ server  <- function(input, output, session) {
       "aa.or.nt4",
       choices=names(input.data2()),
       selected = "JUNCTION..AA._A")
-    
+
   })
-  
+
   observe({
     updateSelectInput(
       session,
       "group_selected_one",
       choices=select_group(),
       selected = "CD8")
-    
+
   })
-  
+
   observe({
     updateSelectInput(
       session,
       "group_selected_two",
       choices=select_group(),
       selected = "IFN")
-    
+
   })
+
+
 
   chain_muscle <- reactive({
     df <- input.data2();
@@ -3493,7 +2636,7 @@ server  <- function(input, output, session) {
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% "chain"])
     x <- AAStringSet(df_unique$chain)
     
-    if (dim(df_unique)[1] < 501) {
+    if (dim(df_unique)[1] < 201) {
       aln <- muscle(x)
       df1 <- as.data.frame(aln@unmasked)
       df_unique$chain1 <- df1$x
@@ -3501,29 +2644,29 @@ server  <- function(input, output, session) {
       
     }
     else {
-      x <- as.data.frame(c(">500 sequences",
-                          "Online tool cannot align >500 sequences",
-                          "Use local application as more sequences"
-                           ))
+      x <- as.data.frame(c(">200 sequences",
+                           "download summary table from length distribution",
+                           "Align sequences using muscle https://www.ebi.ac.uk/Tools/msa/muscle/",
+                           "upload"))
       names(x) <- "error message"
       x
     } 
     
-    
+
   })
   
   output$Motif_align <- DT::renderDataTable( {
-    
+
     datatable(chain_muscle(), extensions = "Buttons", options = list(searching = TRUE,
-                                                                     ordering = TRUE,
-                                                                     buttons = c('copy','csv', 'excel'),
-                                                                     dom = 'Bfrtip',
-                                                                     pageLength=5, 
-                                                                     lengthMenu=c(2,5,10,20,50,100), 
-                                                                     scrollX = TRUE
+                                                                                        ordering = TRUE,
+                                                                                        buttons = c('copy','csv', 'excel'),
+                                                                                        dom = 'Bfrtip',
+                                                                                        pageLength=5, 
+                                                                                        lengthMenu=c(2,5,10,20,50,100), 
+                                                                                        scrollX = TRUE
     ))
   }, server = FALSE)
-  
+
   chain1_align_aa <- reactive({
     df_unique <- chain_muscle()
     validate(
@@ -3540,7 +2683,7 @@ server  <- function(input, output, session) {
     motif_count1<-pcm2pfm(motif_count1)
     as.data.frame(motif_count1)
   })
-  
+
   chain2_align_aa <- reactive({
     df_unique <- chain_muscle()
     validate(
@@ -3600,7 +2743,7 @@ server  <- function(input, output, session) {
                  detail = '', value = 0, {
                    test_fun()
                  })
-    
+
     
     if (input$diff == "compare" && input$aa.nt.col=="ASN") {
       diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
@@ -3682,18 +2825,18 @@ server  <- function(input, output, session) {
                 alphabet = DNA, main = NULL)
       }
       dev.off()},
-    
+
     contentType = "application/pdf"
-    
+
   )
-  
+
   output$downloadPlotPNG_motif_align <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
       paste("TCR_Explore_aligned_motif_", gsub("/", "-", x), ".png", sep = "")
     },
     content = function(file) {
-      
+
       png(file, width = input$width_png_motif_align,
           height = input$height_png_motif_align,
           res = input$resolution_PNG_motif_align)
@@ -3734,9 +2877,9 @@ server  <- function(input, output, session) {
                 alphabet = DNA, main = NULL)
       }
       dev.off()},
-    
+
     contentType = "application/png" # MIME type of the image
-    
+
   )
   #
   # pie graph -----
@@ -3745,17 +2888,9 @@ server  <- function(input, output, session) {
       session,
       "pie_chain",
       choices=names(input.data2()),
-      selected = "AVJ_aCDR3_BVJ_bCDR3")
+      selected = "AJBJ")
     
   })
-  
-  observe({
-    updateSelectInput(
-      session,
-      "string.data.pie.order",
-      choices=select_group(),
-      selected = c("CD8","IFN")) 
-  }) 
   
   
   cols_pie <- reactive({
@@ -3770,7 +2905,7 @@ server  <- function(input, output, session) {
     num <- unique(df$chain)
     col.gg <- gg_fill_hue(length(num))
     length(num)
-    
+   
     
     if (input$pie_colour.choise == "default") {
       lapply(1:length(num), function(i) {
@@ -3787,7 +2922,7 @@ server  <- function(input, output, session) {
     
     else {
       lapply(1:length(num), function(i) {
-        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), input$one.colour.default)        
+        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), "grey")        
       })
       
       
@@ -3825,35 +2960,28 @@ server  <- function(input, output, session) {
     
     df <- as.data.frame(ddply(dat,(c(input$group_column,input$pie_chain)),numcolwise(sum)))
     names(df) <- c("group","chain","cloneCount")
-    
-    df$group <- factor(df[,names(df) %in% input$group_column],levels = input$string.data.pie.order)
-    
+   
     palette <- cols
     a <- unique(df$chain)
     df$chain <- factor(df$chain,levels = a,labels=a)
     df <- transform(df, percent = ave(cloneCount, group, FUN = prop.table))
     
-    vals9$pie <- ggplot(df, aes(x="", y=percent, fill=chain)) +
+   vals9$pie <- ggplot(df, aes(x="", y=percent, fill=chain)) +
       geom_bar(width = 1, stat = "identity",aes(colour = "black")) +
       scale_fill_manual(values=palette) +
       scale_color_manual(values = "black") +
       coord_polar("y", start=0) + 
       facet_wrap(~group,nrow = input$nrow.pie) +
-      theme(
-        axis.text = element_blank(),
+      theme(axis.text = element_blank(),
             axis.ticks = element_blank(),
             panel.grid  = element_blank(),
             axis.title.y= element_blank(),
             legend.position = input$cir.legend,
-            legend.text = element_text(size = input$size.circ, family = input$font_type),
+            legend.text = element_text(size = input$size.circ),
             legend.title = element_blank(),
             axis.title = element_blank()) +
-      guides(color = "none", size = "none")+
-      theme(strip.text = element_text(size = input$panel.text.size.pie, family = input$font_type))+
-      theme(panel.background = element_blank()) +
-      theme(strip.background =element_rect(fill=input$strip.colour.pie))+
-      theme(strip.text = element_text(colour = input$strip.text.colour.pie))
-    vals9$pie
+      guides(color = "none", size = "none")
+   vals9$pie
     
   }
   
@@ -3898,7 +3026,7 @@ server  <- function(input, output, session) {
       session,
       "group.heatmap",
       choices=names(input.data2()),
-      selected = "AVJ")
+      selected = "AJ")
     
   })
   # x-axis heatmap
@@ -3907,7 +3035,7 @@ server  <- function(input, output, session) {
       session,
       "heatmap_2",
       choices=names(input.data2()),
-      selected = "BVJ")
+      selected = "BJ")
     
   })
   # group 
@@ -3922,6 +3050,7 @@ server  <- function(input, output, session) {
   vals14 <- reactiveValues(heatmap_clonal3=NULL)
   
   heatmap_matrix2 <- function() {
+    # group by chain dat <- read.csv("test-data/Group/Merged_A-B_2021.08.02.csv")
     dat <- input.data2();
     validate(
       need(nrow(dat)>0,
@@ -3930,7 +3059,7 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     dat <- subset(dat, get(input$group_column)==input$group_selected3)
     df <- as.data.frame(ddply(dat,(c(input$heatmap_2,input$group.heatmap)),numcolwise(sum)))
-    
+  
     names(df) <- c("group","chain","cloneCount")
     head(df)
     min.FC <- 0
@@ -3943,22 +3072,17 @@ server  <- function(input, output, session) {
     df.1[is.na(df.1)] <- 0
     dim(df.1)
     
-
-    # ha = HeatmapAnnotation(text = anno_text(df.1), which = "row", gp = gpar(fontfamily = input$font_type, fontface = "bold"))
+    
+    
+    # ha = HeatmapAnnotation(text = anno_text(df.1), which = "row", gp = gpar(fontfamily = "serif", fontface = "bold"))
     ht <- Heatmap(df.1,
-                  heatmap_legend_param = list(title = "count",
-                                              title_gp = gpar(fontsize = 10, 
-                                                              fontface = "bold",fontfamily=input$font_type),
-                                              labels_gp = gpar(fontsize = 10,fontfamily=input$font_type)),
-                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap)),
-                  row_names_gp = grid::gpar(fontsize = input$heat.font.size.row,fontfamily=input$font_type),
-                  column_names_gp = grid::gpar(fontsize = input$heat.font.size.col,fontfamily=input$font_type),
-                  
+                  heatmap_legend_param = list(title = "count"),
+                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap))
     )
     
     draw(ht, padding = unit(c(10, 10, 10, 10), "mm"))
-    
-    
+
+
     
     
     
@@ -3971,7 +3095,7 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     dat <- as.data.frame(dat)
-    
+  
     df <- as.data.frame(ddply(dat,(c(input$heatmap_2,input$group.heatmap)),numcolwise(sum)))
     names(df) <- c("group","chain","cloneCount")
     head(df)
@@ -3985,19 +3109,15 @@ server  <- function(input, output, session) {
     head(df.1)
     df.1[is.na(df.1)] <- 0
     dim(df.1)
-    par(family=input$font_type)
     ht <- Heatmap(df.1,
                   heatmap_legend_param = list(title = "count"),
-                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap)),
-                  row_names_gp = grid::gpar(fontsize = input$heat.font.size.row,fontfamily=input$font_type),
-                  column_names_gp = grid::gpar(fontsize = input$heat.font.size.col,fontfamily=input$font_type)
-                  
+                  col = colorRamp2(c(min.FC,max.FC), c("white",input$col.heatmap))
     )
     
     draw(ht, padding = unit(c(10, 10, 10, 10), "mm"))
     
   }
-  
+
   output$heatmap_out2 <- renderPlot({
     
     withProgress(message = 'Figure is being generated...',
@@ -4005,16 +3125,14 @@ server  <- function(input, output, session) {
                    test_fun()
                  })
     if (input$group_hm == "yes") {
-
       heatmap_matrix2()
     }
     
     else {
-      
       heatmap_matrix3()
       
     }
-  })
+      })
   
   
   output$downloadPlot_heatmap <- downloadHandler(
@@ -4055,59 +3173,42 @@ server  <- function(input, output, session) {
   )
   
   # simpson calc -----
-  vals11 <- reactiveValues(Simp1=NULL)
-  vals12 <- reactiveValues(Simp2=NULL)
-
-  observe({
-    updateSelectInput(
-      session,
-      "group_column_simp2",
-      choices=names(input.data2()),
-      selected = "AVJ_aCDR3_BVJ_bCDR3")
+  
+  input.data.diversity.index <- reactive({switch(input$shannon.index,"ab.test.index" = test.data.gd.index.csv(),"own.index" = own.data.index.csv())})
+  
+  test.data.gd.index.csv <- reactive({
+  dataframe = read.csv("test-data/Group/diversity.csv",header=T)   
+  })
+  
+  own.data.index.csv <- reactive({
+    inFile7 <- input$file_diversity.index
+    if (is.null(inFile7)) return(NULL)
+    
+    else {
+      dataframe <- read.csv(
+        inFile7$datapath)}
     
   })
   
+  vals11 <- reactiveValues(Simp1=NULL)
+  vals12 <- reactiveValues(Simp2=NULL)
+  
+  # 
   inv.simpson.index <- function() {
-    dataframe = input.data2();
-    head(dataframe)
+    plots <- input.data.diversity.index();
     
-    df.names <-  dataframe[ , -which(names(dataframe) %in% c("cloneCount","clone"))]
-    df1 <- ddply(dataframe,names(df.names) ,numcolwise(sum))
-    df1 <- df1[order(df1$cloneCount, decreasing = T),]
+    validate(
+      need(nrow(plots)>0,
+           error_message_val3)
+    )
     
-    names(df1)
+    a <- matrix(nrow=1,ncol=dim(plots)[2])
+    b <- matrix(nrow=1,ncol=dim(plots)[2])
+    d <- matrix(nrow=1,ncol=dim(plots)[2])
     
-    df.group <- unique(df1[names(df1) %in% input$group_column_simp])
-    names(df.group) <- "V1"
-    
-    column.length <- length(df.group$V1)
-    column.length
-    
-    df.group2 <- unique(df1[names(df1) %in% input$group_column_simp2])
-    names(df.group2) <- "V1"
-    
-    row.length <- length(df.group2$V1)
-    row.length
-    
-    m = matrix(NA,ncol=column.length, nrow=row.length)
-    samps <- df.group$V1
-    
-    for (j in 1:column.length){
-      df2 <- subset(df1,get(input$group_column_simp)==samps[j])
-      m[,j] <- c(df2$cloneCount, rep(NA, row.length - length(df2$cloneCount)))
-    }
-    m <- as.data.frame(m)
-    names(m) <- samps
-    head(m)
-    m
-    
-    a <- matrix(nrow=1,ncol=dim(m)[2])
-    b <- matrix(nrow=1,ncol=dim(m)[2])
-    d <- matrix(nrow=1,ncol=dim(m)[2])
-    
-    for( i in 1:dim(m)[2]) {
+    for( i in 1:dim(plots)[2]) {
       
-      samp <- m[,i]
+      samp <- plots[,i]
       samp <- na.omit(samp)
       a[,i] <- diversity(samp,"invsimpson")
       b[,i] <- sum(samp)
@@ -4116,32 +3217,48 @@ server  <- function(input, output, session) {
     
     a1 <- rbind(a,b,d)  
     a1 <- as.data.frame(a1)
-    names(a1) <- names(m)
+    names(a1) <- names(plots)
     a1 <- rbind(a,b,d)  
     a1 <- as.data.frame(a1)
-    names(a1) <- names(m)
-    a1
-    df_name <- as.data.frame(do.call(rbind, strsplit(as.character(names(m)), "\\.")))
+    names(a1) <- names(plots)
+    
+    df_name <- as.data.frame(do.call(rbind, strsplit(as.character(names(a1)), "_")))
     head(df_name) 
     
     a2 <- as.data.frame(t(a1))
     names(a2) <- c("inv.simpson.index","total # clones","unique # clones")
-    a2
-    
     both <- cbind(a2,df_name)
-    both$Indiv_group <- paste(both$V1,both$V2,sep = "_")
-    as.data.frame(both)
+    both$V3 <- paste(both$V1,both$V2,sep = "_")
+    both
     
     
   }
   
-  output$table_display.diversity <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
-    dat <- inv.simpson.index()
-    dat <- as.data.frame(dat)
-    dat
+  observe({
+    updateSelectInput(
+      session,
+      "group.index",
+      choices=names(inv.simpson.index()),
+      selected = "V2")
+    
+  })
+  observe({
+    updateSelectInput(
+      session,
+      "group2.index",
+      choices=names(inv.simpson.index()),
+      selected = "V1")
+    
+  })
+  observe({
+    updateSelectInput(
+      session,
+      "x.axis.index",
+      choices=names(inv.simpson.index()),
+      selected = "total # clones")
+    
   })
   
-  # simp cal other plots ------
   cols_simp.index <- reactive({
     dat <- inv.simpson.index();
     dat <- as.data.frame(dat)
@@ -4153,24 +3270,24 @@ server  <- function(input, output, session) {
     
     num <- unique(dat[names(dat) %in% input$group2.index])
     col.gg <- gg_fill_hue(dim(num)[1])
-    
+   
     
     if (input$inv.simp_colour.choise == "default") {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), col.gg[i])
+        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), col.gg[i])        
       })
     }
     else if (input$inv.simp_colour.choise == "random") {
       palette1 <- distinctColorPalette(dim(num)[1])
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), palette1[i])
+        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), palette1[i])        
       })
       
     }
     
     else {
       lapply(1:dim(num)[1], function(i) {
-        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), input$one.colour.default)
+        colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), "grey")        
       })
       
       
@@ -4206,7 +3323,7 @@ server  <- function(input, output, session) {
     unique.col <- as.data.frame(unique(both[names(both) %in% input$group2.index]))
     names(unique.col) <- "V1"
     unique.col$simp.inv_palette <- cols
-    #    df3 <- as.data.frame(merge(both,unique.col,by.x="V1",by.y = "V1"))
+#    df3 <- as.data.frame(merge(both,unique.col,by.x="V1",by.y = "V1"))
     
     
     vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index))+
@@ -4216,16 +3333,15 @@ server  <- function(input, output, session) {
                    stackdir = 'center',show.legend = T) +
       theme_classic() +
       scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
-      theme(text=element_text(size=20,family=input$font_type),
-            axis.title = element_text(colour="black", size=20,family=input$font_type),
-            axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      theme(text=element_text(size=20,family="serif"),
+            axis.title = element_text(colour="black", size=20,family="serif"),
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family="serif"),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family="serif"),
             legend.title  =element_blank(),
-            legend.position = input$legend.placement.simp,
-            legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
-      guides(fill=guide_legend(ncol=input$col.num.simp)) +
+            legend.position = "bottom") +
+      
       xlab("")+
       ylab("Inverse simpson index")
     
@@ -4250,48 +3366,28 @@ server  <- function(input, output, session) {
     names(unique.col) <- "V1"
     unique.col$simp.inv_palette <- cols
     
-    if (input$scale_x_continuous_x=="scientific") {
-      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
-        geom_point(size =3, alpha =1, show.legend =T)+
-        theme_bw() +
-        scale_color_manual(values=unique.col$simp.inv_palette) +
-        theme(text=element_text(size=20,family=input$font_type),
-              axis.title = element_text(colour="black", size=20,family=input$font_type),
-              axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              legend.title  =element_blank(),
-              legend.position = "none",
-              legend.text = element_text(colour="black", size=8,family=input$font_type)) +
-        # scale_alpha(guide = 'none') +
-        scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
-        labs(x="number of clones",
-             y="inverse simpson index")
-      
-      vals12$Simp2
-    }
-
     
-    else {
-      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
-        geom_point(size =3, alpha =1, show.legend =T)+
-        theme_bw() +
-        scale_color_manual(values=unique.col$simp.inv_palette) +
-        theme(text=element_text(size=20,family=input$font_type),
-              axis.title = element_text(colour="black", size=20,family=input$font_type),
-              axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              legend.title  =element_blank(),
-              legend.position = "none",
-              legend.text = element_text(colour="black", size=8,family=input$font_type)) +
-        labs(x="number of clones",
-             y="inverse simpson index")
-      
-      vals12$Simp2
-    }
+    vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+      geom_point(size =3, alpha =1, show.legend =T)+
+      # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+      #               limits = c(1,10^6),
+      #               labels = trans_format("log10", math_format(10^.x))) +
+      theme_bw() +
+      scale_color_manual(values=unique.col$simp.inv_palette) +
+      #annotation_logticks()  +
+      theme(text=element_text(size=20,family="serif"),
+            axis.title = element_text(colour="black", size=20,family="serif"),
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family="serif"),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family="serif"),
+            legend.title  =element_blank(),
+            legend.position = "bottom") +
+      scale_alpha(guide = 'none') +
+      labs(x="number of clones",
+           y="inverse simpson index")
+    
+    vals12$Simp2
     
   }
   output$simpson.index1 <- renderPlot({
@@ -4299,33 +3395,34 @@ server  <- function(input, output, session) {
                  detail = '', value = 0, {
                    test_fun()
                  })
-    group.diversity1() 
-  })
+    group.diversity1()
+      })
   output$simpson.index2 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    group.diversity2() 
+    group.diversity2()
   })
-  
-  table.inv.simpson <- function () {
-    dat <- inv.simpson.index()
-    dat <- as.data.frame(dat)
-    dat
+
+  observe({
+    updateSelectInput(
+      session,
+      "group1_column",
+      choices=names(table.inv.simpson()),
+      selected = "V2")
     
-  }
-  # 
+  }) # group 
   
   select_group2 <- function () {
-    df <- input.data2();
+    df <- table.inv.simpson()
     
     validate(
       need(nrow(df)>0,
            error_message_val1)
     )
     
-    df2 <- as.data.frame(unique(df[names(df) %in% input$group3_column]))
+    df2 <- as.data.frame(unique(df[names(df) %in% input$group1_column]))
     df2 <- as.data.frame(df2)
     #names(df2) <- "V1"
     df2
@@ -4338,9 +3435,7 @@ server  <- function(input, output, session) {
       choices=select_group2(),
       selected = "CD8")
     
-  }) # group
-  
-  
+  }) # group 
   
   observe({
     updateSelectInput(
@@ -4349,8 +3444,8 @@ server  <- function(input, output, session) {
       choices=select_group2(),
       selected = "IFN")
     
-  }) # group
-  # 
+  }) # group 
+  
   ttestout <- reactive({
     dat <- table.inv.simpson()
     conf <- input$conf
@@ -4372,14 +3467,37 @@ server  <- function(input, output, session) {
   output$pvalue <- renderPrint({
     vals <- ttestout()
     if (is.null(vals)){return(NULL)}
-    vals$p.value
+    vals$p.value 
   })
   output$confidence.int <- renderPrint({
     vals <- ttestout()
     if (is.null(vals)){return(NULL)}
-    vals$conf.int
+    vals$conf.int 
   })
   
+  # 
+  
+  
+  DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+    
+    clonal.file <-  input.data.clone.file();
+    clonal.file <- as.data.frame(clonal.file)
+    with.clone.data()
+  })
+  
+  output$table_display.diversity <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+      
+    dat <- inv.simpson.index()
+    dat <- as.data.frame(dat)
+    dat
+    })
+
+  table.inv.simpson <- function () {
+    dat <- inv.simpson.index()
+    dat <- as.data.frame(dat)
+    dat
+    
+  }
   
   output$downloadTABLE_simpson.inv <- downloadHandler(
     filename = function(){
@@ -4465,11 +3583,11 @@ server  <- function(input, output, session) {
     index_updated_ID <- merge(samp_index,replace_ID,by=c("XLoc","YLoc"))
     index_updated_ID
   }
-  
+
   output$merged.clone <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
     merged.index()
   })
-  input.data.clone.file <- reactive({switch(input$data_clone.index, "ab.test.clone3" = test.data.gd.index.csv2(),"own.clone.file" = own.data.clone.file.csv())})
+  input.data.clone.file <- reactive({switch(input$data_clone.index, "gd.test.clone" = test.data.gd.index.csv2(),"own.clone.file" = own.data.clone.file.csv())})
   test.data.gd.index.csv2 <- reactive({
     dataframe = read.csv("test-data/Index/DR4-780 TCR sequence data.csv",header=T) 
   })
@@ -4538,7 +3656,7 @@ server  <- function(input, output, session) {
       dataframe <- read.csv(inFile_CSV1$datapath, header=T)}
     
   })
-  
+
   vals15 <- reactiveValues(complex_dot=NULL)
   
   output$names.in.file <- renderPrint( {
@@ -4552,6 +3670,7 @@ server  <- function(input, output, session) {
     
   })
   
+  
   observe({
     updateSelectInput(
       session,
@@ -4559,6 +3678,7 @@ server  <- function(input, output, session) {
       choices=names(input.data_CSV1()),
       selected = "Indiv")
   })
+  
   observe({
     updateSelectInput(
       session,
@@ -4587,6 +3707,7 @@ server  <- function(input, output, session) {
       choices=names(input.data_CSV1()),
       selected = "CDR3b.Sequence")
   })
+  
   observe({
     updateSelectInput(
       session,
@@ -4677,7 +3798,7 @@ server  <- function(input, output, session) {
     a2[a2< 0] <- 1
     a2
   })
-  
+
   output$downloadTABLE_cleaning <- downloadHandler(
     filename = function(){
       paste(input$name.colour,"colouring column",gsub("-", ".", Sys.Date()),".csv", sep = "")
@@ -4693,6 +3814,7 @@ server  <- function(input, output, session) {
   
   
   # creating the dot plot ----
+  
   input.data_CSV2 <-  reactive({switch(input$dataset_index.2,"test-csv"=test.data_csv2(),"own_csv_file" = own.data_CSV2())})
   test.data_csv2<- reactive({
     dataframe = read.csv("test-data/Index/colouring column2021.11.19.csv",header = T)
@@ -4766,13 +3888,13 @@ server  <- function(input, output, session) {
     
     names(dat) <- gsub("\\.", " ", names(dat))
     
-    
+
     dat <- as.data.frame(dat)
     dat[is.na(dat)] <- "not_clonal"
     num <- unique(dat[names(dat) %in% input$group_complex_dot])
     col.gg <- gg_fill_hue(dim(num)[1])
     unique.col <- as.data.frame(unique(dat[grep(input$group_complex_dot,names(dat))]))
-    
+   
     
     if (input$FACS.index_colour.choise == "default") {
       lapply(1:dim(num)[1], function(i) {
@@ -4816,7 +3938,7 @@ server  <- function(input, output, session) {
       numericInput(paste("shape.FACS.index", i, sep="_"), paste(num[i,]), 19)        
     })
     
-    
+
     
   })
   size.FACS.index <- reactive({
@@ -4856,9 +3978,11 @@ server  <- function(input, output, session) {
     })
   })
   
+  
   output$myPanel.FACS.index.shape <- renderUI({shape.FACS.index()})
   output$myPanel.FACS.index <- renderUI({cols.FACS.index()})
   output$myPanel.FACS.index.size <- renderUI({size.FACS.index()})
+
   
   colors.FACS.index <- reactive({
     dat <- input.data_CSV2()
@@ -4873,7 +3997,7 @@ server  <- function(input, output, session) {
     )
     dat <- as.data.frame(dat)
     dat[is.na(dat)] <- "not_clonal"
-    
+   
     num <- unique(dat[names(dat) %in% input$group_complex_dot])
     lapply(1:dim(num)[1], function(i) {
       input[[paste("col.FACS.index", i, sep="_")]]
@@ -4918,6 +4042,7 @@ server  <- function(input, output, session) {
     })
   })
   
+  
   dot_plot.complex <- reactive({
     index <- input.data_CSV2();
     validate(
@@ -4925,7 +4050,7 @@ server  <- function(input, output, session) {
            "Upload file")
     )
     names(index) <- gsub("\\.", " ", names(index))
-    
+   
     
     index <- as.data.frame(index)
     y_lable1 <- bquote(.(input$y.axis2))
@@ -4938,13 +4063,13 @@ server  <- function(input, output, session) {
     palette.complex <- unlist(colors.FACS.index())
     shape.ggplot <- unlist(shape.FACS.index2())
     size.ggplot <- unlist(size.FACS.index2())
-    
+ 
     vals15$complex_dot <- ggplot(index, aes(x=get(input$x.axis2), y=get(input$y.axis2),
                                             colour = get(input$group_complex_dot),
                                             shape = get(input$group_complex_dot), 
                                             size  = get(input$group_complex_dot),
-    )
-    )+
+                                            )
+                                 )+
       geom_point() +
       scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                     limits = c(input$min.x,10^input$max.x),
@@ -4959,14 +4084,14 @@ server  <- function(input, output, session) {
       geom_hline(yintercept = input$yintercept,colour=input$intercept.col,linetype=input$int.type)+
       geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
       annotation_logticks()  +
-      theme(text=element_text(size=20,family=input$font_type2),
-            axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
-            axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
-            axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
-            axis.title.y = element_text(colour="black",size=input$axis.title.size,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+      theme(text=element_text(size=20,family="serif"),
+            axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+            axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family="serif"),
+            axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family="serif"),
+            axis.title.y = element_text(colour="black",size=input$axis.title.size,angle=90,hjust=.5,vjust=.5,face="plain",family="serif"),
             legend.title  =element_blank(),
             legend.position = input$legend.dot,
-            legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family=input$font_type2)) +
+            legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family="serif")) +
       scale_alpha(guide = 'none') +
       guides(size=FALSE, col = guide_legend(ncol=input$legend.column,override.aes = list(size=input$leg.dot.size)))+
       labs(x=x_lable1,
@@ -4975,38 +4100,35 @@ server  <- function(input, output, session) {
     vals15$complex_dot
   })
   dot_plot.complex1 <- function () {
-    
-    
-    if (input$density_dotplot =="no" & input$grid.lines.dot =='no') {
+      
+     
+      if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
+        
+        dot_plot.complex() 
+      }
+    else if (input$density_dotplot =="no" & input$grid.lines.dot =='no') {
       
       dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
     }
-    else if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
       
-      dot_plot.complex() 
-    }
-    
-    else if (input$density_dotplot =="yes" & input$grid.lines.dot =='no') {
+    else if (input$density_dotplot =="yes" & input$grid.lines.dot =='yes') {
       
-      dot_plot <- dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-      ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
+      dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    }
+      
+      else {
+        ggExtra::ggMarginal(dot_plot.complex(),groupColour = TRUE, groupFill = TRUE)
+      }
       
     }
-    
-    else {
-      ggExtra::ggMarginal(dot_plot.complex(),groupColour = TRUE, groupFill = TRUE)
-
-    }
-    
-  }
   output$dot_plot.complex2 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    
+
     dot_plot.complex1()
-    
+
     
   })
   
@@ -5055,12 +4177,14 @@ server  <- function(input, output, session) {
     
   })
   
+  
   observe({
     updateSelectInput(
       session,
       "order.of.group",
       choices=select_group(),
       selected = c("CD8","IFN"))
+    
   })
   
   upset.parameters <- function () {
@@ -5080,12 +4204,12 @@ server  <- function(input, output, session) {
     mat <- acast(unique.df, chain~group, value.var="cloneCount")
     mat[is.na(mat)] <- 0
     mat <- as.data.frame(mat)
-    # a <- as.data.frame(unique(names(mat)))
-    #   a$V1 <- distinctColorPalette(dim(a)[1])
+   # a <- as.data.frame(unique(names(mat)))
+ #   a$V1 <- distinctColorPalette(dim(a)[1])
     
     df.x <- make_comb_mat(mat)
     ht = draw(UpSet(df.x,
-                    row_names_gp =  gpar(fontfamily = 'serif', fontsize = input$upset.text.size),
+                    row_names_gp =  gpar(fontfamily = 'serif'),
                     column_names_gp = gpar(fontfamily = 'serif'),
                     top_annotation = upset_top_annotation(df.x,
                                                           annotation_name_gp = gpar(fontfamily = 'serif')
@@ -5100,9 +4224,13 @@ server  <- function(input, output, session) {
     cs = comb_size(df.x)
     decorate_annotation("intersection_size", {
       grid.text(cs[od], x = seq_along(cs), y = unit(cs[od], "native") + unit(2, "pt"), 
-                default.units = "native", just = "bottom", gp = gpar(fontsize = input$upset.font.size, fontfamily = 'serif')
+                default.units = "native", just = "bottom", gp = gpar(fontsize = 12, fontfamily = 'serif')
       ) })
-
+    
+    
+    
+    
+    
   }
   output$UpSet.plot <- renderPlot({
     withProgress(message = 'Figure is being generated...',
@@ -5131,12 +4259,12 @@ server  <- function(input, output, session) {
   })
   output$upset.datatable <- DT::renderDataTable( {
     datatable(upset.datatable1(), extensions = "Buttons", options = list(searching = TRUE,
-                                                                         ordering = TRUE,
-                                                                         buttons = c('copy','csv', 'excel'),
-                                                                         dom = 'Bfrtip',
-                                                                         pageLength=2, 
-                                                                         lengthMenu=c(2,5,10,20,50,100), 
-                                                                         scrollX = TRUE
+                                                                     ordering = TRUE,
+                                                                     buttons = c('copy','csv', 'excel'),
+                                                                     dom = 'Bfrtip',
+                                                                     pageLength=2, 
+                                                                     lengthMenu=c(2,5,10,20,50,100), 
+                                                                     scrollX = TRUE
     ))
   }, server = FALSE)
   
@@ -5160,8 +4288,396 @@ server  <- function(input, output, session) {
       print(upset.parameters())
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
+  
+
+  # QC MiXCR and IMGT files -----
+  input.data_IMGT.xls <- reactive({switch(input$dataset_IMGT,"ab-test-data" = test.data_ab.xls(), "gd-test-data" = test.data_gd.xls(),"own" = own.data.IMGT())})
+  test.data_ab.xls <- reactive({
+    dataframe = read_excel("test-data/IMGT/T00016.xls") 
+  })
+  
+  own.data.IMGT <- reactive({
+    inFile4 <- input$file_IMGT1
+    if (is.null(inFile4)) return(NULL)
+    
+    else {
+      dataframe <- read_excel(
+        inFile4$datapath
+        
+      )}
+    
+  })
+  
+  input.data_MiXCR.txt <- reactive({switch(input$dataset_IMGT,"ab-test-data" = test.data_ab.txt(),"gd-test-data" = test.data_gd.txt(),"own" = own.data.MiXCR())})
+  test.data_ab.txt <- reactive({
+    dataframe = read.table("test-data/MiXCR/SJS_TEN/T00016.txt",sep="\t",header=T) 
+  })
+  test.data_gd.txt <- reactive({
+    dataframe = read.table("test-data/MiXCR/SJS_TEN/T00016.txt",sep="\t",header=T) 
+  })
+  own.data.MiXCR <- reactive({
+    inFile5 <- input$file_IMGT2
+    if (is.null(inFile5)) return(NULL)
+    
+    else {
+      dataframe <- read.table(
+        inFile5$datapath,
+        header=inFile5$header_IMGT2,
+        sep=input$sep_IMGT2,
+        quote=input$quote_IMGT2)}
+    
+  })
+  
+  # combining MiXCR and IMGT -----
+  input.data.IMGT.MiXCR <- reactive({switch(input$dataset_IMGT,"ab-test-data" = test.data.ab.csv(), "gd-test-data" = test.data.gd.csv(),"own" = own.data.csv())})
+  test.data.ab.csv <- reactive({
+    dataframe = read.csv("test-data/QC/merged_IMGT_table2021.08.01.csv",header=T) 
+  })
+  test.data.gd.csv <- reactive({
+    dataframe = read.csv("test-data/QC/merged_IMGT_table2021.08.01.csv",header=T) 
+  })
+  own.data.csv <- reactive({
+    inFile6 <- input$file_IMGT.MiXCR
+    if (is.null(inFile6)) return(NULL)
+    
+    else {
+      dataframe <- read.csv(
+        inFile6$datapath)}
+    
+  })
+  
+  # unmerged IMGT df
+  
+  output$unmerged_chain1 <- DT::renderDataTable(escape = FALSE,options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
+    df <- input.data_IMGT.xls();
+    
+    
+    
+    df_chain1 <- as.data.frame(df)
+    df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
+    df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
+    df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
+    df_chain1$`D-GENE and allele` <- gsub(' F','',df_chain1$`D-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('[(]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('[)]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub(' F,','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub(' F','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('[[]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('[]]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('F','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
+    df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
+    df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
+    df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
+    df_chain1
+    
+  })
+  output$unmerged_chain2 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
+    df <- input.data_MiXCR.txt();
+    df <- as.data.frame(df)
+    df
+    
+  })
+  IMGT <- reactive({
+    df_chain1 <- input.data_IMGT.xls();
+    df_chain1 <- as.data.frame(df_chain1)
+    df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
+    df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
+    df_chain1$`J-GENE and allele` <- gsub('[(]','',df_chain1$`J-GENE and allele`)
+    df_chain1$`J-GENE and allele` <- gsub('[)]','',df_chain1$`J-GENE and allele`)
+    df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
+    df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
+    
+    df_chain1$`D-GENE and allele` <- gsub(' F','',df_chain1$`D-GENE and allele`)
+    
+    df_chain1$`V-GENE and allele` <- gsub('[(]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('[)]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub(' F,','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub(' F','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('[[]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('[]]','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub('F','',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
+    df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
+    
+    
+    df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
+    
+    # MiXCR -----
+    df_chain2 <- input.data_MiXCR.txt();
+    df_chain2 <- as.data.frame(df_chain2)
+    df <- merge(df_chain1,df_chain2, by.x="Sequence ID",by.y="ID",all=T)
+    df$V.Gene.IMGT <- df$`V-GENE and allele`
+    df$V.Gene.IMGT <- gsub("[*]0.","",df$V.Gene.IMGT)
+    df$V.Gene.IMGT <- gsub("[*]0..","",df$V.Gene.IMGT)
+    df$V.Gene.IMGT <- gsub("/","",df$V.Gene.IMGT)
+    df$V.Gene.IMGT <- gsub(",.*", "", df$V.Gene.IMGT)
+    df$V.Gene.IMGT <- gsub(" ", "", df$V.Gene.IMGT)
+    df$V.Gene.IMGT <- gsub("TR", "", df$V.Gene.IMGT)
+    df$`J-GENE and allele` <- gsub('TR','',df$`J-GENE and allele`)
+    df$`V-GENE and allele` <- gsub('TR','',df$`V-GENE and allele`)
+    df$`D-GENE and allele` <- gsub('TR','',df$`D-GENE and allele`)
+    
+    df <- mutate(df, CDR3_sequence_match_nt = ifelse(df$JUNCTION==df$nSeqCDR3,"matched","different"),
+                 CDR3_sequence_match_aa = ifelse(df$`JUNCTION (AA)`==df$aaSeqCDR3,"matched","different"),
+                 Matched_TRV = ifelse(df$V.Gene.IMGT==df$bestVHit,"matched","different"))
+    
+    df$clone_quality <- NA 
+    df$comments <- NA
+    df
+    
+  })
+  output$merged_IMGT <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+    IMGT()
+  })
+  output$downloadTABLE2 <- downloadHandler(
+    filename = function(){
+      paste("merged_IMGT_table",gsub("-", ".", Sys.Date()),".csv", sep = "")
+    },
+    content = function(file){
+      write.csv(IMGT(),file, row.names = FALSE)
+    })
+  
+  # # QC after merged MiXCR.IMGT ---- 
+  # chain_merge <- reactive({
+  #   df1 <- input.data.IMGT.MiXCR();
+  #   df1 <- as.data.frame(df1)
+  #   df <- subset(df1,df1$clone_quality=="pass")
+  #   df <- as.data.frame(df)
+  #   
+  #   df2 <- df[c(1:7,11,22,13)]
+  #   y = dim(df2)[2]-1
+  #   y
+  #   df2$V.Gene.IMGT <- gsub("TR","",df2$V.Gene.IMGT)
+  #   df2$cloneCount <- 1
+  #   
+  #   if (input$chain=="ab") {
+  # 
+  #     df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
+  #     head(df_name2)
+  #     df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+  #     df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+  #     df_name3$V1 <- gsub("A","",df_name3$V1)
+  #     df_name3$V1 <- gsub("B","",df_name3$V1)
+  #     
+  #     df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+  #     head(df_name5)
+  #     df2$ID <- df_name2$V1
+  #     
+  #     df2$Indiv.group <- df_name3$V1
+  #     df2$Indiv <-df_name5$V1
+  #     df2$group <- df_name5$V2
+  #     df2$clone <- df_name4$V2
+  #     names(df2)
+  #     
+  #     dim(df)
+  #     
+  #     chain1 <- df2[grep("A",df2$V.Gene.IMGT),]
+  #     chain2 <- df2[grep("B",df2$V.Gene.IMGT),]
+  #     # paste chain into name
+  #     chain1$ID <- gsub("A-","-",chain1$ID)
+  #     names(chain1)[1:y] <- paste(names(chain1)[1:y],"A",sep="_")
+  #     head(chain1)
+  #     chain2$ID <- gsub("B-","-",chain2$ID)
+  #     names(chain2)[1:y] <- paste(names(chain2)[1:y],"B",sep="_")
+  #     
+  #     x <- names(chain2)[10:dim(chain2)[2]]
+  #     
+  #     merged_chain <- merge(chain1,chain2,by =x)
+  #     head(merged_chain)
+  #     merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
+  #     names(merged_chain2)
+  #     dat <- merged_chain2
+  #     dat$AJ <- paste(dat$V.Gene.IMGT_A,".",dat$J.GENE.and.allele_A,sep="")
+  #     dat$BJ <- paste(dat$V.Gene.IMGT_B,".",dat$J.GENE.and.allele_B,sep="")
+  #     dat$AJ <- gsub("[*]0.","",dat$AJ)
+  #     dat$BJ <- gsub("[*]0.","",dat$BJ)
+  #     dat$AJ <- gsub("TR","",dat$AJ)
+  #     dat$AJBJ <- paste(dat$AJ,"_",dat$BJ,sep="")
+  #     dat$AJ_aCDR3 <- paste(dat$AJ,dat$JUNCTION..AA._A,sep="_")
+  #     dat$BJ_bCDR3 <- paste(dat$BJ,dat$JUNCTION..AA._B,sep="_")
+  #     dat$AJ_aCDR3_BJ_bCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
+  #     head(dat)
+  #     
+  #     dat
+  #     
+  #   }
+  #   else {
+  #     df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
+  #     df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "-")))
+  #     df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), "-")))
+  #     df_name3$V1 <- gsub("G","",df_name4$V1)
+  #     df_name3$V1 <- gsub("D","",df_name4$V1)
+  #     df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+  #     df2$ID <- df_name2$V1
+  #     df2$Indiv.group <- df_name3$V1
+  #     df2$Indiv <-df_name5$V1
+  #     df2$group <- df_name5$V2
+  #     df2$clone <- df_name4$V2
+  #     chain1 <- df2[grep("G",df2$V.Gene.IMGT),]
+  #     chain2 <- df2[grep("D",df2$V.Gene.IMGT),]
+  #     # paste chain into name
+  #     chain1$ID <- gsub("G-",".",chain1$ID)
+  #     names(chain1)[1:y] <- paste(names(chain1)[1:y],"G",sep="_")
+  #     chain2$ID <- gsub("D-",".",chain2$ID)
+  #     names(chain2)[1:y] <- paste(names(chain2)[1:y],"D",sep="_")
+  #     x <- names(chain2)[10:dim(chain2)[2]]
+  #     merged_chain <- merge(chain1,chain2,by=x)
+  #     merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_G","Sequence.ID_D","V.DOMAIN.Functionality_G","V.DOMAIN.Functionality_D","D.GENE.and.allele_G","JUNCTION.frame_G","JUNCTION.frame_D"))]
+  #     dat <- merged_chain2
+  #     head(dat)
+  #     dat$GJ <- paste(dat$V.Gene.IMGT_G,"-",dat$J.GENE.and.allele_G,sep="")
+  #     
+  #     dat$DJ <- paste(dat$V.Gene.IMGT_D,"-",dat$J.GENE.and.allele_D,sep="")
+  #     dat$GJ <- gsub("[*]0.","",dat$GJ)
+  #     dat$DJ <- gsub("[*]0.","",dat$DJ)
+  #     dat$GJDJ <- paste(dat$GJ,"_",dat$DJ,sep="")
+  #     dat$GJ_gCDR3 <- paste(dat$GJ,dat$JUNCTION..AA._G,sep="_")
+  #     dat$DJ_dCDR3 <- paste(dat$DJ,dat$JUNCTION..AA._D,sep="_")
+  #     dat$GJ_gCDR3_DJ_dCDR3 <- paste(dat$AJ_aCDR3,dat$BJ_bCDR3,sep=" & ")
+  #     
+  #     
+  #     dat
+  #     
+  #   }
+  # })
+  # output$chain_table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+  #   df1 <- input.data.IMGT.MiXCR();
+  #   df1 <- as.data.frame(df1)
+  #   
+  #   a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
+  #   if (dim(a)[1]>0) {
+  #     df <- as.data.frame("please complete QC analysis")
+  #     names(df) <- " "
+  #     df
+  #   }
+  #   else {
+  #     df <- chain_merge()
+  #     df <- as.data.frame(df)
+  #     df
+  #   }
+  # })
+  # 
+  # output$downloadTABLE3 <- downloadHandler(
+  #   filename = function(){
+  #     paste("paired.file",gsub("-", ".", Sys.Date()),".csv", sep = "")
+  #   },
+  #   content = function(file){
+  #     df <- chain_merge()
+  #     df <- as.data.frame(df)
+  #     write.csv(df,file, row.names = FALSE)
+  #   } )
+  # 
+  # output$names.in.file2 <- renderPrint( {
+  #   df <- chain_merge()
+  #   df <- as.data.frame(df)
+  #   names(df)
+  #   
+  # })
+  # output$chain_table2 <- DT::renderDataTable(escape = FALSE, options = list(autoWidth = FALSE, lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+  #   df1 <- input.data.IMGT.MiXCR();
+  #   df1 <- as.data.frame(df1)
+  #   
+  #   a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
+  #   if (dim(a)[1]>0) {
+  #     df <- as.data.frame("please complete QC analysis")
+  #     names(df) <- " "
+  #     df
+  #     
+  #   }
+  #   else {
+  #     df <- chain_merge()
+  #     df <- as.data.frame(df)
+  #     
+  #     your_list <- c("cloneCount",input$string.data2)
+  #     your_list_df <- as.data.frame((unlist(strsplit(your_list, ', '))))
+  #     names(your_list_df) <- "V1"
+  #     your_list_df
+  #     df.your_list <- df[names(df) %in% your_list_df$V1]
+  #     names.df <- names(df.your_list[ , -which(names(df.your_list) %in% "cloneCount")])
+  #     
+  #     df2 <- as.data.frame(ddply(df.your_list,names.df,numcolwise(sum)))
+  #     df2
+  #     
+  #   }
+  # })
+  # output$downloadTABLE4 <- downloadHandler(
+  #   filename = function(){
+  #     paste("summarised_CDR3_chain",gsub("-", ".", Sys.Date()),".csv", sep = "")
+  #   },
+  #   content = function(file){
+  #     df <- chain_merge()
+  #     df <- as.data.frame(df)
+  #     
+  #     your_list <- c("cloneCount",input$string.data2)
+  #     your_list_df <- as.data.frame((unlist(strsplit(your_list, ', '))))
+  #     names(your_list_df) <- "V1"
+  #     your_list_df
+  #     df.your_list <- df[names(df) %in% your_list_df$V1]
+  #     names.df <- names(df.your_list[ , -which(names(df.your_list) %in% "cloneCount")])
+  #     
+  #     df2 <- as.data.frame(ddply(df.your_list,names.df,numcolwise(sum)))
+  #     df2
+  #     write.csv(df2,file, row.names = FALSE)
+  #   } )
+  # 
+  # 
+  
+  # making 50 fasta files -----
+ 
+  
+  path = reactive({readDirectoryInput(session, 'directory')})
+   observeEvent(
+    ignoreNULL = TRUE,
+    eventExpr = {
+      input$directory
+    },
+    handlerExpr = {
+      if (input$directory > 0) {
+        # condition prevents handler execution on initial app launch
+
+        # launch the directory selection dialog with initial path read from the widget
+        path = choose.dir(default = readDirectoryInput(session, 'directory'))
+        # update the widget value
+        updateDirectoryInput(session, 'directory', value = path)
+        setwd(path)
+        observeEvent(input$do, {
+        
+
+        })
+
+      }
+    }
+  )
+
+  observeEvent(input$do, { output$textWithHTML <- renderUI({
+    system(command = "~/Documents/PhD_2018-2021/R_files/TCR_Explore/test-data/scripts/alignment_211230.sh")
+    system(command = "~/srv/shiny-server/TCR_Explore/test-data/scripts/alignment_211230.sh")
+    rawText <- readLines('time.txt') # get raw text
+
+    
+    # split the text into a list of character vectors
+    #   Each element in the list contains one line
+    splitText <- stringi::stri_split(str = rawText, regex = '\\n')
+
+    # wrap a paragraph tag around each element in the list
+    replacedText <- lapply(splitText, p)
+
+    return(replacedText)
+    
+  })
+  })
+  
+
 }
 
 
 
 shinyApp(ui, server)
+
+
+
+

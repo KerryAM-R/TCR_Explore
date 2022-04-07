@@ -54,9 +54,9 @@ There is also a need to select if the input data is either alpha-beta (ab) or ga
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
 #### Treemap
-The user can specify: 
+**The user can specify:**
 - The order of the group (i.e. CD8 and IFNg)
-- colour choices include: default, rainbow, random or one colour (specified in side panel) 
+- colour choices include: default, rainbow, random or one colour (specified in side panel; *e.g.* grey) 
     + The colour can be altered afterwards
 - If they want the labels to appear on the graph
 - Column to colour as well as column to separate the panel
@@ -69,7 +69,7 @@ The user can specify:
 
 #### Chord diargram
 
-There are several features the user can specify:
+**There are several features the user can specify:**
 - Sub-group to display
 - The user can select the two columns used to display in the chord diagram
 - The transparency of the 'Label' and 'no label' is for the entire data set
@@ -85,7 +85,7 @@ There are several features the user can specify:
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
 #### Pie chart
-There are several features the user can specify:
+**There are several features the user can specify:**
 - Displays one chain
 - The user can alter what is displayed as either: group or indiv.group
 - The amount of rows can be specified
@@ -98,6 +98,18 @@ There are several features the user can specify:
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
+#### Video example
+<iframe
+    width="640"
+    height="480"
+    src="https://www.youtube.com/embed/UmX4kyB2wfg"
+    frameborder="0"
+    allow="autoplay; encrypted-media"
+    allowfullscreen
+>
+</iframe>
+
+
 ### Motif analysis section
 
 <a href="#CDR3 length distribution">CDR3 length distribution</a><br>
@@ -107,9 +119,9 @@ There are several features the user can specify:
 #### CDR3 length distribution
 The length distribution presented is by the unique CDR3 sequences.
 
-The user can specify:
-- the type of graph
-  + histogram, which can be coloured by specific chains (i.e. Colour by: AVJ)
+**The user can specify:**
+- Type of graphs available:
+  + histogram, which can be coloured by specific chains (*e.g.* AVJ)
   + Density plot, coloured by Column of group (side panel)
 - The CDR3 sequences (amino acid or nucleotide)
 - The size of the text
@@ -124,24 +136,53 @@ The user can specify:
 
 #### Single length motif analysis
 
-The nucleotide and amino acid plots show the unique sequences of a certain length
+The nucleotide and amino acid plots show the unique sequences of a certain length (*e.g.* 15)
 
-these are displayed as 'Motif (amino acid)' and 'Motif (nucleotide)'
+These are displayed as 'Motif (amino acid)' and 'Motif (nucleotide)'
+
+The 'Motif (amino acid)' can also compare two groups of the same sequence. 
+
+<img src="www/aa.png" width="600">
+<img src="www/nt.png" width="600">
 
 <a href="#Motif analysis section">Motif analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
 #### Aligned motif analysis
 
+This section can align the sequences using 'muscle' package. 
+
+<img src="www/aa.aligned.png" width="800">
+
 <a href="#Motif analysis section">Motif analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
 ### Diversity and chain interrogation
 
-<a href="#TCR analysis section">TCR analysis section</a><br>
-<a href="#TCR repertiore analysis">Go to top</a><br>
+<a href="#Chain usage">Chain usage</a><br>
+<a href="#Diversity of TCR sequence">Diversity of TCR sequence</a><br>
+
+#### Chain usage
+
+
+<a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
+<a href="#TCR repertoire analysis">Go to top</a><br>
+
+#### Diversity of TCR sequence
+
+<a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
+<a href="#TCR repertoire analysis">Go to top</a><br>
 
 ### Group overlap analysis
 
-<a href="#TCR analysis section">TCR analysis section</a><br>
-<a href="#TCR repertiore analysis">Go to top</a><br>
+
+
+#### Heatmap
+
+<a href="#Group overlap analysis">TCR analysis section</a><br>
+<a href="#TCR repertoire analysis">Go to top</a><br>
+
+#### Upset plot
+
+<a href="#Group overlap analysis">TCR analysis section</a><br>
+<a href="#TCR repertoire analysis">Go to top</a><br>

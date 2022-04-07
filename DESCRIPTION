@@ -26,9 +26,15 @@ Imports:
   readxl,
   vegan,
   randomcoloR,
-  colourpicker
+  colourpicker,
+  showtext,
+  shinyWidgets,
+  shinyFiles,
+  shinyDirectoryInput
+
 Remotes:
   jokergoo/ComplexHeatmap
+
 biocViews:
   motifStack,
   flowCore
