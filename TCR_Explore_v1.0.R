@@ -436,21 +436,21 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                  # UI CDR3 length distribution graphs ----- 
                                          tabPanel("CDR3 length distribution",
                                                   h5("length distribution plot requires an unsummarised dataset"),
-                                                  
-                                                  
-                                                  
+
                                                   fluidRow(
                                                     column(3,selectInput('graph_type', 'Type of graph', graph_type)),
-                                                    
-                                                    column(3,selectInput( "aa.or.nt",label = h5("CDR3 length column"),"" )),
-                                                    column(2, selectInput("hist.density.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
+                                                    column(3,selectInput( "aa.or.nt","CDR3 length column","" )),
+                                                    column(2, selectInput("hist.density.legend","Legend location",choices = c("top","bottom","left","right","none"),selected = "right")),
+                                                    column(2,numericInput("legend.text.hist","Legend text size",value = 6)),
+                                                    column(2,selectInput("hist_colour.choise","Colour", choices =  c("default","rainbow","random","grey")))
                                                   ),
-  
+                                                  
                                                   fluidRow(
-                                                    column(3,numericInput("hist.text.sizer","size of text",value=30)),
-                                                    column(3, numericInput("xlow","x-axis (min)",value=1)),
-                                                    column(3, numericInput("xhigh","x-axis (max)",value=30)),
-                                                    column(3, numericInput("xbreaks","x-axis tick marks",value=1)),
+                                                    column(2,numericInput("hist.text.sizer","size of text",value=16)),
+                                                    column(2, numericInput("xlow","x-axis (min)",value=0)),
+                                                    column(2, numericInput("xhigh","x-axis (max)",value=30)),
+                                                    column(2, numericInput("xbreaks","x-axis tick marks",value=5)),
+                                                    column(2, numericInput("ybreaks","y-axis tick marks",value=2)),
                                                     ),
                                                   
                                                   conditionalPanel(
@@ -459,13 +459,20 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                       # column(3, numericInput("bin","Bins of histogram",value=30)),
                                                       column(3,selectInput( "selected_group_len",label = h5("Group"),"" )),
                                                       column(3,selectInput("chain.hist.col",label = h5 ("Colour by:"),"")),
-                                                      column(3,selectInput("hist_colour.choise",label = h5("Colour"), choices =  c("default","rainbow","random","grey")))
+                                                      
                                                     ),
                                                     
                                                   ),
                                                   
-                                                  
-                                                  
+                                                  conditionalPanel(
+                                                    condition = "input.graph_type == 'density'",
+                                                    fluidRow(
+                                                     column(3,sliderInput("alpha.density","Transparency",min=0, max = 1,value = 0.25, step = 0.05))
+                                                      
+                                                    ),
+                                                    
+                                                  ),
+
                                                   fluidRow(
                                                     conditionalPanel(
                                                       condition = "input.graph_type == 'histogram'",
@@ -473,6 +480,15 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,
                                                                   wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
                                                                             uiOutput('myPanel.hist')))),
+                                                    
+                                                    conditionalPanel(
+                                                    condition = "input.graph_type == 'density'",
+                                                    
+                                                    column(3,
+                                                           wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
+                                                                     uiOutput('myPanel.hist2')))),
+                                                        
+                                                    
                                                            column(9, plotOutput("Chain1_length",height="600px"))),
                                                   
                                                   conditionalPanel(
@@ -482,13 +498,13 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   ),
                                                  
                                                   fluidRow(
-                                                    column(3,numericInput("width_length", "Width of PDF", value=6)),
+                                                    column(3,numericInput("width_length", "Width of PDF", value=10)),
                                                     column(3,numericInput("height_length", "Height of PDF", value=4)),
                                                     column(3),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlot_length','Download PDF'))
                                                   ),
                                                   fluidRow(
-                                                    column(3,numericInput("width_png_length","Width of PNG", value = 960)),
+                                                    column(3,numericInput("width_png_length","Width of PNG", value = 1600)),
                                                     column(3,numericInput("height_png_length","Height of PNG", value = 600)),
                                                     column(3,numericInput("resolution_PNG_length","Resolution of PNG", value = 144)),
                                                     column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_length','Download PNG'))
@@ -1010,6 +1026,7 @@ server  <- function(input, output, session) {
     print(sessionInfo())
   })
   
+  # video outputs -----
   output$video <- renderUI({
     tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 1000, height = 666.6666)
   })
@@ -1023,7 +1040,7 @@ server  <- function(input, output, session) {
   })
 
   output$video4 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/Y3HjPZzHnSc",  width = 1000, height = 666.6666)
+   tags$iframe(src = "https://www.youtube.com/embed/Y3HjPZzHnSc",  width = 1000, height = 666.6666)
   })
 
   output$video5 <- renderUI({
@@ -2490,7 +2507,6 @@ server  <- function(input, output, session) {
     
   })
   output$myPanel.hist <- renderUI({cols.hist()})
-  
   colors.hist <- reactive({
     df <- input.data2(); 
     validate(
@@ -2513,7 +2529,66 @@ server  <- function(input, output, session) {
     })
   })
 
-  output$hist.table <- DT::renderDataTable( {
+  
+  cols.hist2 <- reactive({
+    df <- input.data2(); 
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df1 <- df
+
+    num <- as.data.frame(unique(df1[names(df1) %in% input$group_column]))
+    
+    col.gg <- gg_fill_hue(dim(num)[1])
+    unique.col <- as.data.frame(unique(df1[names(df1) %in% input$group_column]))
+    
+    palette_rainbow <- rev(rainbow(dim(num)[1]))
+    
+    if (input$hist_colour.choise == "rainbow") {
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist2", i, sep="_"), paste(num[i,]), palette_rainbow[i])        
+      }) }
+    else if (input$hist_colour.choise == "default") {
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist2", i, sep="_"), paste(num[i,]), col.gg[i])        
+      })
+    }
+    else if (input$hist_colour.choise == "random") {
+      palette1 <- distinctColorPalette(dim(num)[1])
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist2", i, sep="_"), paste(num[i,]), palette1[i])        
+      })
+      
+    }
+    else {
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.hist2", i, sep="_"), paste(num[i,]), input$one.colour.default)        
+      })
+      
+      
+    }
+    
+  })
+  output$myPanel.hist2 <- renderUI({cols.hist2()})
+  
+  colors.hist2 <- reactive({
+    df <- input.data2(); 
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    df <- as.data.frame(df)
+    df1 <- df
+    
+    num <- as.data.frame(unique(df1[names(df1) %in% input$group_column]))
+     lapply(1:dim(num)[1], function(i) {
+      input[[paste("col.hist2", i, sep="_")]]
+    })
+  })
+  
+ output$hist.table <- DT::renderDataTable( {
     df <- input.data2(); 
     df <- as.data.frame(df)
     df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
@@ -2538,10 +2613,7 @@ server  <- function(input, output, session) {
                                                                                         scrollX = TRUE
     ))
   }, server = FALSE) 
-  
-  
-  
-  
+
  hist.col.table <- function () {
    df <- input.data2();
    validate(
@@ -2564,6 +2636,8 @@ server  <- function(input, output, session) {
    df.col.2
  }
 
+ 
+ 
   Chain1_length <- function () {
     df <- input.data2(); 
     validate(
@@ -2571,7 +2645,6 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     df <- as.data.frame(df)
-    
     
     if (input$graph_type == "histogram" & input$type.tree == "raw data") {
       df <- as.data.frame(df)
@@ -2588,7 +2661,11 @@ server  <- function(input, output, session) {
       df1 <- subset(df2, get(input$group_column)==input$selected_group_len)
       
       df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
-
+      df1$unique <- 1
+      max.1 <- ddply(df1, c(input$group_column,"len1"),numcolwise(sum))
+      max.2 <- subset(max.1, get(input$group_column)==input$selected_group_len)
+      max.hist <- max(max.2$unique)+1
+      
       vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
         geom_bar() + 
         scale_fill_manual(values = df.col.hist$col) +
@@ -2601,10 +2678,12 @@ server  <- function(input, output, session) {
         theme(
           axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
         ) +
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+        scale_y_continuous(limits = c(0, max.hist), breaks = seq(0,max.hist,by = input$ybreaks), expand = c(0, 0))+
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0, 0)) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
       
@@ -2618,9 +2697,21 @@ server  <- function(input, output, session) {
       
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
       
+      df1$unique <- 1
+      max.1 <- ddply(df1, c(input$group_column,"len1"),numcolwise(sum))
+      max.2 <- subset(max.1, get(input$group_column)==input$selected_group_len)
+      max.2$feq <- max.2$unique/sum(max.2$unique)
+      max.hist <- max(max.2$feq)+0.05
+      
+      col2 <- unlist(colors.hist2())
+      num <- as.data.frame(unique(df1[names(df1) %in% input$group_column]))
+      num$col2 <- col2
+      
       vals4$bar.len <- ggplot(df1,aes(x=len1,colour = get(input$group_column),fill = get(input$group_column))) +
-        geom_density(alpha = 0.25) +
+        geom_density(alpha = input$alpha.density) +
         scale_alpha(guide = 'none') + 
+        scale_color_manual(values = num$col2) +
+        scale_fill_manual(values = num$col2) +
         theme_bw()  +
         theme(legend.title = element_blank(),
               legend.position = input$hist.density.legend) +
@@ -2630,10 +2721,12 @@ server  <- function(input, output, session) {
         theme(
           axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
         )+
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+        scale_y_continuous(expand = c(0,0), limits=c(0,max.hist)) +
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0,0)) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
     }
@@ -2653,6 +2746,10 @@ server  <- function(input, output, session) {
       
       df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
 
+      df1$unique <- 1
+      max.1 <- ddply(df1, c(input$group_column,"len1"),numcolwise(sum))
+      max.2 <- subset(max.1, get(input$group_column)==input$selected_group_len)
+      max.hist <- max(max.2$unique)+1
 
       vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
         geom_bar() + 
@@ -2666,9 +2763,12 @@ server  <- function(input, output, session) {
         theme(
           axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)) +
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
+        ) +
+        scale_y_continuous(limits = c(0, max.hist), breaks = seq(0,max.hist,by = input$ybreaks), expand = c(0, 0))+
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0, 0)) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
       
@@ -2677,8 +2777,21 @@ server  <- function(input, output, session) {
       df1 <- df
       df1$len1 <- nchar(df1[, which(names(df1) %in% c(input$aa.or.nt))])
 
-      vals4$bar.len <- ggplot(df1,aes(x=len1, colour = get(input$group_column))) +
-        geom_density() +
+      df1$unique <- 1
+      max.1 <- ddply(df1, c(input$group_column,"len1"),numcolwise(sum))
+      max.2 <- subset(max.1, get(input$group_column)==input$selected_group_len)
+      max.2$feq <- max.2$unique/sum(max.2$unique)
+      max.hist <- max(max.2$feq)+0.05
+      
+      col2 <- unlist(colors.hist2())
+      num <- as.data.frame(unique(df1[names(df1) %in% input$group_column]))
+      num$col2 <- col2
+      
+      vals4$bar.len <- ggplot(df1,aes(x=len1,colour = get(input$group_column),fill = get(input$group_column))) +
+        geom_density(alpha = 0.25) +
+        scale_alpha(guide = 'none') + 
+        scale_color_manual(values = num$col2) +
+        scale_fill_manual(values = num$col2) +
         theme_bw()  +
         theme(legend.title = element_blank(),
               legend.position = input$hist.density.legend) +
@@ -2688,10 +2801,12 @@ server  <- function(input, output, session) {
         theme(
           axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=90),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type)
-        ) +
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks)) +
+          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
+        )+
+        scale_y_continuous(expand = c(0,0), limits=c(0,max.hist)) +
+        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0,0)) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       vals4$bar.len
     }
