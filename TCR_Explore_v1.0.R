@@ -2715,7 +2715,7 @@ server  <- function(input, output, session) {
         theme_bw()  +
         theme(legend.title = element_blank(),
               legend.position = input$hist.density.legend) +
-        labs(y="CDF",
+        labs(y="Frequency",
              x="",
              title="") +
         theme(
@@ -2795,7 +2795,7 @@ server  <- function(input, output, session) {
         theme_bw()  +
         theme(legend.title = element_blank(),
               legend.position = input$hist.density.legend) +
-        labs(y="CDF",
+        labs(y="Frequency",
              x="",
              title="") +
         theme(
