@@ -1307,7 +1307,7 @@ server  <- function(input, output, session) {
     df1 <- as.data.frame(df1)
     df <- subset(df1,df1$clone_quality=="pass")
     df <- as.data.frame(df)
-    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..")]
+    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..","JUNCTION")]
     
     df.Vgene <- as.data.frame(do.call(rbind, strsplit(as.character(df2$V.GENE.and.allele), ",")))
     df2$V.GENE <- df.Vgene$V1
@@ -1373,7 +1373,6 @@ server  <- function(input, output, session) {
       dat
       
     }
-    
     else if (input$IMGT_chain2 =="ab" & input$sheet2 == "Summary") {
       
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
@@ -1400,7 +1399,7 @@ server  <- function(input, output, session) {
       
       merged_chain <- merge(chain1,chain2,by =x)
       head(merged_chain)
-      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
+      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B","JUNCTION_A","JUNCTION_B"))]
       names(merged_chain2)
       dat <- merged_chain2
       dat$AV <- paste(dat$V.GENE_A)
@@ -1423,8 +1422,8 @@ server  <- function(input, output, session) {
       dat$AJ <- gsub("TR","",dat$AJ)
       dat$AVJ <- gsub("TR","",dat$AJ)
       dat$AVJ.BVDJ <- paste(dat$AVJ,"_",dat$BVDJ,sep="")
-      dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$JUNCTION..AA._A,sep="_")
-      dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$JUNCTION..AA._B,sep="_")
+      dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$AA.JUNCTION_A,sep="_")
+      dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$AA.JUNCTION_B,sep="_")
       dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
       head(dat)
       
