@@ -1303,7 +1303,7 @@ server  <- function(input, output, session) {
       need(nrow(df1)>0,
            "Upload file")
     )
-    
+  
     df1 <- as.data.frame(df1)
     df <- subset(df1,df1$clone_quality=="pass")
     df <- as.data.frame(df)
