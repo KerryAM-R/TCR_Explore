@@ -711,7 +711,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                                          choices = simp.index.names,
                                                                          selected = "total # clones"
                                                     )),
-                                                    column(3,selectInput("scale_x_continuous_x",label = h5("Number abbreivation"),choices = c("scientific","natural"))),
+                                                    column(3,selectInput("scale_x_continuous_x",label = h5("Number abbreivation"),
+                                                                         choices = c("scientific","natural"), selected = "natural")),
                                                     column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 2)),
                                                     column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
                                                     column(3,numericInput("legend.text.simp",label = h5("Legend columns"),value = 8)),
