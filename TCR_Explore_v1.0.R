@@ -194,11 +194,11 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     
                                                     selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own_data1")),
                                                     
-                                                    fileInput('file_IMGT_afterQC', 'Chromatogram checked file (.csv)',
+                                                    fileInput('file_IMGT_afterQC', 'Completed QC file (.csv)',
                                                               accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                                     h5("option for paired and TCRdist outputs"),
                                                     selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
-                                                    selectInput("sheet2","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
+                                                    selectInput("sheet2","Information included", choices = c("Summary+JUNCTION","Summary"))),
                                                     
                                                     
                                                     conditionalPanel(condition="input.QC_panel==2",
@@ -216,7 +216,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            tabPanel("IMGT create QC file",value = 1,
                                                     h4("Fill in the 'clone_quality' column: pass or fail"), 
                                                     h4("Add comments if desired"),
-                                                    fluidRow(column(4, selectInput("sheet","Sheets included", choices = c("Summary+JUNCTION","Summary"))),
+                                                    fluidRow(column(4, selectInput("sheet","Information included", choices = c("Summary+JUNCTION","Summary"))),
                                                              column(8, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'), width = "800px")),
                                                     ),
                                                     tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
@@ -3593,8 +3593,6 @@ server  <- function(input, output, session) {
 
   chain_muscle <- reactive({
     df <- input.data2();
-    
-    
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -4185,7 +4183,7 @@ server  <- function(input, output, session) {
     dataframe = input.data2();
     head(dataframe)
     
-    df.names <-  dataframe[ , -which(names(dataframe) %in% c("cloneCount","clone"))]
+    df.names <-   dataframe[ , -which(names(dataframe) %in% c("cloneCount","clone","Sequence_A","Sequence_B"))]
     df1 <- ddply(dataframe,names(df.names) ,numcolwise(sum))
     df1 <- df1[order(df1$cloneCount, decreasing = T),]
     
