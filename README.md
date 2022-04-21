@@ -12,7 +12,6 @@ There are three main sections:
  + Tutorial video available
 - TCR analysis 
     + User uploads the paired file generated from TCR_Explore QC process
-    + Alternatively the user can  upload a file from other outputs (e.g. iRepertoire), which need to include the following column names: cloneCount, Indiv, group, Indiv.group
     + Several analytical graph features available including Treemap, Chord diagram, Pie chart, Motif analysis, Diversity and chain usage, and Overlap for comparison of multiple datasets (Heatmap and Upset plots)
     + For more information on the functions, see the TCR analysis information tab
 - Paired TCR with Index data 
@@ -20,7 +19,7 @@ There are three main sections:
     + The merged file undergoes further QC process in the 'data cleaning steps'
         1. Changes the flow cytometric values from negative to small positive 
         2. User can filter using the clone count for coloring purposes (0=all values included)
-    + This clean file is then used to create the dotplot, which has over 20 cusomisable features
+    + This clean file is then used to create the dotplot, which has over 20 customisable features
     + For more information on the functions, see Paired TCR with Index data information tab
 
 Please contact: Kerry.Mullan@monash.edu or Nicole.Mifsud@monash.edu to report errors.

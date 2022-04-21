@@ -93,7 +93,7 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("total # clones","unique # clones")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 90, width = 154.2857,
+ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 90, width = 140,
                                   
                                   style = "margin:-35px 10px"
                                   
@@ -438,40 +438,37 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   h5("length distribution plot requires an unsummarised dataset"),
 
                                                   fluidRow(
-                                                    column(3,selectInput('graph_type', 'Type of graph', graph_type)),
-                                                    column(3,selectInput( "aa.or.nt","CDR3 length column","" )),
+                                                    column(2,selectInput('graph_type', 'Type of graph', graph_type)),
+                                                    column(2,selectInput( "aa.or.nt","CDR3 length column","" )),
+                                                    
+                                                    conditionalPanel(
+                                                      condition = "input.graph_type == 'histogram'",
+                                                    column(2,selectInput( "selected_group_len","Group","" )),
+                                                    column(2,selectInput("chain.hist.col","Colour by:",""))),
+
+                                                    conditionalPanel(
+                                                      condition = "input.graph_type == 'density'",
+                                                        column(3,sliderInput("alpha.density","Transparency",min=0, max = 1,value = 0.25, step = 0.05))
+
+                                                    ),
+
+                                                    ),
+                                                  fluidRow(
                                                     column(2, selectInput("hist.density.legend","Legend location",choices = c("top","bottom","left","right","none"),selected = "right")),
+                                                    column(2, numericInput("col.num.CDR3len","# of Legend columns",value = 3)),
                                                     column(2,numericInput("legend.text.hist","Legend text size",value = 6)),
                                                     column(2,selectInput("hist_colour.choise","Colour", choices =  c("default","rainbow","random","grey")))
                                                   ),
                                                   
                                                   fluidRow(
-                                                    column(2,numericInput("hist.text.sizer","size of text",value=16)),
+                                                    column(2,numericInput("hist.text.sizer","Size of #",value=16)),
+                                                    column(2,numericInput("hist.text.sizer2","Axis text size",value=30)),
                                                     column(2, numericInput("xlow","x-axis (min)",value=0)),
                                                     column(2, numericInput("xhigh","x-axis (max)",value=30)),
                                                     column(2, numericInput("xbreaks","x-axis tick marks",value=5)),
                                                     column(2, numericInput("ybreaks","y-axis tick marks",value=2)),
                                                     ),
                                                   
-                                                  conditionalPanel(
-                                                    condition = "input.graph_type == 'histogram'",
-                                                    fluidRow(
-                                                      # column(3, numericInput("bin","Bins of histogram",value=30)),
-                                                      column(3,selectInput( "selected_group_len",label = h5("Group"),"" )),
-                                                      column(3,selectInput("chain.hist.col",label = h5 ("Colour by:"),"")),
-                                                      
-                                                    ),
-                                                    
-                                                  ),
-                                                  
-                                                  conditionalPanel(
-                                                    condition = "input.graph_type == 'density'",
-                                                    fluidRow(
-                                                     column(3,sliderInput("alpha.density","Transparency",min=0, max = 1,value = 0.25, step = 0.05))
-                                                      
-                                                    ),
-                                                    
-                                                  ),
 
                                                   fluidRow(
                                                     conditionalPanel(
@@ -714,7 +711,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                                          choices = c("scientific","natural"), selected = "natural")),
                                                     column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 1)),
                                                     column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
-                                                    column(3,numericInput("legend.text.simp",label = h5("Legend columns"),value = 12)),
+                                                    column(3,numericInput("legend.text.simp",label = h5("Legend text size"),value = 12)),
                                                     
 
                                                        
@@ -2678,18 +2675,20 @@ server  <- function(input, output, session) {
         theme(legend.title = element_blank(),
               legend.position = input$hist.density.legend) +
         labs(y="Count",
-             x="",
+             x="CDR3 length distribution",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.x = element_text(colour="black",angle=0,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
           legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
         ) +
         scale_y_continuous(limits = c(0, max.hist), breaks = seq(0,max.hist,by = input$ybreaks), expand = c(0, 0))+
         scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0, 0)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+        guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
+        
       vals4$bar.len
       
     }
@@ -2721,18 +2720,19 @@ server  <- function(input, output, session) {
         theme(legend.title = element_blank(),
               legend.position = input$hist.density.legend) +
         labs(y="Frequency",
-             x="",
+             x="CDR3 length distribution",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
           legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
-        )+
+        ) +
         scale_y_continuous(expand = c(0,0), limits=c(0,max.hist)) +
         scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0,0)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+        guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
       vals4$bar.len
     }
     else if (input$graph_type == "histogram" & input$type.tree == "Summarised data") {
@@ -2763,18 +2763,19 @@ server  <- function(input, output, session) {
               legend.position = input$hist.density.legend) +
         scale_fill_manual(values = df.col.hist$col) +
         labs(y="Count",
-             x="",
+             x="CDR3 length distribution",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
           legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
         ) +
         scale_y_continuous(limits = c(0, max.hist), breaks = seq(0,max.hist,by = input$ybreaks), expand = c(0, 0))+
         scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0, 0)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+        guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
       vals4$bar.len
       
     }
@@ -2801,18 +2802,19 @@ server  <- function(input, output, session) {
         theme(legend.title = element_blank(),
               legend.position = input$hist.density.legend) +
         labs(y="Frequency",
-             x="",
+             x="CDR3 length distribution",
              title="") +
         theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
           axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
           legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
-        )+
+        ) +
         scale_y_continuous(expand = c(0,0), limits=c(0,max.hist)) +
         scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0,0)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+        guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
       vals4$bar.len
     }
 
