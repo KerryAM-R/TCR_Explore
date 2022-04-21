@@ -1770,11 +1770,12 @@ server  <- function(input, output, session) {
   # })
   
   
-  # Tree map ------
+  
+  # file for analytical plots -----
   input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2(),"own_data2" = own.data2())})
   test.data2 <- reactive({
     # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
-    dataframe = read.csv("inst/extdata/test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
+    dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
   })
   own.data2 <- reactive({
     inFile2 <- input$file2 
@@ -1788,6 +1789,9 @@ server  <- function(input, output, session) {
         quote=input$quote)}
     
   })
+  
+  # Tree map ------
+  
   
   observe({
     updateSelectInput(
@@ -4283,6 +4287,7 @@ server  <- function(input, output, session) {
     names(a2) <- c("inv.simpson.index","total # clones","unique # clones")
     a2
     both <- cbind(a2,df_name)
+    both$inv.simpson.index_div_unique.samp <- both$inv.simpson.index/both$`unique # clones`
     as.data.frame(both)
     
   }
@@ -4542,7 +4547,7 @@ server  <- function(input, output, session) {
   ttestout <- reactive({
     dat <- table.inv.simpson()
     conf <- input$conf
-    dat <- dat[order(dat[names(dat) %in% input$group1_column]),]
+    dat <- dat[order(dat$both),]
     ve <- ifelse(input$varequal == 'y', TRUE, FALSE)
     pair_samp <- ifelse(input$paired == 'y', TRUE, FALSE)
     group1 <- subset(dat, get(input$group1_column)==input$group1_selected) # group 1
