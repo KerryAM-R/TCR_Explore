@@ -5231,7 +5231,7 @@ server  <- function(input, output, session) {
       session,
       "upset.select",
       choices=names(input.data2()),
-      selected = "AVJ_aCDR3_BVDJ_bCDR3")
+      selected = "AVJ_aCDR3_BVJ_bCDR3")
     
   })
   observe({
