@@ -91,7 +91,7 @@ error_message_val2 <- "Uploading file"
 error_message_val3 <- "Upload clone file"
 error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
-simp.index.names <- c("inv.simpson.index","total # clones","unique # clones","V1","V2","Indiv_group")
+simp.index.names <- c("total # clones","unique # clones")
 # user interface  ----
 ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 90, width = 154.2857,
                                   
@@ -689,33 +689,32 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          tabPanel("Inverse Simpson Index",
                                                   p("Inverse simpson index; ∞=infinite diversity and 1=limited diversity"),
                                                   fluidRow(
-                                                    column(3,selectInput("group_column_simp",label = h5("Group colum"),
-                                                                         choices = c("group","Indiv","Indiv.group"),
-                                                                         selected = "Indiv.group")),
+                                                    column(3,selectInput("group_column_simp",label = h5("First ID column"),
+                                                                        "")),
+                                                    column(3,selectInput("group_column_simp3",label = h5("Second ID column"),
+                                                                         "")),
                                                     column(3,selectInput("group_column_simp2",label = h5("Unique clone column"),
                                                                          "")),                            
-                                                    
-                                                    
                                                   ),
                                                   fluidRow(column(12, div(DT::dataTableOutput("table_display.diversity")))),
                                                   downloadButton('downloadTABLE_simpson.inv','Download table'),
                                                   fluidRow(
                                                     column(3,selectInput("inv.simp_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
-                                                    column(3,selectInput("group.index",label = h5("Select x-axis"),
-                                                                         choices = simp.index.names,
-                                                                         selected = "V2")),
+
+                                                    column(3,selectInput("group.index",label = h5("x-axis group"),
+                                                                         "")),
+                                                    
                                                     column(3,selectInput("group2.index",label = h5("Colour by this group"),
-                                                                         choices = simp.index.names,
-                                                                         selected = "V1")),
+                                                                         "")),
                                                     column(3,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
                                                                          choices = simp.index.names,
                                                                          selected = "total # clones"
                                                     )),
                                                     column(3,selectInput("scale_x_continuous_x",label = h5("Number abbreivation"),
                                                                          choices = c("scientific","natural"), selected = "natural")),
-                                                    column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 2)),
-                                                    column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "bottom")),
-                                                    column(3,numericInput("legend.text.simp",label = h5("Legend columns"),value = 8)),
+                                                    column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 1)),
+                                                    column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
+                                                    column(3,numericInput("legend.text.simp",label = h5("Legend columns"),value = 12)),
                                                     
 
                                                        
@@ -731,10 +730,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     
                                                     column(2, numericInput("conf","confidence of T test", value =0.95, max = 0.99)),
                                                     column(2,selectInput("group1_column",label = h5("Column of group"), 
-                                                                         choices = simp.index.names,
-                                                                         selected = "V2")),
-                                                    column(2,selectInput("group3_column",label = h5("Group selected"),
-                                                                         choices=c("group","Indiv","Indiv.group"),selected = "group")),
+                                                                         "")),
                                                     column(2,selectInput( "group1_selected",label = h5("Group1"),"" )),
                                                     column(2,selectInput( "group2_selected",label = h5("Group2"),"" )),
                                                     column(2,  selectInput("tail",
@@ -1092,10 +1088,6 @@ server  <- function(input, output, session) {
            "Upload file")
     )
     
-    
-    
-    
-    
     if (input$include.origin == "no" && input$sheet == "Summary+JUNCTION") {
       df2 <- input.data_IMGT.xls4();
       
@@ -1347,7 +1339,7 @@ server  <- function(input, output, session) {
       dat <- merged_chain2
       dat$AV <- paste(dat$V.GENE_A)
       dat$AJ <- paste(dat$J.GENE.and.allele_A,sep="")
-      dat$AVJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
+      dat$AVJ <- paste(dat$AV,".",dat$AJ,sep="")
       dat$AV <- gsub("[*]0.","",dat$AV)
       dat$AJ <- gsub("[*]0.","",dat$AJ)
       dat$AVJ <- gsub("[*]0.","",dat$AVJ)
@@ -1355,19 +1347,26 @@ server  <- function(input, output, session) {
       dat$BV <- paste(dat$V.GENE_B)
       dat$BJ <- paste(dat$J.GENE.and.allele_B)
       dat$BD <- paste(dat$D.GENE.and.allele_B)
-      dat$BVDJ <- paste(dat$V.GENE_B,".",dat$D.GENE.and.allele_B,".",dat$J.GENE.and.allele_B,sep="")
+      dat$BVJ <- paste(dat$BV,".",dat$BJ,sep="")
+      dat$BVDJ <- paste(dat$BV,".",dat$BD,".",dat$BJ,sep="")
       
       dat$BV <- gsub("[*]0.","",dat$BV)
       dat$BJ <- gsub("[*]0.","",dat$BJ)
       dat$BD <- gsub("[*]0.","",dat$BD)
+      dat$BVJ <- gsub("[*]0.","",dat$BVJ)
       dat$BVDJ <- gsub("[*]0.","",dat$BVDJ)
-    
-      dat$AJ <- gsub("TR","",dat$AJ)
-      dat$AVJ <- gsub("TR","",dat$AJ)
+      dat$BVDJ <- gsub(".NA.",".",dat$BVDJ)
       
+      dat$AJ <- gsub("TR","",dat$AJ)
+      dat$AVJ <- gsub("TR","",dat$AVJ)
+      dat$AVJ <- gsub("AJ","J",dat$AVJ)
+      dat$AVJ.BVJ <- paste(dat$AVJ,"_",dat$BVJ,sep="")
       dat$AVJ.BVDJ <- paste(dat$AVJ,"_",dat$BVDJ,sep="")
       dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$JUNCTION..AA._A,sep="_")
+      dat$BVJ_bCDR3 <- paste(dat$BVJ,dat$JUNCTION..AA._B,sep="_")
       dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$JUNCTION..AA._B,sep="_")
+      
+      dat$AVJ_aCDR3_BVJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVJ_bCDR3,sep=" & ")
       dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
       head(dat)
       
@@ -1405,7 +1404,7 @@ server  <- function(input, output, session) {
       dat <- merged_chain2
       dat$AV <- paste(dat$V.GENE_A)
       dat$AJ <- paste(dat$J.GENE.and.allele_A,sep="")
-      dat$AVJ <- paste(dat$V.GENE_A,".",dat$J.GENE.and.allele_A,sep="")
+      dat$AVJ <- paste(dat$AV,".",dat$AJ,sep="")
       dat$AV <- gsub("[*]0.","",dat$AV)
       dat$AJ <- gsub("[*]0.","",dat$AJ)
       dat$AVJ <- gsub("[*]0.","",dat$AVJ)
@@ -1413,18 +1412,26 @@ server  <- function(input, output, session) {
       dat$BV <- paste(dat$V.GENE_B)
       dat$BJ <- paste(dat$J.GENE.and.allele_B)
       dat$BD <- paste(dat$D.GENE.and.allele_B)
-      dat$BVDJ <- paste(dat$V.GENE_B,".",dat$D.GENE.and.allele_B,".",dat$J.GENE.and.allele_B,sep="")
+      dat$BVJ <- paste(dat$BV,".",dat$BJ,sep="")
+      dat$BVDJ <- paste(dat$BV,".",dat$BD,".",dat$BJ,sep="")
       
       dat$BV <- gsub("[*]0.","",dat$BV)
       dat$BJ <- gsub("[*]0.","",dat$BJ)
       dat$BD <- gsub("[*]0.","",dat$BD)
+      dat$BVJ <- gsub("[*]0.","",dat$BVJ)
       dat$BVDJ <- gsub("[*]0.","",dat$BVDJ)
+      dat$BVDJ <- gsub(".NA.",".",dat$BVDJ)
       
       dat$AJ <- gsub("TR","",dat$AJ)
-      dat$AVJ <- gsub("TR","",dat$AJ)
+      dat$AVJ <- gsub("TR","",dat$AVJ)
+      dat$AVJ <- gsub("AJ","J",dat$AVJ)
+      dat$AVJ.BVJ <- paste(dat$AVJ,"_",dat$BVJ,sep="")
       dat$AVJ.BVDJ <- paste(dat$AVJ,"_",dat$BVDJ,sep="")
       dat$AVJ_aCDR3 <- paste(dat$AVJ,dat$AA.JUNCTION_A,sep="_")
+      dat$BVJ_bCDR3 <- paste(dat$BVJ,dat$AA.JUNCTION_B,sep="_")
       dat$BVDJ_bCDR3 <- paste(dat$BVDJ,dat$AA.JUNCTION_B,sep="_")
+      
+      dat$AVJ_aCDR3_BVJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVJ_bCDR3,sep=" & ")
       dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
       head(dat)
       
@@ -1809,7 +1816,6 @@ server  <- function(input, output, session) {
       selected = "AVJ.BVJ")
     
   })
-
   observe({
     updateSelectInput(
       session,
@@ -1817,7 +1823,6 @@ server  <- function(input, output, session) {
       choices=select_group(),
       selected = c("IFN","CD8")) 
   }) 
-  
   
   cols <- reactive({
     dat <- input.data2();
@@ -3939,19 +3944,21 @@ server  <- function(input, output, session) {
     df <- as.data.frame(ddply(dat,(c(input$group_column,input$pie_chain)),numcolwise(sum)))
     names(df) <- c("group","chain","cloneCount")
     
-    df$group <- factor(df[,names(df) %in% input$group_column],levels = input$string.data.pie.order)
+    
     
     palette <- cols
     a <- unique(df$chain)
     df$chain <- factor(df$chain,levels = a,labels=a)
     df <- transform(df, percent = ave(cloneCount, group, FUN = prop.table))
     
+    df$group <- factor(df$group,levels = unique(input$string.data.pie.order) )
+    
     vals9$pie <- ggplot(df, aes(x="", y=percent, fill=chain)) +
       geom_bar(width = 1, stat = "identity",aes(colour = "black")) +
       scale_fill_manual(values=palette) +
       scale_color_manual(values = "black") +
       coord_polar("y", start=0) + 
-      facet_wrap(~group,nrow = input$nrow.pie) +
+      facet_wrap(~df$group,nrow = input$nrow.pie) +
       theme(
         axis.text = element_blank(),
             axis.ticks = element_blank(),
@@ -4174,6 +4181,22 @@ server  <- function(input, output, session) {
   observe({
     updateSelectInput(
       session,
+      "group_column_simp",
+      choices=names(input.data2()),
+      selected = "Indiv")
+    
+  })
+  observe({
+    updateSelectInput(
+      session,
+      "group_column_simp3",
+      choices=names(input.data2()),
+      selected = "group")
+    
+  })
+  observe({
+    updateSelectInput(
+      session,
       "group_column_simp2",
       choices=names(input.data2()),
       selected = "AVJ_aCDR3_BVJ_bCDR3")
@@ -4182,15 +4205,28 @@ server  <- function(input, output, session) {
   
   inv.simpson.index <- function() {
     dataframe = input.data2();
+    
+    test <- as.data.frame(dataframe)
+      validate(
+        need(nrow(test)>0,
+             "Upload file")
+      )
+    
     head(dataframe)
     
-    df.names <-   dataframe[ , -which(names(dataframe) %in% c("cloneCount","clone","Sequence_A","Sequence_B"))]
-    df1 <- ddply(dataframe,names(df.names) ,numcolwise(sum))
+    df1 <- ddply(dataframe,c(input$group_column_simp,input$group_column_simp2,input$group_column_simp3),numcolwise(sum))
     df1 <- df1[order(df1$cloneCount, decreasing = T),]
     
-    names(df1)
+    V1 <- df1[names(df1) %in% input$group_column_simp]
+    V1
+    V2 <- df1[names(df1) %in% input$group_column_simp3]
+    V1V2 <- cbind(V1,V2)
+    names(V1V2) <- c("V1","V2")
     
-    df.group <- unique(df1[names(df1) %in% input$group_column_simp])
+    df1$selected.groups <- paste(V1V2$V1,V1V2$V2,sep="_")
+    
+    
+    df.group <- unique(df1[names(df1) %in% "selected.groups"])
     names(df.group) <- "V1"
     
     column.length <- length(df.group$V1)
@@ -4206,7 +4242,7 @@ server  <- function(input, output, session) {
     samps <- df.group$V1
     
     for (j in 1:column.length){
-      df2 <- subset(df1,get(input$group_column_simp)==samps[j])
+      df2 <- subset(df1,df1$selected.groups==samps[j])
       m[,j] <- c(df2$cloneCount, rep(NA, row.length - length(df2$cloneCount)))
     }
     m <- as.data.frame(m)
@@ -4234,17 +4270,18 @@ server  <- function(input, output, session) {
     a1 <- as.data.frame(a1)
     names(a1) <- names(m)
     a1
-    df_name <- as.data.frame(do.call(rbind, strsplit(as.character(names(m)), "\\.")))
+    df_name <- as.data.frame(do.call(rbind, strsplit(as.character(names(m)), "_")))
+    df_name$both <- paste(df_name$V1,df_name$V2,sep = "_")
+    head(df_name) 
+    names(df_name) <- c(input$group_column_simp,input$group_column_simp3,"both")
+    
     head(df_name) 
     
     a2 <- as.data.frame(t(a1))
     names(a2) <- c("inv.simpson.index","total # clones","unique # clones")
     a2
-    
     both <- cbind(a2,df_name)
-    both$Indiv_group <- paste(both$V1,both$V2,sep = "_")
     as.data.frame(both)
-    
     
   }
   
@@ -4254,20 +4291,48 @@ server  <- function(input, output, session) {
     dat
   })
   
+  
+  observe({
+    
+    df <- as.list(c(input$group_column_simp,input$group_column_simp3,"both"))
+    
+    updateSelectInput(
+      session,
+      "group.index",
+      choices=df,
+      selected= "group"
+    )
+    
+  })
+  
+  observe({
+    
+    df <- as.list(c(input$group_column_simp,input$group_column_simp3,"both"))
+    
+    updateSelectInput(
+      session,
+      "group2.index",
+      choices=df,
+      selected = "Indiv"
+      )
+
+  })
+  
+  
   # simp cal other plots ------
   cols_simp.index <- reactive({
     dat <- inv.simpson.index();
     dat <- as.data.frame(dat)
-    
+
     selected.col <- dat[names(dat) %in% input$group2.index]
     names(selected.col) <- "V1"
     dat[names(dat) %in% input$group2.index] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
-    
-    
+
+
     num <- unique(dat[names(dat) %in% input$group2.index])
     col.gg <- gg_fill_hue(dim(num)[1])
-    
-    
+
+
     if (input$inv.simp_colour.choise == "default") {
       lapply(1:dim(num)[1], function(i) {
         colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), col.gg[i])
@@ -4278,19 +4343,19 @@ server  <- function(input, output, session) {
       lapply(1:dim(num)[1], function(i) {
         colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), palette1[i])
       })
-      
+
     }
-    
+
     else {
       lapply(1:dim(num)[1], function(i) {
         colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), input$one.colour.default)
       })
-      
-      
+
+
     }
-    
+
   })
-  
+
   output$myPanel.inv.simp <- renderUI({cols_simp.index()})
   
   colors_inv.simp <- reactive({
@@ -4299,8 +4364,8 @@ server  <- function(input, output, session) {
     selected.col <- dat[names(dat) %in% input$group2.index]
     names(selected.col) <- "V1"
     dat[names(dat) %in% input$group2.index] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
-    
-    
+
+
     num <- unique(dat[names(dat) %in% input$group2.index])
     lapply(1:dim(num)[1], function(i) {
       input[[paste("col.inv.simpson", i, sep="_")]]
@@ -4308,20 +4373,23 @@ server  <- function(input, output, session) {
   })
   group.diversity1 <- function() {
     both <- inv.simpson.index()
+    
+    
+    
     both <- as.data.frame(both)
-    
+
     cols <- unlist(colors_inv.simp())
-    
+
     selected.col <- both[names(both) %in% input$group2.index]
     names(selected.col) <- "V1"
     both[names(both) %in% input$group2.index] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
-    
+
     unique.col <- as.data.frame(unique(both[names(both) %in% input$group2.index]))
     names(unique.col) <- "V1"
     unique.col$simp.inv_palette <- cols
     #    df3 <- as.data.frame(merge(both,unique.col,by.x="V1",by.y = "V1"))
-    
-    
+
+
     vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index))+
       geom_boxplot(show.legend = F)+
       geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
@@ -4341,9 +4409,9 @@ server  <- function(input, output, session) {
       guides(fill=guide_legend(ncol=input$col.num.simp)) +
       xlab("")+
       ylab("Inverse simpson index")
-    
+
     vals11$Simp1
-    
+
   }
   group.diversity2 <- function() {
     both <- inv.simpson.index()
@@ -4352,17 +4420,17 @@ server  <- function(input, output, session) {
       need(nrow(both)>0,
            "select correct chain")
     )
-    
+
     both <- as.data.frame(both)
-    
+
     selected.col <- both[names(both) %in% input$group2.index]
     names(selected.col) <- "V1"
     both[names(both) %in% input$group2.index] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
-    
+
     unique.col <- as.data.frame(unique(both[names(both) %in% input$group2.index]))
     names(unique.col) <- "V1"
     unique.col$simp.inv_palette <- cols
-    
+
     if (input$scale_x_continuous_x=="scientific") {
       vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
         geom_point(size =3, alpha =1, show.legend =T)+
@@ -4381,11 +4449,9 @@ server  <- function(input, output, session) {
         scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
         labs(x="number of clones",
              y="inverse simpson index")
-      
+
       vals12$Simp2
     }
-
-    
     else {
       vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
         geom_point(size =3, alpha =1, show.legend =T)+
@@ -4402,85 +4468,92 @@ server  <- function(input, output, session) {
               legend.text = element_text(colour="black", size=8,family=input$font_type)) +
         labs(x="number of clones",
              y="inverse simpson index")
-      
+
       vals12$Simp2
     }
-    
+
   }
   output$simpson.index1 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    group.diversity1() 
+    group.diversity1()
   })
   output$simpson.index2 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
                    test_fun()
                  })
-    group.diversity2() 
+    group.diversity2()
   })
-  
+
   table.inv.simpson <- function () {
     dat <- inv.simpson.index()
     dat <- as.data.frame(dat)
     dat
-    
+
   }
-  # 
-  
+
   select_group2 <- function () {
     df <- input.data2();
-    
+
     validate(
       need(nrow(df)>0,
            error_message_val1)
     )
-    
-    df2 <- as.data.frame(unique(df[names(df) %in% input$group3_column]))
+
+    df2 <- as.data.frame(unique(df[names(df) %in% input$group1_column]))
     df2 <- as.data.frame(df2)
     #names(df2) <- "V1"
     df2
   }
-  
+
   observe({
     updateSelectInput(
       session,
       "group1_selected",
       choices=select_group2(),
       selected = "CD8")
-    
+
   }) # group
-  
-  
-  
   observe({
     updateSelectInput(
       session,
       "group2_selected",
       choices=select_group2(),
       selected = "IFN")
-    
+
   }) # group
-  # 
+  observe({
+    
+    df <- as.list(c(input$group_column_simp,input$group_column_simp3,"both"))
+    
+    updateSelectInput(
+      session,
+      "group1_column",
+      choices=df,
+      selected = "group"
+    )
+    
+  })
   ttestout <- reactive({
     dat <- table.inv.simpson()
     conf <- input$conf
-    dat <- dat[order(dat$V1),]
+    dat <- dat[order(dat[names(dat) %in% input$group1_column]),]
     ve <- ifelse(input$varequal == 'y', TRUE, FALSE)
     pair_samp <- ifelse(input$paired == 'y', TRUE, FALSE)
     group1 <- subset(dat, get(input$group1_column)==input$group1_selected) # group 1
     group2 <- subset(dat, get(input$group1_column)==input$group2_selected) # group 2
     t.test(group1$inv.simpson.index, group2$inv.simpson.index, paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
   })
-  
+
   output$tvalue <- renderPrint({
     vals <- ttestout()
     if (is.null(vals)){return(NULL)}
     vals$statistic
   })
-  
+
   # Output of p value
   output$pvalue <- renderPrint({
     vals <- ttestout()
@@ -4492,8 +4565,8 @@ server  <- function(input, output, session) {
     if (is.null(vals)){return(NULL)}
     vals$conf.int
   })
-  
-  
+
+
   output$downloadTABLE_simpson.inv <- downloadHandler(
     filename = function(){
       paste("inv.simpson.index",gsub("-", ".", Sys.Date()),".csv", sep = "")
@@ -4501,7 +4574,7 @@ server  <- function(input, output, session) {
     content = function(file){
       write.csv(table.inv.simpson(),file, row.names = FALSE)
     })
-  
+
   output$downloadPlot_simpson.inv <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
@@ -4509,16 +4582,16 @@ server  <- function(input, output, session) {
     }, content = function(file) {
       pdf(file, width=input$width_simpson.inv,height=input$height_simpson.inv, onefile = FALSE) # open the pdf device
       grid.arrange(print(group.diversity1()),print(group.diversity2()),ncol=2)
-      dev.off()}, 
+      dev.off()},
     contentType = "application/pdf" )
-  
+
   output$downloadPlotPNG_simpson.inv <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
       paste("inv.simpson.index.", gsub("/", "-", x), ".png", sep = "")
     },
     content = function(file) {
-      
+
       png(file, width = input$width_png_simpson.inv, height = input$height_png_simpson.inv, res = input$resolution_PNG_simpson.inv)
       grid.arrange(print(group.diversity1()),print(group.diversity2()),ncol=2)
       dev.off()}, contentType = "application/png" # MIME type of the image
@@ -5156,7 +5229,7 @@ server  <- function(input, output, session) {
       session,
       "upset.select",
       choices=names(input.data2()),
-      selected = "AJBJ")
+      selected = "AVJ_aCDR3_BVDJ_bCDR3")
     
   })
   observe({
