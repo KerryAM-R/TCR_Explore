@@ -157,7 +157,9 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               tabPanel("Session info", 
                                        tabPanel("Session info", 
                                                 div(style="width:800px",
-                                                verbatimTextOutput("sessionInfo")))
+                                                verbatimTextOutput("sessionInfo")),
+                                                tags$head(includeHTML(("google-analytics.html")))
+                                                )
                               )
                        )
                  ),
@@ -438,8 +440,9 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                        tabsetPanel(
                  # UI CDR3 length distribution graphs ----- 
                                          tabPanel("CDR3 length distribution",
-                                                  p("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
-                                                  p("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
+                                                  p(" "),
+                                                  h6("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
+                                                  h6("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
 
                                                   fluidRow(
                                                     column(2,selectInput('graph_type', 'Type of graph', graph_type)),
@@ -514,8 +517,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                  # UI motif -----
                                          tabPanel("Motif (amino acid)",
                                                   p(" "),
-                                                  p("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
-                                                  p("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
+                                                  h6("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
+                                                  h6("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
                                                   h5("Select amino acid column and CDR3 length"),
                                                   verbatimTextOutput("length"),
                                                   
@@ -574,6 +577,9 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          ),
                  # motif align with muscle -----
                                          tabPanel("Motif (AA or NT alignment)",
+                                                  p(" "),
+                                                  h6("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
+                                                  h6("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
                                                   fluidRow(
                                                     column(3,selectInput("aa.or.nt4",label = h5("CDR3 column"),"")),
                                                     column(3,selectInput("group_selected_one",label = h5("First group (bottom of plot)"),"" )),
@@ -3365,6 +3371,9 @@ server  <- function(input, output, session) {
     motif
     
   })
+  
+  
+  
   output$length <- renderPrint( {
     df <- input.data2();
     validate(
@@ -3375,7 +3384,7 @@ server  <- function(input, output, session) {
     df <- df[order(df$len1),]
     df <- subset(df,get(input$group_column)==input$group_selected_motif)
     df_len <- unique(df$len1)
-    cat("The dataset contains CDR3 lengths of:",  df_len)
+    cat(input$group_selected_motif,"dataset contains CDR3 lengths of:",  df_len)
   })
   
   output$length.table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
@@ -3390,8 +3399,7 @@ server  <- function(input, output, session) {
     df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
     df_unique$Unique_clones <- 1
-    unique2 <- as.data.frame(df_unique[names(df_unique) %in% c(input$group_column,"len1","Unique_clones"),])
-    as.data.frame(ddply(unique2,(c(input$group_column,"len1")),numcolwise(sum)))
+    as.data.frame(ddply(df_unique,(c(input$group_column,"len1")),numcolwise(sum)))
     
     
   })
