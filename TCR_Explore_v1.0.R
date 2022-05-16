@@ -214,7 +214,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                        mainPanel(
                                          tabsetPanel(id = "QC_panel",
                                            tabPanel("IMGT create QC file",value = 1,
-                                                    h4("Fill in the 'clone_quality' column: pass or fail"), 
+                                                    h4("Fill in the 'clone_quality' column with lowercase: pass or fail"), 
                                                     h4("Add comments if desired"),
                                                     fluidRow(column(4, selectInput("sheet","Information included", choices = c("Summary+JUNCTION","Summary"))),
                                                              column(8, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'), width = "800px")),
@@ -225,6 +225,9 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                            ),
                                            tabPanel("Paired chain file",value = 2,
                                                     tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
+                                                    div(DT::dataTableOutput("Pass.Fail.NA_table")),
+                                                    
+                                                    
                                                     div(DT::dataTableOutput("chain_table_IMGT.QC1"))
                                            ),
                                            tabPanel("TCRdist output file",value = 3,
@@ -683,8 +686,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          
                                          
                  # UI inverse simpson index -----
-                                         tabPanel("Inverse Simpson Index",
-                                                  p("Inverse simpson index; ∞=infinite diversity and 1=limited diversity"),
+                                         tabPanel("Inverse Simpson Diversity Index",
+                                                  p("Inverse Simpson Diversity Index: ∞=infinite diversity and 1=limited diversity"),
                                                   fluidRow(
                                                     column(3,selectInput("group_column_simp",label = h5("First ID column"),
                                                                         "")),
@@ -696,17 +699,25 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   fluidRow(column(12, div(DT::dataTableOutput("table_display.diversity")))),
                                                   downloadButton('downloadTABLE_simpson.inv','Download table'),
                                                   fluidRow(
+                                                    
+                                                    column(3,selectInput("index.type",label = h5("Type of inverse SDI"), choices =  c("Inverse SDI","Sample size corrected Inverse SDI"))),
+                                                    
                                                     column(3,selectInput("inv.simp_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
 
-                                                    column(3,selectInput("group.index",label = h5("x-axis group"),
+                                                    column(2,selectInput("group.index",label = h5("x-axis group"),
                                                                          "")),
                                                     
-                                                    column(3,selectInput("group2.index",label = h5("Colour by this group"),
+                                                    column(2,selectInput("group2.index",label = h5("Colour by this group"),
                                                                          "")),
-                                                    column(3,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
+                                                    
+                                                    
+                                                    column(2,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
                                                                          choices = simp.index.names,
                                                                          selected = "total # clones"
-                                                    )),
+                                                    ))),
+                                                  fluidRow(
+                                                    
+                                                  
                                                     column(3,selectInput("scale_x_continuous_x",label = h5("Number abbreivation"),
                                                                          choices = c("scientific","natural"), selected = "natural")),
                                                     column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 1)),
@@ -1121,6 +1132,7 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
       
+      
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
       df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
       df_chain1$clone_quality <- NA 
@@ -1165,6 +1177,8 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
       
+      
+      
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
       df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
       df_chain1$clone_quality <- NA 
@@ -1204,6 +1218,7 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
+      
       
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
       df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
@@ -1247,6 +1262,7 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
       
+      
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
       df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
       df_chain1$clone_quality <- NA 
@@ -1285,6 +1301,27 @@ server  <- function(input, output, session) {
         inFile12$datapath)}
     
   })
+  Pass.Fail.NA <- reactive({
+    df1 <- input.data.IMGT_afterQC();
+    
+    validate(
+      need(nrow(df1)>0,
+           "Upload file")
+    )
+    
+    df1$clone_quality <- gsub("pass","pass",df1$clone_quality,ignore.case = T)
+    df1$clone_quality <- gsub("fail","fail",df1$clone_quality,ignore.case = T)
+    df1$cloneCount <- 1
+    df2 <- df1[,c("cloneCount","clone_quality")] 
+    
+    as.data.frame(ddply(df2,"clone_quality",numcolwise(sum)))
+    
+    
+  })
+  
+  output$Pass.Fail.NA_table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
+    Pass.Fail.NA()
+  })
   
   chain_merge_IMGTonly <- reactive({
     df1 <- input.data.IMGT_afterQC();
@@ -1295,9 +1332,11 @@ server  <- function(input, output, session) {
     )
   
     df1 <- as.data.frame(df1)
+    df1$clone_quality <- gsub("pass","pass",df1$clone_quality,ignore.case = T)
+    df1$clone_quality <- gsub("fail","fail",df1$clone_quality,ignore.case = T)
     df <- subset(df1,df1$clone_quality=="pass")
     df <- as.data.frame(df)
-    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..","JUNCTION")]
+    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..")]
     
     df.Vgene <- as.data.frame(do.call(rbind, strsplit(as.character(df2$V.GENE.and.allele), ",")))
     df2$V.GENE <- df.Vgene$V1
@@ -1316,7 +1355,7 @@ server  <- function(input, output, session) {
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
+      df2$well <- df_name3$V2
       
       chain1 <- df2[grep("A",df2$V.GENE),]
       chain2 <- df2[grep("B",df2$V.GENE),]
@@ -1381,7 +1420,7 @@ server  <- function(input, output, session) {
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
+      df2$well <- df_name3$V2
       
       chain1 <- df2[grep("A",df2$V.GENE),]
       chain2 <- df2[grep("B",df2$V.GENE),]
@@ -1411,7 +1450,6 @@ server  <- function(input, output, session) {
       dat$BD <- paste(dat$D.GENE.and.allele_B)
       dat$BVJ <- paste(dat$BV,".",dat$BJ,sep="")
       dat$BVDJ <- paste(dat$BV,".",dat$BD,".",dat$BJ,sep="")
-      
       dat$BV <- gsub("[*]0.","",dat$BV)
       dat$BJ <- gsub("[*]0.","",dat$BJ)
       dat$BD <- gsub("[*]0.","",dat$BD)
@@ -1446,7 +1484,7 @@ server  <- function(input, output, session) {
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
+      df2$well <- df_name3$V2
       
       chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
       chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
@@ -1463,15 +1501,45 @@ server  <- function(input, output, session) {
       head(merged_chain)
       merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_G","Sequence.ID_D","V.DOMAIN.Functionality_G","V.DOMAIN.Functionality_D","D.GENE.and.allele_G","JUNCTION.frame_G","JUNCTION.frame_D"))]
       dat <- merged_chain2
-      dat$GJ <- paste(dat$V.GENE_G,".",dat$J.GENE.and.allele_G,sep="")
-      dat$DJ <- paste(dat$V.GENE_D,".",dat$J.GENE.and.allele_D,sep="")
+      dat$GV <- paste(dat$V.GENE_G)
+      dat$GJ <- paste(dat$J.GENE.and.allele_G,sep="")
+      
+      dat$GV <- gsub("[*]0.","",dat$GV)
       dat$GJ <- gsub("[*]0.","",dat$GJ)
+      dat$GJ <- gsub("TR","",dat$GJ)
+      dat$GJ <- gsub("GJ","J",dat$GJ)
+      dat$GJ <- gsub(", or J.","",dat$GJ)
+      dat$GVJ <- paste(dat$GV,".",dat$GJ,sep="")
+
+      
+      dat$DV <- paste(dat$V.GENE_D)
+      dat$DJ <- paste(dat$J.GENE.and.allele_D)
+      dat$DD <- paste(dat$D.GENE.and.allele_D)
+
+      dat$DV <- gsub("[*]0.","",dat$DV)
       dat$DJ <- gsub("[*]0.","",dat$DJ)
-      dat$GJ <- gsub(", or GJ","/",dat$GJ)
-      dat$GJDJ <- paste(dat$GJ,".",dat$DJ,sep="")
-      dat$GJ_gCDR3 <- paste(dat$GJ,dat$JUNCTION..AA._G,sep="_")
-      dat$DJ_dCDR3 <- paste(dat$DJ,dat$JUNCTION..AA._D,sep="_")
-      dat$GJ_gCDR3_DJ_dCDR3 <- paste(dat$DJ_dCDR3,dat$GJ_gCDR3,sep=" & ")
+      dat$DD <- gsub("[*]0.","",dat$DD)
+      dat$DD <- gsub(" and ",".",dat$DD)
+      
+      dat$DVJ <- paste(dat$DV,".",dat$DJ,sep="")
+      dat$DVDJ <- paste(dat$DV,".",dat$DD,".",dat$DJ,sep="")
+      
+      dat$DVJ <- gsub("[*]0.","",dat$DVJ)
+      dat$DVDJ <- gsub("[*]0.","",dat$DVDJ)
+      dat$DVDJ <- gsub(".NA.",".",dat$DVDJ)
+      
+      dat$GJ <- gsub("TR","",dat$GJ)
+      dat$GVJ <- gsub("TR","",dat$GVJ)
+      dat$GVJ.DVJ <- paste(dat$GVJ,"_",dat$DVJ,sep="")
+      dat$GVJ.DVDJ <- paste(dat$GVJ,"_",dat$DVDJ,sep="")
+      dat$GVJ_aCDR3 <- paste(dat$GVJ,dat$JUNCTION..AA._G,sep="_")
+      dat$DVJ_bCDR3 <- paste(dat$DVJ,dat$JUNCTION..AA._D,sep="_")
+      dat$DVDJ_bCDR3 <- paste(dat$DVDJ,dat$JUNCTION..AA._D,sep="_")
+      
+      dat$GVJ_aCDR3_DVJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVJ_bCDR3,sep=" & ")
+      dat$GVJ_aCDR3_DVDJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVDJ_bCDR3,sep=" & ")
+      dat$DD <- gsub("NA","no DD",dat$DD)
+      
       dat
     }
     
@@ -1485,7 +1553,7 @@ server  <- function(input, output, session) {
       df2$Indiv.group <- df_name3$V1
       df2$Indiv <-df_name5$V1
       df2$group <- df_name5$V2
-      df2$clone <- df_name3$V2
+      df2$well <- df_name3$V2
       
       chain1 <- df2[grep("G",df2$V.GENE.and.allele),]
       chain2 <- df2[grep("D",df2$V.GENE.and.allele),]
@@ -1500,17 +1568,47 @@ server  <- function(input, output, session) {
       x <- names(chain2)[z:dim(chain2)[2]]
       merged_chain <- merge(chain1,chain2,by =x)
       head(merged_chain)
-      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_G","Sequence.ID_D","V.DOMAIN.Functionality_G","V.DOMAIN.Functionality_D","D.GENE.and.allele_G","JUNCTION.frame_G","JUNCTION.frame_D"))]
+      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_G","Sequence.ID_D","V.DOMAIN.Functionality_G","V.DOMAIN.Functionality_D","D.GENE.and.allele_G","JUNCTION.frame_G","JUNCTION.frame_D","JUNCTION_G","JUNCTION_D"))]
+
       dat <- merged_chain2
-      dat$GJ <- paste(dat$V.GENE_G,".",dat$J.GENE.and.allele_G,sep="")
-      dat$DJ <- paste(dat$V.GENE_D,".",dat$J.GENE.and.allele_D,sep="")
+      
+      dat$GV <- paste(dat$V.GENE_G)
+      dat$GJ <- paste(dat$J.GENE.and.allele_G,sep="")
+      
+      dat$GV <- gsub("[*]0.","",dat$GV)
       dat$GJ <- gsub("[*]0.","",dat$GJ)
+      dat$GJ <- gsub("TR","",dat$GJ)
+      dat$GJ <- gsub("GJ","J",dat$GJ)
+      dat$GJ <- gsub(", or J.","",dat$GJ)
+      dat$GVJ <- paste(dat$GV,".",dat$GJ,sep="")
+
+      dat$DV <- paste(dat$V.GENE_D)
+      dat$DJ <- paste(dat$J.GENE.and.allele_D)
+      dat$DD <- paste(dat$D.GENE.and.allele_D)
+      
+      dat$DV <- gsub("[*]0.","",dat$DV)
       dat$DJ <- gsub("[*]0.","",dat$DJ)
-      dat$GJ <- gsub(", or GJ","/",dat$GJ)
-      dat$GJDJ <- paste(dat$GJ,".",dat$DJ,sep="")
-      dat$GJ_gCDR3 <- paste(dat$GJ,dat$AA.JUNCTION_G,sep="_")
-      dat$DJ_dCDR3 <- paste(dat$DJ,dat$AA.JUNCTION_D,sep="_")
-      dat$GJ_gCDR3_DJ_dCDR3 <- paste(dat$DJ_dCDR3,dat$GJ_gCDR3,sep=" & ")
+      dat$DD <- gsub("[*]0.","",dat$DD)
+      dat$DD <- gsub(" and ",".",dat$DD)
+      
+      dat$DVJ <- paste(dat$DV,".",dat$DJ,sep="")
+      dat$DVDJ <- paste(dat$DV,".",dat$DD,".",dat$DJ,sep="")
+      
+      dat$DVJ <- gsub("[*]0.","",dat$DVJ)
+      dat$DVDJ <- gsub("[*]0.","",dat$DVDJ)
+      dat$DVDJ <- gsub(".NA.",".",dat$DVDJ)
+      
+      dat$DD <- gsub("NA","no DD",dat$DD)
+
+      dat$GVJ <- gsub("TR","",dat$GVJ)
+      dat$GVJ.DVJ <- paste(dat$GVJ,"_",dat$DVJ,sep="")
+      dat$GVJ.DVDJ <- paste(dat$GVJ,"_",dat$DVDJ,sep="")
+      dat$GVJ_aCDR3 <- paste(dat$GVJ,dat$AA.JUNCTION_G,sep="_")
+      dat$DVJ_bCDR3 <- paste(dat$DVJ,dat$AA.JUNCTION_D,sep="_")
+      dat$DVDJ_bCDR3 <- paste(dat$DVDJ,dat$AA.JUNCTION_D,sep="_")
+      
+      dat$GVJ_aCDR3_DVJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVJ_bCDR3,sep=" & ")
+      dat$GVJ_aCDR3_DVDJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVDJ_bCDR3,sep=" & ")
       dat
     }
     
@@ -4287,7 +4385,7 @@ server  <- function(input, output, session) {
     names(a2) <- c("inv.simpson.index","total # clones","unique # clones")
     a2
     both <- cbind(a2,df_name)
-    both$inv.simpson.index_div_unique.samp <- both$inv.simpson.index/both$`unique # clones`
+    both$inv.simpson.index_div_unique.samp <- both$inv.simpson.index/both$`total # clones`
     as.data.frame(both)
     
   }
@@ -4396,28 +4494,62 @@ server  <- function(input, output, session) {
     unique.col$simp.inv_palette <- cols
     #    df3 <- as.data.frame(merge(both,unique.col,by.x="V1",by.y = "V1"))
 
+    if (input$index.type == "Sample size corrected Inverse SDI") {
+      
+      vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index_div_unique.samp))+
+        geom_boxplot(show.legend = F)+
+        geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
+                     dotsize = 1,
+                     sshow.legend = T,
+                     stackdir = "center", binpositions="all", stackgroups=TRUE
+                     ) +
+        theme_classic() +
+        scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+        theme(text=element_text(size=20,family=input$font_type),
+              axis.title = element_text(colour="black", size=20,family=input$font_type),
+              axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              legend.title  =element_blank(),
+              legend.position = input$legend.placement.simp,
+              legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+        guides(fill=guide_legend(ncol=input$col.num.simp)) +
+        xlab("")+
+        ylab("Inverse SDI (corrected)")
+      
+      vals11$Simp1
+      
+      
+      
+    }
+    
+    else {
+      vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index))+
+        geom_boxplot(show.legend = F)+
+        geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
+                     dotsize = 1,
+                     stackdir = "center", binpositions="all", stackgroups=TRUE,
+                     show.legend = T) +
+        theme_classic() +
+        scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+        theme(text=element_text(size=20,family=input$font_type),
+              axis.title = element_text(colour="black", size=20,family=input$font_type),
+              axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+              legend.title  =element_blank(),
+              legend.position = input$legend.placement.simp,
+              legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+        guides(fill=guide_legend(ncol=input$col.num.simp)) +
+        xlab("")+
+        ylab("Inverse SDI")
+      
+      vals11$Simp1
+    }
 
-    vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index))+
-      geom_boxplot(show.legend = F)+
-      geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
-                   dotsize = 1,
-                   stackdir = 'center',show.legend = T) +
-      theme_classic() +
-      scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
-      theme(text=element_text(size=20,family=input$font_type),
-            axis.title = element_text(colour="black", size=20,family=input$font_type),
-            axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-            legend.title  =element_blank(),
-            legend.position = input$legend.placement.simp,
-            legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
-      guides(fill=guide_legend(ncol=input$col.num.simp)) +
-      xlab("")+
-      ylab("Inverse simpson index")
 
-    vals11$Simp1
 
   }
   group.diversity2 <- function() {
@@ -4437,9 +4569,9 @@ server  <- function(input, output, session) {
     unique.col <- as.data.frame(unique(both[names(both) %in% input$group2.index]))
     names(unique.col) <- "V1"
     unique.col$simp.inv_palette <- cols
-
-    if (input$scale_x_continuous_x=="scientific") {
-      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+    if (input$index.type == "Sample size corrected Inverse SDI") {
+      if (input$scale_x_continuous_x=="scientific") {
+      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index_div_unique.samp,color=get(input$group2.index)))+
         geom_point(size =3, alpha =1, show.legend =T)+
         theme_bw() +
         scale_color_manual(values=unique.col$simp.inv_palette) +
@@ -4455,12 +4587,12 @@ server  <- function(input, output, session) {
         # scale_alpha(guide = 'none') +
         scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
         labs(x="number of clones",
-             y="inverse simpson index")
+             y="Inverse SDI (corrected)")
 
       vals12$Simp2
     }
     else {
-      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+      vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index_div_unique.samp,color=get(input$group2.index)))+
         geom_point(size =3, alpha =1, show.legend =T)+
         theme_bw() +
         scale_color_manual(values=unique.col$simp.inv_palette) +
@@ -4474,12 +4606,57 @@ server  <- function(input, output, session) {
               legend.position = "none",
               legend.text = element_text(colour="black", size=8,family=input$font_type)) +
         labs(x="number of clones",
-             y="inverse simpson index")
+             y="Inverse SDI (corrected)")
 
       vals12$Simp2
-    }
+    }}
 
+    
+    else {
+      if (input$scale_x_continuous_x=="scientific") {
+        vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+          geom_point(size =3, alpha =1, show.legend =T)+
+          theme_bw() +
+          scale_color_manual(values=unique.col$simp.inv_palette) +
+          theme(text=element_text(size=20,family=input$font_type),
+                axis.title = element_text(colour="black", size=20,family=input$font_type),
+                axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                legend.title  =element_blank(),
+                legend.position = "none",
+                legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+          # scale_alpha(guide = 'none') +
+          scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
+          labs(x="number of clones",
+               y="Inverse SDI")
+        
+        vals12$Simp2
+      }
+      else {
+        vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+          geom_point(size =3, alpha =1, show.legend =T)+
+          theme_bw() +
+          scale_color_manual(values=unique.col$simp.inv_palette) +
+          theme(text=element_text(size=20,family=input$font_type),
+                axis.title = element_text(colour="black", size=20,family=input$font_type),
+                axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                legend.title  =element_blank(),
+                legend.position = "none",
+                legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+          labs(x="number of clones",
+               y="Inverse SDI")
+        
+        vals12$Simp2
+      }}
+    
+    
   }
+  
   output$simpson.index1 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
                  detail = '', value = 0, {
@@ -4552,7 +4729,17 @@ server  <- function(input, output, session) {
     pair_samp <- ifelse(input$paired == 'y', TRUE, FALSE)
     group1 <- subset(dat, get(input$group1_column)==input$group1_selected) # group 1
     group2 <- subset(dat, get(input$group1_column)==input$group2_selected) # group 2
-    t.test(group1$inv.simpson.index, group2$inv.simpson.index, paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
+    
+    if (input$index.type == "Sample size corrected Inverse SDI") {
+      t.test(group1$inv.simpson.index_div_unique.samp, group2$inv.simpson.index_div_unique.samp, paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
+      }
+    
+    else {
+      
+      t.test(group1$inv.simpson.index, group2$inv.simpson.index, paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
+    }
+    
+    
   })
 
   output$tvalue <- renderPrint({
