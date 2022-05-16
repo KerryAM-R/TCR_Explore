@@ -438,7 +438,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                        tabsetPanel(
                  # UI CDR3 length distribution graphs ----- 
                                          tabPanel("CDR3 length distribution",
-                                                  h5("length distribution plot requires an unsummarised dataset"),
+                                                  p("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
+                                                  p("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
 
                                                   fluidRow(
                                                     column(2,selectInput('graph_type', 'Type of graph', graph_type)),
@@ -512,8 +513,12 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          ),
                  # UI motif -----
                                          tabPanel("Motif (amino acid)",
+                                                  p(" "),
+                                                  p("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
+                                                  p("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
                                                   h5("Select amino acid column and CDR3 length"),
                                                   verbatimTextOutput("length"),
+                                                  
                                                   fluidRow(
                                                     column(2,selectInput( "aa.or.nt2",label = h5("Amino acid CDR3 column"),"" )),
                                                     column(2,style = "margin-top: 15px;",numericInput("len","CDR3 amino acid length", value = 15)),                               
