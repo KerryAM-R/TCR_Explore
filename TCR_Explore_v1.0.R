@@ -27,6 +27,8 @@ require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
 library("shinyWidgets")
 library("showtext")
+library("ggseqlogo")
+
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -394,7 +396,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          ),
                                          
                                          fluidRow(
-                                           column(3,numericInput("width_png_circ","Width of PNG", value = 1600)),
+                                           column(3,numericInput("width_png_circ","Width of PNG", value = 1200)),
                                            column(3,numericInput("height_png_circ","Height of PNG", value = 1200)),
                                            column(3,numericInput("resolution_PNG_circ","Resolution of PNG", value = 144)),
                                            column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_circ','Download PNG'))
@@ -525,8 +527,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   fluidRow(
                                                     column(2,selectInput( "aa.or.nt2",label = h5("Amino acid CDR3 column"),"" )),
                                                     column(2,style = "margin-top: 15px;",numericInput("len","CDR3 amino acid length", value = 15)),                               
-                                                    column(2,selectInput( "group_selected_motif",label = h5("Group 1 (Bottom)"),"" )),
-                                                    column(2,selectInput( "group_selected_motif2",label = h5("Group 2 (top)"),"" )),
+                                                    column(2,selectInput( "group_selected_motif",label = h5("Group 1 (top)"),"" )),
+                                                    column(2,selectInput( "group_selected_motif2",label = h5("Group 2 (bottom)"),"" )),
                                                     column(2, selectInput("comarpison.aa.motif",label = h5("Type of comparison"), choices= c("single.group1","compare two groups")))
                                                   ),
                                                   fluidRow(
@@ -582,8 +584,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   h6("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
                                                   fluidRow(
                                                     column(3,selectInput("aa.or.nt4",label = h5("CDR3 column"),"")),
-                                                    column(3,selectInput("group_selected_one",label = h5("First group (bottom of plot)"),"" )),
-                                                    column(3,selectInput("group_selected_two",label = h5("Second group (top of plot)"),"" )),
+                                                    column(3,selectInput("group_selected_one",label = h5("First group (top of plot)"),"" )),
+                                                    column(3,selectInput("group_selected_two",label = h5("Second group (bottom of plot)"),"" )),
                                                     
                                                   ),
                                                   p("ASN = amino acid data and DNA = DNA data"),
@@ -1037,6 +1039,8 @@ server  <- function(input, output, session) {
   vals9 <- reactiveValues(pie=NULL)
   vals10 <- reactiveValues(heatmap_clonal=NULL)
   vals22 <- reactiveValues(Treemap22=NULL)
+  vals33 <- reactiveValues(geom_comp=NULL)
+  vals44 <- reactiveValues(plot.ggseq.2=NULL)
   options(shiny.sanitize.errors = F)
   output$sessionInfo <- renderPrint({
     print(sessionInfo())
@@ -3108,7 +3112,7 @@ server  <- function(input, output, session) {
       geom_point(aes(x=df5$cloneCount,y=df5$csum)) +
       geom_text(aes(x=df5$cloneCount,y=df5$percent,label=df5$count2),vjust=input$numeric.adjust, family='serif',colour=input$colour.numeric.bar, size=input$label.size)+
       xlab("Distinct CDR3")+
-      ylab("Frequency of repertoire")+
+      ylab("Frequency in repertoire")+
       theme_bw()+
       theme(
         axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis),
@@ -3346,13 +3350,13 @@ server  <- function(input, output, session) {
       session,
       "group_selected_motif",
       choices=select_group(),
-      selected = "CD8") })
+      selected = "IFN") })
   observe({
     updateSelectInput(
       session,
       "group_selected_motif2",
       choices=select_group(),
-      selected = "IFN") })
+      selected = "CD8") })
   
   output$Motif <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
     df <- input.data2();
@@ -3371,8 +3375,6 @@ server  <- function(input, output, session) {
     motif
     
   })
-  
-  
   
   output$length <- renderPrint( {
     df <- input.data2();
@@ -3424,10 +3426,19 @@ server  <- function(input, output, session) {
     motif_count <- aa.count.function(cbind(x=1,y=2,motif), input$len)
     motif_count<-pcm2pfm(motif_count)
     motif_count
-    motif<-new("pfm", mat=motif_count, name="",
-               color=colorset(alphabet="AA",
-                              colorScheme="chemistry"))
-    motif
+  
+    ggseqlogo(motif_count, seq_type='aa') + 
+      ylab('bits')+ 
+      geom_hline(yintercept=0) +
+      geom_vline(xintercept=0) +
+      theme(
+        axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+        axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+        axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+        legend.title  =element_blank(),
+        legend.position = "right",
+        legend.text = element_text(colour="black", size=12,family="serif"))
   })
   
   
@@ -3449,7 +3460,6 @@ server  <- function(input, output, session) {
     motif_count1_aa<-pcm2pfm(motif_count)
     as.data.frame(motif_count1_aa)
   })
-
   
   Motif_compare_aa_group2 <- reactive({
     df <- input.data2();
@@ -3470,33 +3480,52 @@ server  <- function(input, output, session) {
     as.data.frame(motif_count2_aa)
   })
   
-  output$Motif.aa.single.length <- renderPlot({
+  motif.compar.plot <- reactive({
     
-  
+    motif_count1_aa <- Motif_compare_aa_group1()
+    motif_count2_aa <- Motif_compare_aa_group2()
+    diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
+                                       pwm2 = as.data.frame(motif_count2_aa), 
+                                       alphabet = ASN
+                                       
+    )
+    
+    mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
+    names(mat) <- 1:dim(mat)[2]
+    
+   vals33$geom_comp <- ggseqlogo(mat, method='custom', seq_type='aa') + 
+      ylab('JS divergence') + 
+      geom_hline(yintercept=0) +
+      geom_vline(xintercept=0) +
+      annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_motif,size=10,face="plain",family=input$font_type)+
+      annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_motif2,size=10,face="plain",family=input$font_type)+
+      theme(
+        axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+        axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+        axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+        legend.title  =element_blank(),
+        legend.position = "right",
+        legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+   
+   vals33$geom_comp 
+    
   })
   
   output$Motif_plot <- renderPlot( {
     
     if (input$comarpison.aa.motif == "single.group1") {
-      motif <- Motif_plot2()
       withProgress(message = 'Figure is being generated...',
                    detail = '', value = 0, {
                      test_fun()
                    })
-      plot(motif)
+      Motif_plot2()
       
     }
     
     else {
-      motif_count1_aa <- Motif_compare_aa_group1()
-      motif_count2_aa <- Motif_compare_aa_group2()
-      diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
-                                         pwm2 = as.data.frame(motif_count2_aa), 
-                                         alphabet = ASN
-                                         
-                                         )
       
-      diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
+      motif.compar.plot()
 
     }
     
@@ -3511,25 +3540,16 @@ server  <- function(input, output, session) {
     content = function(file) {
       pdf(file, width=input$width_motif,height=input$height_motif, onefile = FALSE) # open the pdf device
       if (input$comarpison.aa.motif == "single.group1") {
-        motif <- Motif_plot2()
         withProgress(message = 'Figure is being generated...',
                      detail = '', value = 0, {
                        test_fun()
                      })
-        plot(motif)
+        plot(Motif_plot2())
         
       }
       
       else {
-        motif_count1_aa <- Motif_compare_aa_group1()
-        motif_count2_aa <- Motif_compare_aa_group2()
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
-                                           pwm2 = as.data.frame(motif_count2_aa), 
-                                           alphabet = ASN
-                                           
-        )
-        
-        diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
+        plot(motif.compar.plot())
         
       }
       dev.off()}, contentType = "application/pdf" )
@@ -3554,15 +3574,7 @@ server  <- function(input, output, session) {
       }
       
       else {
-        motif_count1_aa <- Motif_compare_aa_group1()
-        motif_count2_aa <- Motif_compare_aa_group2()
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), 
-                                           pwm2 = as.data.frame(motif_count2_aa), 
-                                           alphabet = ASN
-                                           
-        )
-        
-        diffLogo(diffLogoObj, diffLogoConfiguration = list(showSequenceLogosTop=T))
+        plot(motif.compar.plot())
         
       }
       dev.off()},   contentType = "application/png" # MIME type of the image
@@ -3701,7 +3713,7 @@ server  <- function(input, output, session) {
       session,
       "group_selected_one",
       choices=select_group(),
-      selected = "CD8")
+      selected = "IFN")
     
   })
   
@@ -3710,7 +3722,7 @@ server  <- function(input, output, session) {
       session,
       "group_selected_two",
       choices=select_group(),
-      selected = "IFN")
+      selected = "CD8")
     
   })
 
@@ -3826,7 +3838,7 @@ server  <- function(input, output, session) {
     
   })
   
-  output$Motif_plot_align <- renderPlot( {
+  Motif_plot_align1 <- reactive({
     motif_count1_aa <- chain1_align_aa()
     motif_count2_aa <- chain2_align_aa()
     motif_count1_nt <- chain1_align_nt()
@@ -3839,40 +3851,105 @@ server  <- function(input, output, session) {
     
     if (input$diff == "compare" && input$aa.nt.col=="ASN") {
       diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
-      diffLogo(diffLogoObj)
+      mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
+      names(mat) <- 1:dim(mat)[2]
+      
+      vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='aa') + 
+        ylab('JS divergence') + 
+        geom_hline(yintercept=0) +
+        geom_vline(xintercept=0) +
+        annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_one,size=10,face="plain",family=input$font_type)+
+        annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_two,size=10,face="plain",family=input$font_type)+
+        theme(
+          axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+          axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.title  =element_blank(),
+          legend.position = "right",
+          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+      vals44$plot.ggseq.2
+      
     }
     else if (input$diff == "compare" && input$aa.nt.col=="DNA") {
       diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_nt), pwm2 = as.data.frame(motif_count2_nt), alphabet = DNA)
-      diffLogo(diffLogoObj)
+      mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
+      names(mat) <- 1:dim(mat)[2]
+      
+     vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='dna') + 
+        ylab('JS divergence') + 
+        geom_hline(yintercept=0) +
+        geom_vline(xintercept=0) +
+        theme(
+          axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+          axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.title  =element_blank(),
+          legend.position = "bottom",
+          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+     vals44$plot.ggseq.2
       
     }
     else if (input$diff == "plot_one" && input$aa.nt.col=="ASN") {
-      seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
+      vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
               baseDistribution = probabilities,
               alphabet = ASN, main = NULL)
-      
+      vals44$plot.ggseq.2
     }
     else if (input$diff == "plot_one" && input$aa.nt.col=="DNA") {
-      seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
+      vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
               baseDistribution = probabilities,
               alphabet = DNA, main = NULL)
-      
+      vals44$plot.ggseq.2
     }
     
     else if (input$diff == "plot_two" && input$aa.nt.col=="ASN") {
-      seqLogo(as.data.frame(motif_count2_aa), sparse = FALSE, drawLines = 1,
+      vals44$plot.ggseq.2 <- seqLogo(as.data.frame(motif_count2_aa), sparse = FALSE, drawLines = 1,
               baseDistribution = probabilities,
               alphabet = ASN, main = NULL)
-      
+      vals44$plot.ggseq.2
     }
     
     else {
-      seqLogo(as.data.frame(motif_count2_nt), sparse = FALSE, drawLines = 1,
+      vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count2_nt), sparse = FALSE, drawLines = 1,
               baseDistribution = probabilities,
               alphabet = DNA, main = NULL)
+      vals44$plot.ggseq.2
     }
     
   })
+  
+  
+  output$Motif_plot_align <- renderPlot( {
+    Motif_plot_align1()
+    
+  })
+  
+  output$downloadPlotPNG_motif_align <- downloadHandler(
+    filename = function() {
+      x <- gsub(":", ".", Sys.time())
+      paste("TCR_Explore_aligned_motif_", gsub("/", "-", x), ".png", sep = "")
+    },    
+    content = function(file) {
+      png(file, width = input$width_png_motif_align, 
+          height = input$height_png_motif_align, 
+          res = input$resolution_PNG_motif_align)
+
+        motif <- Motif_plot_align1()
+        withProgress(message = 'Figure is being generated...',
+                     detail = '', value = 0, {
+                       test_fun()
+                     })
+        plot(motif)
+        
+      
+      
+
+      dev.off()},   contentType = "application/png" # MIME type of the image
+  )
+  
+  
   output$downloadPlot_motif_align <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
@@ -3880,99 +3957,31 @@ server  <- function(input, output, session) {
     },
     content = function(file) {
       pdf(file, width=input$width_motif_align,height=input$height_motif_align, onefile = FALSE) # open the pdf device
-      motif_count1_aa <- chain1_align_aa()
-      motif_count2_aa <- chain2_align_aa()
-      motif_count1_nt <- chain1_align_nt()
-      motif_count2_nt <- chain2_align_nt()
-      if (input$diff == "compare" && input$aa.nt.col=="ASN") {
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
-        diffLogo(diffLogoObj)
-      }
-      else if (input$diff == "compare" && input$aa.nt.col=="DNA") {
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_nt), pwm2 = as.data.frame(motif_count2_nt), alphabet = DNA)
-        diffLogo(diffLogoObj)
-        
-      }
-      else if (input$diff == "plot_one" && input$aa.nt.col=="ASN") {
-        seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = ASN, main = NULL)
-        
-      }
-      else if (input$diff == "plot_one" && input$aa.nt.col=="DNA") {
-        seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = DNA, main = NULL)
-        
-      }
-      else if (input$diff == "plot_two" && input$aa.nt.col=="ASN") {
-        seqLogo(as.data.frame(motif_count2_aa), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = ASN, main = NULL)
-        
-      }
-      else {
-        seqLogo(as.data.frame(motif_count2_nt), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = DNA, main = NULL)
-      }
-      dev.off()},
+      plot(Motif_plot_align1())
+      dev.off()
+      },
     
     contentType = "application/pdf"
     
   )
   
-  output$downloadPlotPNG_motif_align <- downloadHandler(
-    filename = function() {
-      x <- gsub(":", ".", Sys.time())
-      paste("TCR_Explore_aligned_motif_", gsub("/", "-", x), ".png", sep = "")
-    },
-    content = function(file) {
-      
-      png(file, width = input$width_png_motif_align,
-          height = input$height_png_motif_align,
-          res = input$resolution_PNG_motif_align)
-      motif_count1_aa <- chain1_align_aa()
-      motif_count2_aa <- chain2_align_aa()
-      motif_count1_nt <- chain1_align_nt()
-      motif_count2_nt <- chain2_align_nt()
-      if (input$diff == "compare" && input$aa.nt.col=="ASN") {
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
-        diffLogo(diffLogoObj)
-      }
-      else if (input$diff == "compare" && input$aa.nt.col=="DNA") {
-        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_nt), pwm2 = as.data.frame(motif_count2_nt), alphabet = DNA)
-        diffLogo(diffLogoObj)
-        
-      }
-      else if (input$diff == "plot_one" && input$aa.nt.col=="ASN") {
-        seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = ASN, main = NULL)
-        
-      }
-      else if (input$diff == "plot_one" && input$aa.nt.col=="DNA") {
-        seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = DNA, main = NULL)
-        
-      }
-      else if (input$diff == "plot_two" && input$aa.nt.col=="ASN") {
-        seqLogo(as.data.frame(motif_count2_aa), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = ASN, main = NULL)
-        
-      }
-      else {
-        seqLogo(as.data.frame(motif_count2_nt), sparse = FALSE, drawLines = 1,
-                baseDistribution = probabilities,
-                alphabet = DNA, main = NULL)
-      }
-      dev.off()},
+  # output$downloadPlotPNG_motif_align <- downloadHandler(
+  #   filename = function() {
+  #     x <- gsub(":", ".", Sys.time())
+  #     paste("TCR_Explore_aligned_motif_", gsub("/", "-", x), ".png", sep = "")
+  #   },
+  #   content = function(file) {
+  #     
+  #     png(file, width = input$width_png_motif_align,
+  #         height = input$height_png_motif_align,
+  #         res = input$resolution_PNG_motif_align)
+  #     Motif_plot_align1()
+  #     dev.off()
+  #     },
     
-    contentType = "application/png" # MIME type of the image
-    
-  )
+  #   contentType = "application/png" # MIME type of the image
+  #   
+  # )
   #
   # pie graph -----
   observe({
@@ -5114,7 +5123,7 @@ server  <- function(input, output, session) {
       session,
       "x.axis2",
       choices=names(dat),
-      selected = "tetramer no 2 PE")
+      selected = "tetramer 2 PE")
   })
   
   observe({
@@ -5131,7 +5140,7 @@ server  <- function(input, output, session) {
       session,
       "y.axis2",
       choices=names(dat),
-      selected = "tetramer no 1 APC")
+      selected = "tetramer 1 APC")
   })
   
   observe({
@@ -5312,6 +5321,7 @@ server  <- function(input, output, session) {
   })
   
   dot_plot.complex <- reactive({
+    set.seed(123)
     index <- input.data_CSV2();
     validate(
       need(nrow(index)>0,
