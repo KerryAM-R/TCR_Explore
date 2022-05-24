@@ -1074,7 +1074,7 @@ server  <- function(input, output, session) {
   # IMGT only  -----
   input.data_IMGT.xls3 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls3(), "own_data" = own.data.IMGT3())})
   test.data_ab.xls3 <- reactive({
-    dataframe = read_excel("Raw_data/vquest-2.xls") 
+    dataframe = read_excel("test-data/QC/Vquest_data/CD8_E10630_A.xls") 
   })
   own.data.IMGT3 <- reactive({
     inFile_IMGT3 <- input$file_IMGT3
@@ -1089,7 +1089,7 @@ server  <- function(input, output, session) {
   })
   input.data_IMGT.xls4 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls4(), "own_data" = own.data.IMGT4())})
   test.data_ab.xls4 <- reactive({
-    dataframe = read_xls("Raw_data/vquest-2.xls",sheet = 2) 
+    dataframe = read_xls("test-data/QC/Vquest_data/CD8_E10630_A.xls",sheet = 2) 
   })
   
   own.data.IMGT4 <- reactive({
@@ -1146,11 +1146,16 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
-      
+      df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
+      df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
       
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
-      df_chain1$clone_quality <- NA 
+      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
+                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
+                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
+                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
+      df_chain1$clone_quality <- ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT","pass",NA)
+      
       df_chain1$comments <- NA
       df_chain1
       
@@ -1191,11 +1196,16 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
-      
+      df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
+      df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
       
       
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
+      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
+      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
+                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
+                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
+                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
       df_chain1$clone_quality <- NA 
       df_chain1$comments <- NA
       df_chain1
@@ -1233,10 +1243,14 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
-      
+      df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
+      df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
       
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
+      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
+                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
+                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
+                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
       df_chain1$clone_quality <- NA 
       df_chain1$comments <- NA
       df_chain1
@@ -1276,10 +1290,14 @@ server  <- function(input, output, session) {
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
-      
+      df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
+      df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
       
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-REGION identity %`>=90,"quality sequence alignment","check chromatogram")
+      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
+                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
+                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
+                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
       df_chain1$clone_quality <- NA 
       df_chain1$comments <- NA
       df_chain1
@@ -1305,7 +1323,7 @@ server  <- function(input, output, session) {
   # table of IMGT for pairing -----
   input.data.IMGT_afterQC <- reactive({switch(input$dataset_IMGT_afterQC,"ab-test-data1" = test.data.ab.csv3(), "own_data1" = own.data.csv3())})
   test.data.ab.csv3 <- reactive({
-    dataframe = read.csv("test-data/QC/E1630_IMGT_only.QC2022.03.21.csv",header=T) 
+    dataframe = read.csv("test-data/QC/QC.csv_files/SJS.TEN.three.samps.csv",header=T) 
   })
   own.data.csv3 <- reactive({
     inFile12 <- input$file_IMGT_afterQC
@@ -1316,6 +1334,9 @@ server  <- function(input, output, session) {
         inFile12$datapath)}
     
   })
+  
+  
+  
   Pass.Fail.NA <- reactive({
     df1 <- input.data.IMGT_afterQC();
     
@@ -1327,16 +1348,23 @@ server  <- function(input, output, session) {
     df1$clone_quality <- gsub("pass","pass",df1$clone_quality,ignore.case = T)
     df1$clone_quality <- gsub("fail","fail",df1$clone_quality,ignore.case = T)
     df1$cloneCount <- 1
-    df2 <- df1[,c("cloneCount","clone_quality")] 
+    df2 <- df1[,c("cloneCount","clone_quality","V.sequence.quality.check")] 
     
-    as.data.frame(ddply(df2,"clone_quality",numcolwise(sum)))
+    as.data.frame(ddply(df2,c("clone_quality","V.sequence.quality.check"),numcolwise(sum)))
     
     
   })
   
-  output$Pass.Fail.NA_table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
-    Pass.Fail.NA()
-  })
+  output$Pass.Fail.NA_table<- DT::renderDataTable( {
+                                    datatable(Pass.Fail.NA(), extensions = "Buttons", options = list(searching = TRUE,
+                                                                                                    ordering = TRUE,
+                                                                                                    buttons = c('copy','csv', 'excel'),
+                                                                                                    dom = 'Bfrtip',
+                                                                                                    pageLength=10, 
+                                                                                                    lengthMenu=c(2,5,10,20,50,100), 
+                                                                                                    scrollX = TRUE
+    ))
+  }, server = FALSE)
   
   chain_merge_IMGTonly <- reactive({
     df1 <- input.data.IMGT_afterQC();
@@ -1390,11 +1418,13 @@ server  <- function(input, output, session) {
       dat <- merged_chain2
       dat$AV <- paste(dat$V.GENE_A)
       dat$AJ <- paste(dat$J.GENE.and.allele_A,sep="")
+      dat$AJ <- gsub("[*]0.","",dat$AJ)
+      dat$AJ <- gsub(",, AJ..","",dat$AJ)
+      dat$AJ <- gsub(",, AJ.","",dat$AJ)
+      
       dat$AVJ <- paste(dat$AV,".",dat$AJ,sep="")
       dat$AV <- gsub("[*]0.","",dat$AV)
-      dat$AJ <- gsub("[*]0.","",dat$AJ)
       dat$AVJ <- gsub("[*]0.","",dat$AVJ)
-      
       dat$BV <- paste(dat$V.GENE_B)
       dat$BJ <- paste(dat$J.GENE.and.allele_B)
       dat$BD <- paste(dat$D.GENE.and.allele_B)
@@ -1419,6 +1449,7 @@ server  <- function(input, output, session) {
       
       dat$AVJ_aCDR3_BVJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVJ_bCDR3,sep=" & ")
       dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
+      dat$BD <- gsub("NA","-",dat$BD)
       head(dat)
       
       dat
@@ -1472,6 +1503,8 @@ server  <- function(input, output, session) {
       dat$BVDJ <- gsub("[*]0.","",dat$BVDJ)
       dat$BVDJ <- gsub(".NA.",".",dat$BVDJ)
       
+      
+      
       dat$AJ <- gsub("TR","",dat$AJ)
       dat$AVJ <- gsub("TR","",dat$AVJ)
       dat$AVJ <- gsub("AJ","J",dat$AVJ)
@@ -1483,6 +1516,7 @@ server  <- function(input, output, session) {
       
       dat$AVJ_aCDR3_BVJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVJ_bCDR3,sep=" & ")
       dat$AVJ_aCDR3_BVDJ_bCDR3 <- paste(dat$AVJ_aCDR3,dat$BVDJ_bCDR3,sep=" & ")
+      dat$BD <- gsub("NA","-",dat$BD)
       head(dat)
       
       dat
@@ -1547,13 +1581,13 @@ server  <- function(input, output, session) {
       dat$GVJ <- gsub("TR","",dat$GVJ)
       dat$GVJ.DVJ <- paste(dat$GVJ,"_",dat$DVJ,sep="")
       dat$GVJ.DVDJ <- paste(dat$GVJ,"_",dat$DVDJ,sep="")
-      dat$GVJ_aCDR3 <- paste(dat$GVJ,dat$JUNCTION..AA._G,sep="_")
-      dat$DVJ_bCDR3 <- paste(dat$DVJ,dat$JUNCTION..AA._D,sep="_")
-      dat$DVDJ_bCDR3 <- paste(dat$DVDJ,dat$JUNCTION..AA._D,sep="_")
+      dat$GVJ_gCDR3 <- paste(dat$GVJ,dat$JUNCTION..AA._G,sep="_")
+      dat$DVJ_dCDR3 <- paste(dat$DVJ,dat$JUNCTION..AA._D,sep="_")
+      dat$DVDJ_dCDR3 <- paste(dat$DVDJ,dat$JUNCTION..AA._D,sep="_")
       
-      dat$GVJ_aCDR3_DVJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVJ_bCDR3,sep=" & ")
-      dat$GVJ_aCDR3_DVDJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVDJ_bCDR3,sep=" & ")
-      dat$DD <- gsub("NA","no DD",dat$DD)
+      dat$GVJ_gCDR3_DVJ_dCDR3 <- paste(dat$GVJ_gCDR3,dat$DVJ_dCDR3,sep=" & ")
+      dat$GVJ_gCDR3_DVDJ_dCDR3 <- paste(dat$GVJ_gCDR3,dat$DVDJ_dCDR3,sep=" & ")
+      dat$DD <- gsub("NA","-",dat$DD)
       
       dat
     }
@@ -1619,11 +1653,11 @@ server  <- function(input, output, session) {
       dat$GVJ.DVJ <- paste(dat$GVJ,"_",dat$DVJ,sep="")
       dat$GVJ.DVDJ <- paste(dat$GVJ,"_",dat$DVDJ,sep="")
       dat$GVJ_aCDR3 <- paste(dat$GVJ,dat$AA.JUNCTION_G,sep="_")
-      dat$DVJ_bCDR3 <- paste(dat$DVJ,dat$AA.JUNCTION_D,sep="_")
-      dat$DVDJ_bCDR3 <- paste(dat$DVDJ,dat$AA.JUNCTION_D,sep="_")
+      dat$DVJ_dCDR3 <- paste(dat$DVJ,dat$AA.JUNCTION_D,sep="_")
+      dat$DVDJ_dCDR3 <- paste(dat$DVDJ,dat$AA.JUNCTION_D,sep="_")
       
-      dat$GVJ_aCDR3_DVJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVJ_bCDR3,sep=" & ")
-      dat$GVJ_aCDR3_DVDJ_bCDR3 <- paste(dat$GVJ_aCDR3,dat$DVDJ_bCDR3,sep=" & ")
+      dat$GVJ_gCDR3_DVJ_dCDR3 <- paste(dat$GVJ_gCDR3,dat$DVJ_dCDR3,sep=" & ")
+      dat$GVJ_gCDR3_DVDJ_dCDR3 <- paste(dat$GVJ_gCDR3,dat$DVDJ_dCDR3,sep=" & ")
       dat
     }
     
@@ -1755,8 +1789,8 @@ server  <- function(input, output, session) {
 
     names(df2) <- c("subject","epitope","count","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq")
     
-    df2$clone_id <- paste("clone")
-    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq","clone_id"),numcolwise(sum)))
+    df2$well_id <- paste("well")
+    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq","well_id"),numcolwise(sum)))
     df3 <- df3[,c(1,2,12,3:11)]
     df3
     
@@ -1774,8 +1808,8 @@ server  <- function(input, output, session) {
     
     names(df2) <- c("subject","epitope","count","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq")
     
-    df2$clone_id <- paste("clone")
-    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq","clone_id"),numcolwise(sum)))
+    df2$well_id <- paste("well")
+    df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq","well_id"),numcolwise(sum)))
     df3 <- df3[,c(1,2,12,3:11)]
     df3
     
@@ -1855,40 +1889,11 @@ server  <- function(input, output, session) {
       
     })
   
-  ## output VDJtools ----
-  # observe({
-  #   updateSelectInput(
-  #     session,
-  #     "group_selected_VDJtools",
-  #     choices=select_group())
-  #   
-  # }) # group 
-  # 
-  # chain_table_summary2 <- reactive({
-  #   df <- input.data2()
-  #   validate(
-  #     need(nrow(df)>0,
-  #          error_message_val1)
-  #   )
-  #   
-  #   df <- subset(df, get(input$group_column)==input$group_selected_VDJtools)
-  #   
-  #   df <- as.data.frame(df)
-  #   df2 <- df[,c("cloneCount","")] 
-  #   df2
-  #   df3 <- as.data.frame(ddply(df2,input$string.data3,numcolwise(sum)))
-  #   df3
-  #   
-  #   
-  # })
-  
-  
-  
   # file for analytical plots -----
   input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2(),"own_data2" = own.data2())})
   test.data2 <- reactive({
     # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
-    dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
+    dataframe = read.csv("test-data/Group/paired_TCR_file2022.05.24.csv",header=T) 
   })
   own.data2 <- reactive({
     inFile2 <- input$file2 
@@ -2626,6 +2631,7 @@ server  <- function(input, output, session) {
     
   })
   output$myPanel.hist <- renderUI({cols.hist()})
+  
   colors.hist <- reactive({
     df <- input.data2(); 
     validate(
@@ -2633,7 +2639,7 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     df <- as.data.frame(df)
-    df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+    df.names <-  df[ , -which(names(df) %in% c("cloneCount","well"))]
     df1 <- ddply(df,names(df.names) ,numcolwise(sum))
     df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
     
@@ -2710,25 +2716,20 @@ server  <- function(input, output, session) {
  output$hist.table <- DT::renderDataTable( {
     df <- input.data2(); 
     df <- as.data.frame(df)
-    df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+    df <- df[names(df) %in% c("cloneCount",input$group_column,input$aa.or.nt,input$chain.hist.col)]
+    df.names <-  df[ , -which(names(df) %in% c("cloneCount"))]
     df1 <- ddply(df,names(df.names) ,numcolwise(sum))
-    
+    df1
     df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
     df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
-    df1 <- df1[order(df1$chain, decreasing = F),]
-    df1$chain <- factor(df1$chain,levels = unique(df1$chain))
-    df.col.2 <- as.data.frame(hist.col.table())
-    names(df.col.2) <- c("V1","col")
-    df.col.2
-    df1 <- subset(df1, get(input$group_column)==input$selected_group_len)
-    df.col.2[df.col.2$V1 %in% unique(df1$chain),]
+    df1
     
-    datatable(df.col.2[df.col.2$V1 %in% unique(df1$chain),], extensions = "Buttons", options = list(searching = TRUE,
+    datatable(df1, extensions = "Buttons", options = list(searching = TRUE,
                                                                                         ordering = TRUE,
                                                                                         buttons = c('copy','csv', 'excel'),
                                                                                         dom = 'Bfrtip',
-                                                                                        pageLength=5, 
-                                                                                        lengthMenu=c(2,5,10,20,50,100), 
+                                                                                        pageLength=5,
+                                                                                        lengthMenu=c(2,5,10,20,50,100),
                                                                                         scrollX = TRUE
     ))
   }, server = FALSE) 
@@ -2756,7 +2757,7 @@ server  <- function(input, output, session) {
  }
 
  
- 
+ # CHAIN LENGTH HISTOGRAM- ---
   Chain1_length <- function () {
     df <- input.data2(); 
     validate(
@@ -2767,7 +2768,8 @@ server  <- function(input, output, session) {
     
     if (input$graph_type == "histogram" & input$type.tree == "raw data") {
       df <- as.data.frame(df)
-      df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+      df <- df[names(df) %in% c("cloneCount",input$group_column,input$aa.or.nt,input$chain.hist.col)]
+      df.names <-  df[ , -which(names(df) %in% c("cloneCount"))]
       df1 <- ddply(df,names(df.names) ,numcolwise(sum))
       
       df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
@@ -2812,7 +2814,8 @@ server  <- function(input, output, session) {
     else if (input$graph_type == "density" & input$type.tree == "raw data") {
       df <- as.data.frame(df)
       head(df)
-      df.names <-  df[ , -which(names(df) %in% c("cloneCount","clone"))]
+      df <- df[names(df) %in% c("cloneCount",input$group_column,input$aa.or.nt,input$chain.hist.col)]
+      df.names <-  df[ , -which(names(df) %in% c("cloneCount"))]
       df1 <- ddply(df,names(df.names) ,numcolwise(sum))
       names(df1)
       
@@ -3344,7 +3347,7 @@ server  <- function(input, output, session) {
       session,
       "aa.or.nt2",
       choices=names(input.data2()),
-      selected = "JUNCTION..AA._B")})
+      selected = "JUNCTION..AA._A")})
   observe({
     updateSelectInput(
       session,
@@ -4890,7 +4893,7 @@ server  <- function(input, output, session) {
     index_updated_ID <- as.data.frame(merged.index())
     clonal.file <-  input.data.clone.file();
     clonal.file <- as.data.frame(clonal.file)
-    index.clonal.file <- merge(clonal.file,index_updated_ID,by="clone")
+    index.clonal.file <- merge(clonal.file,index_updated_ID,by="well")
     index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name')]
     index.clonal.file
     
@@ -4911,7 +4914,7 @@ server  <- function(input, output, session) {
     index_updated_ID <- as.data.frame(merged.index())
     clonal.file <-  as.data.frame(input.data.clone.file())
     clonal.file <- as.data.frame(clonal.file)
-    index.clonal.file <- merge(clonal.file,index_updated_ID,by="clone")
+    index.clonal.file <- merge(clonal.file,index_updated_ID,by="well")
     index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name')]
     index.clonal.file
     
