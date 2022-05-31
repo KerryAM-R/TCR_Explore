@@ -93,6 +93,8 @@ error_message_val2 <- "Uploading file"
 error_message_val3 <- "Upload clone file"
 error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
+?radioButtons
+
 simp.index.names <- c("total # clones","unique # clones")
 # user interface  ----
 ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 90, width = 140,
@@ -278,17 +280,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
 
                                          selectInput("font_type",label = h4("Type of font"),choices = font,selected = "serif"),
                                          downloadButton("table_length","Download summarised table with length"),
-                                         conditionalPanel(
-                                           condition = "input.stat == 'stacked'",
-                                           h4("Stacked bar plot"),
-                                           fluidRow(
-                                             column(3,numericInput("bar.stack.angle","Angle of text",value = 90)),
-                                             column(3,numericInput("hight.bar.stack.adj","Position of text",value = 0)),
-                                             column(6,selectInput("lines.bar.graph","Display black lines?",
-                                                                  choices = c("yes","no"),
-                                                                  selected = "no"))
-                                           ),
-                                         ),
+
                                          tags$hr()
                             ),
                             
@@ -660,12 +652,23 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     fluidRow(
                                                       column(3, numericInput("label.size.axis2","Size of axis label", value = 20)),
                                                       column(3,selectInput( "bar.stacked_colour.choise",label = h5("Colour"),choices = c(
-                                                      "default","rainbow","random","grey"))), 
-                                                      
+                                                      "default","rainbow","random","grey"))),
+                                                      fluidRow(
+                                                        column(2,numericInput("bar.stack.angle","Angle of text",value = 90)),
+                                                        column(2,numericInput("hight.bar.stack.adj","Position of text",value = 0)),
+                                                        column(2,selectInput("lines.bar.graph","Display black lines?",
+                                                                             choices = c("yes","no"),
+                                                                             selected = "no"))
+                                                      ),
+                                                      fluidRow(column(3,numericInput("stacked.no.legend","legend columns",value = 3)),
+                                                               column(3, selectInput("stacked.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
+                                                               column(3,numericInput("stacked.legend.size","Legend text size",value = 12)),
+                                                               ),
 
 
                                                       ),
                                                     ),
+
                  fluidRow(
          
                    conditionalPanel(
@@ -961,6 +964,13 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               
                  # merging FACS file with clone file -----
                               tabPanel("Merging paired TCR with Index data",value = 1,
+                                       fluidRow(column(4, textInput("group_FACS","Group of data","other")),
+                                                column(4, textInput("indiv_FACS","Individual of data","780")),
+                                                column(2, checkboxInput("multiple_plates","Multiple plates",value = F)),
+                                                column(2, numericInput("Plate_FACS","Plate #","1")),
+                                                ),
+                                       
+                                      
                                        div(DT::dataTableOutput("FACS.CSV")),
                                        # div(DT::dataTableOutput("merged.clone")),
                                        div(DT::dataTableOutput("merged.index.clone")),
@@ -2972,17 +2982,20 @@ server  <- function(input, output, session) {
   table.len.download <- reactive( {
     df <- input.data2()
     df <- as.data.frame(df)
+    df <- as.data.frame(df)
+    df <- df[,-grep("Sequence*",names(df))]  
+    df <- df[,-grep("allele*",names(df))]  
+    df <- df[,-grep("well",names(df))]  
+    
     if (input$type.tree == "raw data") {
-     
-      df <- ddply(df,names(df[-c(1,5)]),numcolwise(sum))
-      df2 <- df[,c(grep("JUNCTION",names(df)))]
-      df3 <- df2
+      df2 <- ddply(df,names(df[-c(1)]),numcolwise(sum))
+      df3 <- df2[,c(grep("JUNCTION",names(df2)))]
       for (i in 1:dim(df3)[1]) {
         df3[i,] <- nchar(df3[i,])
         df3
       }
       names(df3) <- paste(names(df3),"length", sep="_")
-      df4 <- cbind(df,df3)
+      df4 <- cbind(df2,df3)
       df4
     }
    
@@ -3247,10 +3260,14 @@ server  <- function(input, output, session) {
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
           axis.text.x = element_text(colour="black",family=input$font_type,angle=input$bar.stack.angle,size = input$label.size.axis2, hjust=input$hight.bar.stack.adj),
           axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis2),
-          legend.text = element_text(colour="black",family=input$font_type),
-          legend.title = element_blank()
+          legend.text = element_text(colour="black",family=input$font_type,size = input$stacked.legend.size),
+          legend.title = element_blank(),
+          legend.position = input$stacked.legend,
+          
         )+ 
-        scale_fill_manual(values=palette) 
+        
+        scale_fill_manual(values=palette) +
+        guides(fill=guide_legend(ncol=input$stacked.no.legend))
       vals31$bar.usage3
       
     }
@@ -4851,6 +4868,10 @@ server  <- function(input, output, session) {
     
     req(samp)
     samp_index <- getIndexSort(samp)
+    samp_index <- as.data.frame(samp_index[1:dim(samp_index)[1],])
+    samp_index$group <- input$group_FACS
+    samp_index$Indiv <- input$indiv_FACS
+    samp_index$plate <- input$Plate_FACS
     datatable(samp_index[1:dim(samp_index)[1],], extensions = "Buttons", options = list(searching = TRUE,
                                                                                         ordering = TRUE,
                                                                                         buttons = c('copy','csv', 'excel'),
@@ -4864,11 +4885,18 @@ server  <- function(input, output, session) {
     samp <-  input.data_FACS()
     req(samp)
     samp_index <- getIndexSort(samp)
-    head(samp_index)
+    samp_index <- as.data.frame(samp_index[1:dim(samp_index)[1],])
+    samp_index$group <- input$group_FACS
+    samp_index$Indiv <- input$indiv_FACS
+    samp_index$plate <- input$Plate_FACS
+    
     replace_ID <- read.csv("test-data/Index/Loc_to_ID.csv")
     head(replace_ID)
     index_updated_ID <- merge(samp_index,replace_ID,by=c("XLoc","YLoc"))
     index_updated_ID
+    index_updated_ID$plate.well <- paste(index_updated_ID$plate,index_updated_ID$well,sep="")
+    index_updated_ID
+   
   }
   
   output$merged.clone <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
@@ -4891,11 +4919,21 @@ server  <- function(input, output, session) {
   
   with.clone.data <- function () {
     index_updated_ID <- as.data.frame(merged.index())
-    clonal.file <-  input.data.clone.file();
+    clonal.file <-  as.data.frame(input.data.clone.file())
     clonal.file <- as.data.frame(clonal.file)
-    index.clonal.file <- merge(clonal.file,index_updated_ID,by="well")
-    index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name')]
-    index.clonal.file
+    
+    if (input$multiple_plates == T) {
+      index_updated_ID$well <- index_updated_ID$plate.well
+      index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
+      index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
+      
+      
+    }
+    else {
+      index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
+      index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
+      index.clonal.file
+    }
     
   }
   
@@ -4914,9 +4952,20 @@ server  <- function(input, output, session) {
     index_updated_ID <- as.data.frame(merged.index())
     clonal.file <-  as.data.frame(input.data.clone.file())
     clonal.file <- as.data.frame(clonal.file)
-    index.clonal.file <- merge(clonal.file,index_updated_ID,by="well")
-    index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name')]
-    index.clonal.file
+    
+    if (input$multiple_plates == T) {
+      index_updated_ID$well <- index_updated_ID$plate.well
+      index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
+      index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
+      
+      
+    }
+    else {
+      index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
+      index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
+      index.clonal.file
+    }
+
     
   })
   
