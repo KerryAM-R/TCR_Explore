@@ -153,24 +153,48 @@ This section can align the sequences using 'muscle' package.
 #### Chain usage
 
 
+- there are three types of graphs available in chain bar graph section:
+
+<img src="www/Chain.bar.png" width="600">
+<img src="www/frequency.in.rep.png" width="600">
+<img src="www/stack.bar.chart.png" width="600">
+
 <a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
 #### Diversity of TCR sequence
+
+The top panel showcases the Inverse Simpson Diversity index (SDI) table. This table can be downloaded, which may be needed with more complex designs (ANOVA).
+
+<img src="www/Index.table.png" width="1140">
+
+The bottom panel showcases the graphical outputs and simple t-test. 
+
+<img src="www/iSDI.graph.png" width="1140">
 
 <a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
 ### Group overlap analysis
 
-
+There are two graphs to this overlap section. 
 
 #### Heatmap
+
+The Heatmap plot can display data of a specific group/individual (Select specific groups=yes; selected group="E10630.CD8"). The user may wish to display the x by y of AV vs BV. 
+
+If 'Select specific groups=no', the user can showcase the multiple individuals on either the x or y axis (see image below)
+
+<img src="www/heatmap.png" width="1140">
 
 <a href="#Group overlap analysis">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
 
 #### Upset plot
+
+The upset plot can highlight if the specific clonotypes overlap.  
+
+<img src="www/upset.png" width="1140">
 
 <a href="#Group overlap analysis">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>

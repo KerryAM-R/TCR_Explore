@@ -1,5 +1,6 @@
 
 ## volcano plots
+require("markdown")
 library("rmarkdown")
 require("tidyverse")
 require("ggplot2") #Best plots
@@ -133,7 +134,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
 
                               tabPanel("Paired TCR with Index data information",
                                        includeMarkdown("README.FACS.md")),
-                              
+
                               
                               tabPanel("Video examples",
                                        tabsetPanel(
@@ -964,8 +965,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                               
                  # merging FACS file with clone file -----
                               tabPanel("Merging paired TCR with Index data",value = 1,
-                                       fluidRow(column(4, textInput("group_FACS","Group of data","other")),
-                                                column(4, textInput("indiv_FACS","Individual of data","780")),
+                                       fluidRow(column(4, selectInput("group_FACS","Group of data","")),
+                                                column(4, selectInput("indiv_FACS","Individual of data","780")),
                                                 column(2, checkboxInput("multiple_plates","Multiple plates",value = F)),
                                                 column(2, numericInput("Plate_FACS","Plate #","1")),
                                                 ),
@@ -981,7 +982,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                  # UI complex dotplot add columns if needed -----
                               tabPanel("Data cleaning steps",value = 2,
                                        
-                                       selectInput("string.data","Recommended selecting for ab TCR data: Indiv (or group),TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. \nDo not select flurochrome columns, clone, cloneCount, LocX or LocY, row or column","",multiple = T, width = "1200px"),
+                                       selectInput("string.data","Recommended selecting for ab TCR data: Indiv, group,TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. Do not select flurochrome columns, or cloneCount","",multiple = T, width = "1200px"),
                                        div(DT::dataTableOutput("table.index.1")),
                                        
                                        ),
@@ -3233,13 +3234,14 @@ server  <- function(input, output, session) {
         geom_bar(position="fill", stat="identity") +
         xlab("")+
         ylab("Frequency")+
+        guides(fill=guide_legend(ncol=input$stacked.no.legend))+
         theme_bw()+
         theme(
           axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
           axis.text.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
           axis.text.x = element_text(colour="black",family=input$font_type,angle=input$bar.stack.angle,size = input$label.size.axis2, hjust=input$hight.bar.stack.adj),
           axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$label.size.axis2),
-          legend.text = element_text(colour="black",family=input$font_type),
+          legend.text = element_text(colour="black",family=input$font_type,size = input$stacked.legend.size),
           legend.title = element_blank()
         )+ 
         scale_fill_manual(values=palette) +
@@ -3254,6 +3256,7 @@ server  <- function(input, output, session) {
         geom_bar(position="fill", stat="identity") +
         xlab("")+
         ylab("Frequency")+
+        guides(fill=guide_legend(ncol=input$stacked.no.legend))+
         theme_bw()+
         theme(
           axis.title.y = element_text(colour="black",family=input$font_type,size = input$label.size.axis2),
@@ -3264,10 +3267,9 @@ server  <- function(input, output, session) {
           legend.title = element_blank(),
           legend.position = input$stacked.legend,
           
-        )+ 
+        ) +
+        scale_fill_manual(values=palette) 
         
-        scale_fill_manual(values=palette) +
-        guides(fill=guide_legend(ncol=input$stacked.no.legend))
       vals31$bar.usage3
       
     }
@@ -4881,6 +4883,57 @@ server  <- function(input, output, session) {
                                                                                         scrollX = TRUE
     ))
   }, server = FALSE)  
+  
+
+  select_group_FACS <- function () {
+    df <- input.data.clone.file()
+    df <- as.data.frame(df)
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    
+    df2 <- as.data.frame(unique(df[names(df) %in% "group"]))
+    df2 <- as.data.frame(df2)
+    #names(df2) <- "V1"
+    df2
+  }
+  
+  
+  observe({
+    updateSelectInput(
+      session,
+      "group_FACS",
+      choices=select_group_FACS(),
+      selected = c("other"))
+  })
+  
+  select_group_FACS2 <- function () {
+    df <- input.data.clone.file()
+    df <- as.data.frame(df)
+    validate(
+      need(nrow(df)>0,
+           error_message_val1)
+    )
+    
+    df2 <- as.data.frame(unique(df[names(df) %in% "Indiv"]))
+    df2 <- as.data.frame(df2)
+    #names(df2) <- "V1"
+    df2
+  }
+  
+  
+  observe({
+    updateSelectInput(
+      session,
+      "indiv_FACS",
+      choices=select_group_FACS2(),
+      selected = c("780"))
+  })
+  
+  
+  
+  
   merged.index <- function(){
     samp <-  input.data_FACS()
     req(samp)
@@ -4926,13 +4979,20 @@ server  <- function(input, output, session) {
       index_updated_ID$well <- index_updated_ID$plate.well
       index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
       index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
-      
-      
+      index.clonal.file <- index.clonal.file[ , -which(names(index.clonal.file) %in% c(names(index.clonal.file)[grep("Sequence",names(index.clonal.file))],
+                                                                                       names(index.clonal.file)[grep("*allele*",names(index.clonal.file))],
+                                                                                       names(index.clonal.file)[grep("JUNCTION_",names(index.clonal.file))],
+                                                                                       names(index.clonal.file)[grep("IMGT",names(index.clonal.file))],
+                                                                                       names(index.clonal.file)[grep("GENE",names(index.clonal.file))] ))]
+      index.clonal.file
     }
     else {
       index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
       index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
+      index.clonal.file <- index.clonal.file[ , -which(names(index.clonal.file) %in% c(names(index.clonal.file)[grep("Sequence",names(index.clonal.file))],names(index.clonal.file)[grep("*allele*",names(index.clonal.file))],names(index.clonal.file)[grep("JUNCTION_",names(index.clonal.file))],names(index.clonal.file)[grep("IMGT",names(index.clonal.file))] ,names(index.clonal.file)[grep("GENE",names(index.clonal.file))] ))]
+      
       index.clonal.file
+      
     }
     
   }
@@ -4949,22 +5009,7 @@ server  <- function(input, output, session) {
       need(nrow(clonal.file)>0,
            "Upload clone file")
     )
-    index_updated_ID <- as.data.frame(merged.index())
-    clonal.file <-  as.data.frame(input.data.clone.file())
-    clonal.file <- as.data.frame(clonal.file)
-    
-    if (input$multiple_plates == T) {
-      index_updated_ID$well <- index_updated_ID$plate.well
-      index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
-      index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
-      
-      
-    }
-    else {
-      index.clonal.file <- merge(clonal.file,index_updated_ID,by=c("well","Indiv","group"))
-      index.clonal.file <- index.clonal.file[!names(index.clonal.file) %in% c("row","column","XLoc","YLoc",'name',"plate","plate.well")]
-      index.clonal.file
-    }
+    with.clone.data()
 
     
   })
@@ -5046,7 +5091,7 @@ server  <- function(input, output, session) {
       session,
       "string.data",
       choices=names(input.data_CSV1()),
-      selected = c("Indiv","TRBV","CDR3b.Sequence","TRBJ","TRAV","CDR3a.Sequence", "TRAJ","AJ", "BJ","AJBJ")) 
+      selected = c("Indiv","group","TRBV","CDR3b.Sequence","TRBJ","TRAV","CDR3a.Sequence", "TRAJ","AJ", "BJ","AJBJ")) 
   }) 
   
   index.cleaning1 <- reactive({
@@ -5057,7 +5102,7 @@ server  <- function(input, output, session) {
     )
     df <- as.data.frame(df)
     head(df)
-    df$cloneCount <- 1
+    
     
     df2 <- df[,c("cloneCount",input$string.data)] 
     df2
