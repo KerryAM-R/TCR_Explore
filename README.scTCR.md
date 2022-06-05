@@ -166,11 +166,11 @@ This section can align the sequences using 'muscle' package.
 
 The top panel showcases the Inverse Simpson Diversity index (SDI) table. This table can be downloaded, which may be needed with more complex designs (ANOVA).
 
-<img src="www/Index.table.png" width="1140">
+<img src="www/Index.table.png" width="800">
 
 The bottom panel showcases the graphical outputs and simple t-test. 
 
-<img src="www/iSDI.graph.png" width="1140">
+<img src="www/iSDI.graph.png" width="800">
 
 <a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -185,7 +185,7 @@ The Heatmap plot can display data of a specific group/individual (Select specifi
 
 If 'Select specific groups=no', the user can showcase the multiple individuals on either the x or y axis (see image below)
 
-<img src="www/heatmap.png" width="1140">
+<img src="www/heatmap.png" width="800">
 
 <a href="#Group overlap analysis">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -194,7 +194,7 @@ If 'Select specific groups=no', the user can showcase the multiple individuals o
 
 The upset plot can highlight if the specific clonotypes overlap.  
 
-<img src="www/upset.png" width="1140">
+<img src="www/upset.png" width="800">
 
 <a href="#Group overlap analysis">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>

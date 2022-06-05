@@ -891,8 +891,9 @@ tabPanel("Paired TCR with Index data",
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          selectInput("font_type2","Type of font",choices = font,selected = "Times"),
                                          fluidRow(
-                                           column(4,selectInput("x.axis2",label = h5("Select x-axis"),"")),
                                            column(4,selectInput("y.axis2",label = h5("Select y-axis"),"")),
+                                           column(4,selectInput("x.axis2",label = h5("Select x-axis"),"")),
+                                           
                                            column(4,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
                                          ),
                                          fluidRow(
