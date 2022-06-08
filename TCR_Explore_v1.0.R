@@ -1123,7 +1123,7 @@ server  <- function(input, output, session) {
   # .ab1 files for checking heitogenity ----
   input.data_IMGT.ab1 <- reactive({switch(input$dataset_.ab1,".ab1-test-data" = test.data_ab.ab1(), ".ab1-own_data" = own.data.ab1())})
   test.data_ab.ab1 <- reactive({
-    hetsangerseq <- readsangerseq("../../Results_2020/MiXCR_sort/1196/1196_d14_CBZ_Vd1/D-A10_B12.ab1") 
+    hetsangerseq <- readsangerseq("test-data/QC/SJS.TEN/E10630/Micromon/IFNg/IFNA-A10_C07.ab1") 
   })
   own.data.ab1 <- reactive({
     inFile_.ab1 <- input$file_.ab1
