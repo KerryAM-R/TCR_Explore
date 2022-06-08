@@ -248,7 +248,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                      )
                             ),
                  # .ab1 chromatogram file -----
-                 tabPanel("Check .ab1 files",
+                 tabPanel("Check .ab1 files (under development)",
                           sidebarLayout(
                             sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
                                          selectInput("dataset_.ab1", "Choose a dataset:", choices = c(".ab1-test-data", ".ab1-own_data")),
