@@ -893,7 +893,6 @@ tabPanel("Paired TCR with Index data",
                                          fluidRow(
                                            column(4,selectInput("y.axis2",label = h5("Select y-axis"),"")),
                                            column(4,selectInput("x.axis2",label = h5("Select x-axis"),"")),
-                                           
                                            column(4,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
                                          ),
                                          fluidRow(

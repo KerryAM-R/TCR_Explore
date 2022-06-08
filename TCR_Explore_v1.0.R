@@ -29,7 +29,7 @@ require("VLF") ## aa.count.function
 library("shinyWidgets")
 library("showtext")
 library("ggseqlogo")
-
+library("sangerseqR")
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -247,6 +247,44 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                        
                                      )
                             ),
+                 # .ab1 chromatogram file -----
+                 tabPanel("Check .ab1 files",
+                          sidebarLayout(
+                            sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
+                                         selectInput("dataset_.ab1", "Choose a dataset:", choices = c(".ab1-test-data", ".ab1-own_data")),
+                                         fileInput('file_.ab1', 'Chromatogram .ab1 file',
+                                                   accept=c('ab1')),
+                                         
+                                         ),
+                            mainPanel(
+                              tabsetPanel(
+                                
+                                tabPanel("Chromatogram sequence check",
+                                         p("Checking for heterozygousity in sequence alignment."),
+                                         p("Few mis-matches should exist for the promary and secondary sequences should if one only exists"),
+                                         p("Check heterogenatiy of sequences with a 0.33 ratio cut-off as per the 'sangerseqR' package recommendation"),
+                                         verbatimTextOutput("hetsangerseq"),
+                                         ),
+                                         
+                                tabPanel("Chromatogram",
+                                         p("Showcasing the heterogeneous sequences in the .ab1 file"),
+                                         p("Blue section repersent mis-matched base pairs"),
+                                         
+                                         plotOutput("chromatogram.seq", height="600px"),
+                                         
+                                         ),
+                                
+                                tabPanel("Primary and secondary sequence aligment",
+                                         p("Aligment of the primary and secondary sequence."),
+                                        
+                                         verbatimTextOutput("alignment"),
+                                         
+                                         )
+                                       )
+                            )
+                          ),
+                         
+                          ),
                             
                  ),
                  
@@ -1081,6 +1119,75 @@ server  <- function(input, output, session) {
   output$video6 <- renderUI({
     tags$iframe(src = "https://www.youtube.com/embed/juZrSQDDhQA",  width = 1000, height = 666.6666)
   })
+  
+  # .ab1 files for checking heitogenity ----
+  input.data_IMGT.ab1 <- reactive({switch(input$dataset_.ab1,".ab1-test-data" = test.data_ab.ab1(), ".ab1-own_data" = own.data.ab1())})
+  test.data_ab.ab1 <- reactive({
+    hetsangerseq <- readsangerseq("../../Results_2020/MiXCR_sort/1196/1196_d14_CBZ_Vd1/D-A10_B12.ab1") 
+  })
+  own.data.ab1 <- reactive({
+    inFile_.ab1 <- input$file_.ab1
+    if (is.null(inFile_.ab1)) return(NULL)
+    
+    else {
+      hetsangerseq <- readsangerseq(
+        inFile_.ab1$datapath
+        
+      )}
+    
+  })
+  
+  output$hetsangerseq <- renderPrint({
+    
+    hetsangerseq <- input.data_IMGT.ab1()
+    
+    validate(
+      need(nrow(hetsangerseq@traceMatrix)>0,
+           error_message_val1)
+    )
+    
+    
+    hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
+    
+    print(hetcalls)
+  })
+  
+  output$chromatogram.seq <- renderPlot({
+    
+    hetsangerseq <- input.data_IMGT.ab1()
+    
+    validate(
+      need(nrow(hetsangerseq@traceMatrix)>0,
+           error_message_val1)
+    )
+    
+    hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
+    
+    chromatogram(hetcalls, width = 100, height = 3, showcalls = "both", trim5 =0, trim3 = 0)
+  })
+  
+  output$alignment <- renderPrint({
+    
+    hetsangerseq <- input.data_IMGT.ab1()
+    
+    validate(
+      need(nrow(hetsangerseq@traceMatrix)>0,
+           error_message_val1)
+    )
+    
+    hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
+    hetcalls
+    chromatogram(hetcalls, width = 100, height = 2, showcalls = "both", trim5 =20, trim3 = 20)
+    Primaryseq <- primarySeq(hetcalls, string = TRUE)
+    secondary_seq <- secondarySeq(hetcalls, string = TRUE)
+    
+    pa <- pairwiseAlignment(primarySeq(hetcalls), secondarySeq(hetcalls))
+    print(writePairwiseAlignments(pa))
+  })
+  
+  
+  
+  
   
   # IMGT only  -----
   input.data_IMGT.xls3 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls3(), "own_data" = own.data.IMGT3())})
