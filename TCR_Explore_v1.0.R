@@ -556,6 +556,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                   verbatimTextOutput("length"),
                                                   
                                                   fluidRow(
+                                                    column(2, checkboxInput("compar.lab.motif.aa.single","Add Label",value = T)),
                                                     column(2,selectInput( "aa.or.nt2",label = h5("Amino acid CDR3 column"),"" )),
                                                     column(2,style = "margin-top: 15px;",numericInput("len","CDR3 amino acid length", value = 15)),                               
                                                     column(2,selectInput( "group_selected_motif",label = h5("Group 1 (top)"),"" )),
@@ -617,12 +618,13 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                                     column(3,selectInput("aa.or.nt4",label = h5("CDR3 column"),"")),
                                                     column(3,selectInput("group_selected_one",label = h5("First group (top of plot)"),"" )),
                                                     column(3,selectInput("group_selected_two",label = h5("Second group (bottom of plot)"),"" )),
-                                                    
+                                                    # column(2,checkboxInput("",select = T))
                                                   ),
                                                   p("ASN = amino acid data and DNA = DNA data"),
                                                   fluidRow(
                                                     column(3,selectInput("aa.nt.col",label=h5("Type of data:"),choices =c("ASN","DNA"))),
                                                     column(3,selectInput("diff",label=h5("Type of plot"),choices =c("compare","plot_one","plot_two"))),
+                                                    column(3, checkboxInput("compar.lab.motif.all","Add Label (compare only)",value = T)),
                                                   ),
                                                   fluidRow(
                                                     column(12,div(DT::dataTableOutput("Motif_align"))),
@@ -3525,14 +3527,11 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     
-    
-    
     df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
     df_unique$Unique_clones <- 1
     as.data.frame(ddply(df_unique,(c(input$group_column,"len1")),numcolwise(sum)))
-    
-    
+
   })
   
   Motif_plot2 <- reactive({
@@ -3622,22 +3621,46 @@ server  <- function(input, output, session) {
     mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
     names(mat) <- 1:dim(mat)[2]
     
-   vals33$geom_comp <- ggseqlogo(mat, method='custom', seq_type='aa') + 
-      ylab('JS divergence') + 
-      geom_hline(yintercept=0) +
-      geom_vline(xintercept=0) +
-      annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_motif,size=10,face="plain",family=input$font_type)+
-      annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_motif2,size=10,face="plain",family=input$font_type)+
-      theme(
-        axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-        axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-        axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-        legend.title  =element_blank(),
-        legend.position = "right",
-        legend.text = element_text(colour="black", size=12,family=input$font_type)) 
-   
-   vals33$geom_comp 
+    if (input$compar.lab.motif.aa.single == T) {
+      
+      vals33$geom_comp <- ggseqlogo(mat, method='custom', seq_type='aa') + 
+        ylab('JS divergence') + 
+        geom_hline(yintercept=0) +
+        geom_vline(xintercept=0) +
+        annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_motif,size=10,face="plain",family=input$font_type)+
+        annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_motif2,size=10,face="plain",family=input$font_type)+
+        theme(
+          axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+          axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.title  =element_blank(),
+          legend.position = "right",
+          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+      
+      vals33$geom_comp 
+      
+    }
+    
+    else {
+      vals33$geom_comp <- ggseqlogo(mat, method='custom', seq_type='aa') + 
+        ylab('JS divergence') + 
+        geom_hline(yintercept=0) +
+        geom_vline(xintercept=0) +
+        theme(
+          axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+          axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+          legend.title  =element_blank(),
+          legend.position = "right",
+          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+      
+      vals33$geom_comp 
+      
+    }
+    
+
     
   })
   
@@ -3978,74 +4001,143 @@ server  <- function(input, output, session) {
                  })
     
     
-    if (input$diff == "compare" && input$aa.nt.col=="ASN") {
-      diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
-      mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
-      names(mat) <- 1:dim(mat)[2]
-      
-      vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='aa') + 
-        ylab('JS divergence') + 
-        geom_hline(yintercept=0) +
-        geom_vline(xintercept=0) +
-        annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_one,size=10,face="plain",family=input$font_type)+
-        annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_two,size=10,face="plain",family=input$font_type)+
-        theme(
-          axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-          axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          legend.title  =element_blank(),
-          legend.position = "right",
-          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
-      vals44$plot.ggseq.2
-      
-    }
-    else if (input$diff == "compare" && input$aa.nt.col=="DNA") {
-      diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_nt), pwm2 = as.data.frame(motif_count2_nt), alphabet = DNA)
-      mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
-      names(mat) <- 1:dim(mat)[2]
-      
-     vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='dna') + 
-        ylab('JS divergence') + 
-        geom_hline(yintercept=0) +
-        geom_vline(xintercept=0) +
-        theme(
-          axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-          axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-          legend.title  =element_blank(),
-          legend.position = "bottom",
-          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
-     vals44$plot.ggseq.2
-      
-    }
-    else if (input$diff == "plot_one" && input$aa.nt.col=="ASN") {
-      vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
-              baseDistribution = probabilities,
-              alphabet = ASN, main = NULL)
-      vals44$plot.ggseq.2
-    }
-    else if (input$diff == "plot_one" && input$aa.nt.col=="DNA") {
-      vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
-              baseDistribution = probabilities,
-              alphabet = DNA, main = NULL)
-      vals44$plot.ggseq.2
-    }
-    
-    else if (input$diff == "plot_two" && input$aa.nt.col=="ASN") {
-      vals44$plot.ggseq.2 <- seqLogo(as.data.frame(motif_count2_aa), sparse = FALSE, drawLines = 1,
-              baseDistribution = probabilities,
-              alphabet = ASN, main = NULL)
-      vals44$plot.ggseq.2
+    if (input$compar.lab.motif.all == T) {
+      if (input$diff == "compare" && input$aa.nt.col=="ASN") {
+        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
+        mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
+        names(mat) <- 1:dim(mat)[2]
+        
+        vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='aa') + 
+          ylab('JS divergence') + 
+          geom_hline(yintercept=0) +
+          geom_vline(xintercept=0) +
+          annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_one,size=10,face="plain",family=input$font_type)+
+          annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_two,size=10,face="plain",family=input$font_type)+
+          theme(
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            legend.title  =element_blank(),
+            legend.position = "right",
+            legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+        vals44$plot.ggseq.2
+        
+      }
+      else if (input$diff == "compare" && input$aa.nt.col=="DNA") {
+        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_nt), pwm2 = as.data.frame(motif_count2_nt), alphabet = DNA)
+        mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
+        names(mat) <- 1:dim(mat)[2]
+        
+        vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='dna') + 
+          ylab('JS divergence') + 
+          geom_hline(yintercept=0) +
+          geom_vline(xintercept=0) +
+          theme(
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            legend.title  =element_blank(),
+            legend.position = "bottom",
+            legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+        vals44$plot.ggseq.2
+        
+      }
+      else if (input$diff == "plot_one" && input$aa.nt.col=="ASN") {
+        vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
+                                      baseDistribution = probabilities,
+                                      alphabet = ASN, main = NULL)
+        vals44$plot.ggseq.2
+      }
+      else if (input$diff == "plot_one" && input$aa.nt.col=="DNA") {
+        vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
+                                      baseDistribution = probabilities,
+                                      alphabet = DNA, main = NULL)
+        vals44$plot.ggseq.2
+      }
+      else if (input$diff == "plot_two" && input$aa.nt.col=="ASN") {
+        vals44$plot.ggseq.2 <- seqLogo(as.data.frame(motif_count2_aa), sparse = FALSE, drawLines = 1,
+                                       baseDistribution = probabilities,
+                                       alphabet = ASN, main = NULL)
+        vals44$plot.ggseq.2
+      }
+      else {
+        vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count2_nt), sparse = FALSE, drawLines = 1,
+                                      baseDistribution = probabilities,
+                                      alphabet = DNA, main = NULL)
+        vals44$plot.ggseq.2
+      }
     }
     
     else {
-      vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count2_nt), sparse = FALSE, drawLines = 1,
-              baseDistribution = probabilities,
-              alphabet = DNA, main = NULL)
-      vals44$plot.ggseq.2
+      if (input$diff == "compare" && input$aa.nt.col=="ASN") {
+        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_aa), pwm2 = as.data.frame(motif_count2_aa), alphabet = ASN)
+        mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
+        names(mat) <- 1:dim(mat)[2]
+        
+        vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='aa') + 
+          ylab('JS divergence') + 
+          geom_hline(yintercept=0) +
+          geom_vline(xintercept=0) +
+          theme(
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            legend.title  =element_blank(),
+            legend.position = "right",
+            legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+        vals44$plot.ggseq.2
+        
+      }
+      else if (input$diff == "compare" && input$aa.nt.col=="DNA") {
+        diffLogoObj = createDiffLogoObject(pwm1 = as.data.frame(motif_count1_nt), pwm2 = as.data.frame(motif_count2_nt), alphabet = DNA)
+        mat <- (diffLogoObj$pwm1 - diffLogoObj$pwm2)
+        names(mat) <- 1:dim(mat)[2]
+        
+        vals44$plot.ggseq.2 <- ggseqlogo(mat, method='custom', seq_type='dna') + 
+          ylab('JS divergence') + 
+          geom_hline(yintercept=0) +
+          geom_vline(xintercept=0) +
+          theme(
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            legend.title  =element_blank(),
+            legend.position = "bottom",
+            legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+        vals44$plot.ggseq.2
+        
+      }
+      else if (input$diff == "plot_one" && input$aa.nt.col=="ASN") {
+        vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
+                                      baseDistribution = probabilities,
+                                      alphabet = ASN, main = NULL)
+        vals44$plot.ggseq.2
+      }
+      else if (input$diff == "plot_one" && input$aa.nt.col=="DNA") {
+        vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
+                                      baseDistribution = probabilities,
+                                      alphabet = DNA, main = NULL)
+        vals44$plot.ggseq.2
+      }
+      else if (input$diff == "plot_two" && input$aa.nt.col=="ASN") {
+        vals44$plot.ggseq.2 <- seqLogo(as.data.frame(motif_count2_aa), sparse = FALSE, drawLines = 1,
+                                       baseDistribution = probabilities,
+                                       alphabet = ASN, main = NULL)
+        vals44$plot.ggseq.2
+      }
+      else {
+        vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count2_nt), sparse = FALSE, drawLines = 1,
+                                      baseDistribution = probabilities,
+                                      alphabet = DNA, main = NULL)
+        vals44$plot.ggseq.2
+      }
+      
     }
+
     
   })
   
