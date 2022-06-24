@@ -30,6 +30,8 @@ library("shinyWidgets")
 library("showtext")
 library("ggseqlogo")
 library("sangerseqR")
+library(shinydashboard)
+library(shinymanager)
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -37,6 +39,11 @@ font_add_google("Press Start 2P", "Game")
 
 showtext_auto() 
 
+credentials <- data.frame(
+  user = c("shiny"),
+  password = c("shiny"),
+  stringsAsFactors = FALSE
+)
 
 font <- as.data.frame(font_families())
 font
