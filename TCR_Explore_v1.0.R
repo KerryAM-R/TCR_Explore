@@ -5224,7 +5224,7 @@ server  <- function(input, output, session) {
   # colouring columns -----
   input.data_CSV1 <-  reactive({switch(input$dataset7,"test-csv"=test.data_csv1(),"own_csv" = own.data_CSV1())})
   test.data_csv1 <- reactive({
-    dataframe = read.csv("test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",header = T, fileEncoding = "UTF-8")
+    dataframe = read.csv("test-data/Index/TCR_Explore_index.clonal.2021.11.19.csv",header = T)
   })
   own.data_CSV1 <- reactive({
     inFile_CSV1 <- input$file_FACS.csv1
