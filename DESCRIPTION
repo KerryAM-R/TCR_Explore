@@ -29,12 +29,13 @@ Imports:
   colourpicker,
   showtext,
   shinyWidgets,
-  shinyFiles,
-  shinyDirectoryInput
+  shinyFiles
 
 Remotes:
-  jokergoo/ComplexHeatmap
+  jokergoo/ComplexHeatmap,
+  wleepang/shiny-directory-input
 
 biocViews:
   motifStack,
-  flowCore
+  flowCore,
+  DiffLogo

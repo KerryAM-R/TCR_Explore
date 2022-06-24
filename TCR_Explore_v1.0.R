@@ -1,7 +1,7 @@
 
 ## volcano plots
 require("markdown")
-library("rmarkdown")
+require("rmarkdown")
 require("tidyverse")
 require("ggplot2") #Best plots
 require("ggrepel") #Avoid overlapping labels
@@ -93,8 +93,6 @@ error_message_val1 <- "No data found"
 error_message_val2 <- "Uploading file"
 error_message_val3 <- "Upload clone file"
 error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
-
-?radioButtons
 
 simp.index.names <- c("total # clones","unique # clones")
 # user interface  ----
