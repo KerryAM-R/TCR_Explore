@@ -264,27 +264,49 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             mainPanel(
                               tabsetPanel(
                                 
-                                tabPanel("Chromatogram sequence check",
-                                         p("Checking for heterozygousity in sequence alignment."),
-                                         p("Few mis-matches should exist for the promary and secondary sequences should if one only exists"),
-                                         p("Check heterogenatiy of sequences with a 0.33 ratio cut-off as per the 'sangerseqR' package recommendation"),
-                                         verbatimTextOutput("hetsangerseq"),
-                                         ),
-                                         
                                 tabPanel("Chromatogram",
+                                         p("A high quality chormatogram will display few mismatches (Blue) between the primary and secondary sequences."),
                                          p("Showcasing the heterogeneous sequences in the .ab1 file"),
-                                         p("Blue section repersent mis-matched base pairs"),
-                                         
+                                         fluidRow(
+                                           column(3,numericInput("Number.seq.line","Number of sequences per row",value = 100)),
+                                           column(3,numericInput("trim5.seq","Trim 5` sequences",value = 0)),
+                                           column(3,numericInput("trim3.seq","Trim 3` sequences",value = 0)),
+                                           
+                                           
+                                         ),
                                          plotOutput("chromatogram.seq", height="600px"),
                                          
+                                         
+                                         fluidRow(
+                                           column(3,numericInput("width_chromatogram.seq", "Width of PDF", value=10)),
+                                           column(3,numericInput("height_chromatogram.seq", "Height of PDF", value=8)),
+                                           column(3),
+                                           column(3,style = "margin-top: 25px;",downloadButton('downloadPlot_chromatogram.seq','Download PDF'))
                                          ),
-                                
-                                tabPanel("Primary and secondary sequence aligment",
+                                         
+                                         fluidRow(
+                                           column(3,numericInput("width_png_chromatogram.seq","Width of PNG", value = 1600)),
+                                           column(3,numericInput("height_png_chromatogram.seq","Height of PNG", value = 1200)),
+                                           column(3,numericInput("resolution_PNG_chromatogram.seq","Resolution of PNG", value = 144)),
+                                           column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_chromatogram.seq','Download PNG'))
+                                         ),
+                                         
+                                         
+                                         
+                                ),
+                                  tabPanel("Primary and secondary sequence aligment",
                                          p("Aligment of the primary and secondary sequence."),
                                         
                                          verbatimTextOutput("alignment"),
                                          
-                                         )
+                                         ),
+                                
+                                tabPanel("Chromatogram sequence",
+                                         p("Checking for heterozygosity in sequence alignment."),
+                                         
+                                         p("Check heterogenatiy of sequences with a 0.33 ratio cut-off as per the 'sangerseqR' package recommendation"),
+                                         verbatimTextOutput("hetsangerseq"),
+                                ),
                                        )
                             )
                           ),
@@ -1192,41 +1214,67 @@ server  <- function(input, output, session) {
   output$hetsangerseq <- renderPrint({
     
     hetsangerseq <- input.data_IMGT.ab1()
-    
-    validate(
-      need(nrow(hetsangerseq@traceMatrix)>0,
-           error_message_val1)
-    )
-    
-    
     hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
     
     print(hetcalls)
   })
   
-  output$chromatogram.seq <- renderPlot({
+  chromatogram.seq1 <- reactive({
     
     hetsangerseq <- input.data_IMGT.ab1()
-    
-    validate(
-      need(nrow(hetsangerseq@traceMatrix)>0,
-           error_message_val1)
-    )
-    
     hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
     
-    chromatogram(hetcalls, width = 100, height = 3, showcalls = "both", trim5 =0, trim3 = 0)
+    chromatogram(hetcalls, width = input$Number.seq.line, height = 4, cex.mtext = 1, cex.base = 3, showcalls = "both", trim5 =input$trim5.seq, trim3 = input$trim3.seq)
+    
   })
+  
+  output$chromatogram.seq <- renderPlot({ 
+    
+    chromatogram.seq1()
+    
+    })
+  
+  
+  output$downloadPlot_chromatogram.seq <- downloadHandler(
+    filename = function() {
+      x <- gsub(":", ".", Sys.time())
+      paste("TCR_Explore_chromatogram_",Sys.Date(), ".pdf", sep = "")
+    }, content = function(file) {
+      pdf(file, width=input$width_chromatogram.seq,height=input$height_chromatogram.seq, onefile = FALSE) # open the pdf device
+      hetsangerseq <- input.data_IMGT.ab1()
+      
+      validate(
+        need(nrow(hetsangerseq@traceMatrix)>0,
+             error_message_val1)
+      )
+      
+      hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
+      
+      chromatogram(hetcalls, width = input$Number.seq.line, height = 4, cex.mtext = 1, cex.base = 3, showcalls = "both", trim5 =input$trim5.seq, trim3 = input$trim3.seq)
+      dev.off()}, contentType = "application/pdf" )
+  
+  output$downloadPlotPNG_chromatogram.seq <- downloadHandler(
+    filename = function() {
+      x <- gsub(":", ".", Sys.time())
+      paste("TCR_Explore_chromatogram.seq_",Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      
+      png(file, width = input$width_png_chromatogram.seq, height = input$height_png_chromatogram.seq, res = input$resolution_PNG_chromatogram.seq)
+     
+        
+      hetsangerseq <- input.data_IMGT.ab1()
+      hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
+      chromatogram(hetcalls, width = input$Number.seq.line, height = 4, cex.mtext = 1, cex.base = 3, showcalls = "both", trim5 =input$trim5.seq, trim3 = input$trim3.seq)
+
+      dev.off()}, contentType = "application/png" # MIME type of the image
+  )
+  
+  
   
   output$alignment <- renderPrint({
     
     hetsangerseq <- input.data_IMGT.ab1()
-    
-    validate(
-      need(nrow(hetsangerseq@traceMatrix)>0,
-           error_message_val1)
-    )
-    
     hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
     hetcalls
     chromatogram(hetcalls, width = 100, height = 2, showcalls = "both", trim5 =20, trim3 = 20)
@@ -1236,10 +1284,6 @@ server  <- function(input, output, session) {
     pa <- pairwiseAlignment(primarySeq(hetcalls), secondarySeq(hetcalls))
     print(writePairwiseAlignments(pa))
   })
-  
-  
-  
-  
   
   # create and merge .seq to fasta files -----
   getData <- reactive({
