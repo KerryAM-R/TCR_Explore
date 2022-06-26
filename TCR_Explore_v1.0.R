@@ -190,7 +190,59 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                             }')
                               )
                             ),
-                            
+                        
+                            # seq to fasta file merger -----
+                            tabPanel("SEQ to FASTA file merger",
+                                     fluidPage(
+                                       sidebarPanel(
+                                         fileInput("file1_seq.file",
+                                                   "Choose .seq files from directory",
+                                                   multiple = TRUE,
+                                                   accept=c('.seq')),
+                                         h5("Add Indiv and group/chain name"),
+                                         h6("IndividualID.groupChain-initialwell"),
+                                         
+                                         h4("Select range of 50"),
+                                         fluidRow(
+                                           column(6,numericInput("lower.seq","First file",value = 1, steps = 50)),
+                                           column(6,numericInput("upper.seq","Last file",value = 50, steps = 50)),
+                                           
+                                         ),
+                                         fluidRow(
+                                           column(4,selectInput("indiv_miss","Add Indiv label", choices = c("No","Yes"))),
+                                           column(4,selectInput("group_miss","Add Group label", choices = c("No","Yes"))),
+                                           
+                                         ),
+                                         
+                                         
+                                         fluidRow(column(4,
+                                                         conditionalPanel(
+                                                           condition = "input.indiv_miss == 'Yes'",
+                                                           textInput("indiv.miss.name","Individual ID","Other"),
+                                                           
+                                                         )),
+                                                  column(4,
+                                                         conditionalPanel(
+                                                           condition = "input.group_miss == 'Yes'",
+                                                           textInput("group.miss.name","Group ID","Other"),
+                                                           
+                                                         ),
+                                                         
+                                                  )
+                                         ),
+                                         
+                                         textInput("seq.name","name of file","test-data"),
+                                         downloadButton('downloadData_fasta.files', 'Download')
+                                       ),
+                                       
+                                       mainPanel(
+                                         tableOutput('contents')
+                                       )
+                                       
+                                     )
+                                     
+                                     
+                            ),    
                  # UI IMGT only ----
                             tabPanel("IMGT",
                                      sidebarLayout(
@@ -312,58 +364,7 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                           ),
                          
                           ),
-                 # seq to fasta file merger -----
-                 tabPanel("SEQ to FASTA file merger (under development)",
-                   fluidPage(
-                     sidebarPanel(
-                       fileInput("file1_seq.file",
-                                 "Choose .seq files from directory",
-                                 multiple = TRUE,
-                                 accept=c('.seq')),
-                       h5("Add Indiv and group/chain name"),
-                       h6("IndividualID.groupChain-initialwell"),
-                       
-                       h4("Select range of 50"),
-                       fluidRow(
-                         column(4,numericInput("lower.seq","First file",value = 1)),
-                         column(4,numericInput("upper.seq","Last file",value = 50)),
-                         
-                       ),
-                       fluidRow(
-                         column(4,selectInput("indiv_miss","Add Indiv label", choices = c("No","Yes"))),
-                         column(4,selectInput("group_miss","Add Group label", choices = c("No","Yes"))),
-                         
-                       ),
-                       
-                       
-                       fluidRow(column(4,
-                                       conditionalPanel(
-                                         condition = "input.indiv_miss == 'Yes'",
-                                         textInput("indiv.miss.name","Individual ID","Other"),
-                                         
-                                       )),
-                                column(4,
-                                       conditionalPanel(
-                                         condition = "input.group_miss == 'Yes'",
-                                         textInput("group.miss.name","Group ID","Other"),
-                                         
-                                       ),
-                                       
-                                )
-                       ),
-                       
-                       textInput("seq.name","name of file","test-data"),
-                       downloadButton('downloadData_fasta.files', 'Download')
-                     ),
-                     
-                     mainPanel(
-                       tableOutput('contents')
-                     )
-                     
-                   )
-                   
-                   
-                 )
+
                             
                  ),
                  
