@@ -204,8 +204,8 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                          
                                          h4("Select range of 50"),
                                          fluidRow(
-                                           column(6,numericInput("lower.seq","First file",value = 1, steps = 50)),
-                                           column(6,numericInput("upper.seq","Last file",value = 50, steps = 50)),
+                                           column(6,numericInput("lower.seq","First file",value = 1, step = 50)),
+                                           column(6,numericInput("upper.seq","Last file",value = 50, step = 50)),
                                            
                                          ),
                                          fluidRow(
