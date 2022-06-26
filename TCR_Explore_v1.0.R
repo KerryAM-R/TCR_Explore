@@ -322,6 +322,13 @@ ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", h
                                  accept=c('.seq')),
                        h5("Add Indiv and group/chain name"),
                        h6("IndividualID.groupChain-initialwell"),
+                       
+                       h4("Select range of 50"),
+                       fluidRow(
+                         column(4,numericInput("lower.seq","First file",value = 1)),
+                         column(4,numericInput("upper.seq","Last file",value = 50)),
+                         
+                       ),
                        fluidRow(
                          column(4,selectInput("indiv_miss","Add Indiv label", choices = c("No","Yes"))),
                          column(4,selectInput("group_miss","Add Group label", choices = c("No","Yes"))),
@@ -1224,7 +1231,7 @@ server  <- function(input, output, session) {
     hetsangerseq <- input.data_IMGT.ab1()
     hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
     
-    chromatogram(hetcalls, width = input$Number.seq.line, height = 4, cex.mtext = 1, cex.base = 3, showcalls = "both", trim5 =input$trim5.seq, trim3 = input$trim3.seq)
+    chromatogram(hetcalls, width = input$Number.seq.line, height = 4, cex.mtext = 1, cex.base = 10, showcalls = "both", trim5 =input$trim5.seq, trim3 = input$trim3.seq)
     
   })
   
@@ -1300,7 +1307,7 @@ server  <- function(input, output, session) {
       df_total = data.frame()
       
       
-      for (i in 1:numfiles) { 
+      for (i in input$lower.seq:input$upper.seq) { 
         tryCatch({
           temp<- read.table(input$file1_seq.file[[i, 'datapath']],header = F) 
           temp
