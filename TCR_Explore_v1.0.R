@@ -2731,9 +2731,9 @@ server  <- function(input, output, session) {
       
       # transparancy
       alpha_mat <- hierarchy
-      # alpha_mat[alpha_mat>0] <- 1
-      # alpha_mat[rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$selected.chord.transparacy
-      # alpha_mat[!rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$unselected.chord.transparacy
+      alpha_mat[alpha_mat>0] <- 1
+      alpha_mat[rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$selected.chord.transparacy
+      alpha_mat[!rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$unselected.chord.transparacy
       alpha_mat
       
       circos.clear()
