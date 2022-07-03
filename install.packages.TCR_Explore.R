@@ -1,6 +1,8 @@
 ## volcano plots
 install.packages(c("tidyverse","ggplot2" ,"ggrepel","shiny","shinyBS","gridExtra","DT","plyr","dplyr","reshape2","treemapify","circlize","scales", "readxl","vegan","VLF","randomcoloR","colourpicker","devtools","muscle","markdown"))
 
+install.packages("circlize")
+
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 

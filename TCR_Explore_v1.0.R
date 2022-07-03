@@ -1,4 +1,3 @@
-
 ## volcano plots
 require("markdown")
 require("rmarkdown")
@@ -30,8 +29,8 @@ library("shinyWidgets")
 library("showtext")
 library("ggseqlogo")
 library("sangerseqR")
-library(shinydashboard)
-library(shinymanager)
+# library(shinydashboard)
+# library(shinymanager)
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -191,7 +190,7 @@ navbarMenu("QC",
              )
            ),
            
-           # seq to fasta file merger -----
+# seq to fasta file merger -----
            tabPanel("SEQ to FASTA file merger",
                     fluidPage(
                       sidebarPanel(
@@ -243,7 +242,7 @@ navbarMenu("QC",
                     
                     
            ),    
-           # UI IMGT only ----
+# UI IMGT only ----
            tabPanel("IMGT",
                     sidebarLayout(
                       sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
@@ -304,7 +303,7 @@ navbarMenu("QC",
                       
                     )
            ),
-           # .ab1 chromatogram file -----
+# .ab1 chromatogram file -----
            tabPanel("Check .ab1 files (under development)",
                     sidebarLayout(
                       sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
@@ -370,7 +369,6 @@ navbarMenu("QC",
 
 
 # UI TCR plots ----
-
 tabPanel("TCR analysis",
          
          tags$style(HTML("
@@ -405,7 +403,7 @@ tabPanel("TCR analysis",
            
            mainPanel(tabsetPanel(
              tabPanel("Overview of TCR pairing",tabsetPanel(
-               # UI Summary table -----
+# UI Summary table -----
                tabPanel("Summary table",
                         # verbatimTextOutput("names.in.file3"),
                         fluidRow(
@@ -689,7 +687,7 @@ tabPanel("TCR analysis",
                                    column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif_nt','Download PNG'))
                                  )
                         ),
-                        # motif align with muscle -----
+# motif align with muscle -----
                         tabPanel("Motif (AA or NT alignment)",
                                  p(" "),
                                  h6("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
@@ -731,11 +729,11 @@ tabPanel("TCR analysis",
                       )
              ),
              
-                        # diversity and chain usage -----
+# diversity and chain usage -----
              
              tabPanel("Diversity and chain usage",
                       tabsetPanel(
-                        # UI bar graphs ----- 
+# UI bar graphs ----- 
                         tabPanel("Chain bar graph",
                                  fluidRow(
                                    column(3,selectInput("stat",label = h5("Plot output"),choices=c("chains","frequency","stacked")),),
@@ -746,7 +744,7 @@ tabPanel("TCR analysis",
                                  
                                  
                                  
-                        # chain usage -----
+# chain usage -----
                                  conditionalPanel(
                                    condition = "input.stat == 'chains'",
                                    h5("Individual chains"),
@@ -757,7 +755,7 @@ tabPanel("TCR analysis",
                                      column(3,style = "margin-top: 10px;", colourInput("colour_bar.usage","Colour of bars", value = "black"))),
                                    
                                  ),
-                        # cummulative freq  -----
+# cummulative freq  -----
                                  conditionalPanel(
                                    condition = "input.stat == 'frequency'",
                                    h5("Cummulative frequency"),
@@ -769,7 +767,7 @@ tabPanel("TCR analysis",
                                    ),
                                    
                                  ),
-                        # stacked bar graph  -----
+# stacked bar graph  -----
                                  conditionalPanel(
                                    
                                    condition = "input.stat == 'stacked'",
@@ -827,7 +825,7 @@ tabPanel("TCR analysis",
                         ),
                         
                         
-                        # UI inverse simpson index -----
+# UI inverse simpson index -----
                         tabPanel("Inverse Simpson Diversity Index",
                                  p("Inverse Simpson Diversity Index: ∞=infinite diversity and 1=limited diversity"),
                                  fluidRow(
@@ -931,7 +929,7 @@ tabPanel("TCR analysis",
                       
              ),
              
-             ##### Overlap ----          
+# Overlap ----          
              tabPanel("Overlap",
                       tabsetPanel(
                         # UI heatmap -----
@@ -3412,7 +3410,7 @@ server  <- function(input, output, session) {
       geom_bar(aes(x=df3$cloneCount,y=df3$percent),stat="identity",fill=input$colour_bar.usage)+
       geom_line(aes(x=df5$cloneCount,y=df5$csum))+
       geom_point(aes(x=df5$cloneCount,y=df5$csum)) +
-      geom_text(aes(x=df5$cloneCount,y=df5$percent,label=df5$count2),vjust=input$numeric.adjust, family='serif',colour=input$colour.numeric.bar, size=input$label.size)+
+      geom_text(aes(x=df5$cloneCount,y=df5$percent,label=df5$count2),vjust=input$numeric.adjust, family=input$font_type,colour=input$colour.numeric.bar, size=input$label.size)+
       xlab("Distinct CDR3")+
       ylab("Frequency in repertoire")+
       theme_bw()+
@@ -3742,7 +3740,7 @@ server  <- function(input, output, session) {
         axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
         legend.title  =element_blank(),
         legend.position = "right",
-        legend.text = element_text(colour="black", size=12,family="serif"))
+        legend.text = element_text(colour="black", size=12,family=input$font_type))
   })
   
   
@@ -5996,13 +5994,13 @@ server  <- function(input, output, session) {
     
     df.x <- make_comb_mat(mat)
     ht = draw(UpSet(df.x,
-                    row_names_gp =  gpar(fontfamily = 'serif', fontsize = input$upset.text.size),
-                    column_names_gp = gpar(fontfamily = 'serif'),
+                    row_names_gp =  gpar(fontfamily = input$font_type, fontsize = input$upset.text.size),
+                    column_names_gp = gpar(fontfamily = input$font_type),
                     top_annotation = upset_top_annotation(df.x,
-                                                          annotation_name_gp = gpar(fontfamily = 'serif')
+                                                          annotation_name_gp = gpar(fontfamily = input$font_type)
                     ),
                     right_annotation = upset_right_annotation(df.x,
-                                                              annotation_name_gp = gpar(fontfamily = 'serif')),
+                                                              annotation_name_gp = gpar(fontfamily = input$font_type)),
                     
                     set_order  = c(input$order.of.group)
                     
@@ -6011,7 +6009,7 @@ server  <- function(input, output, session) {
     cs = comb_size(df.x)
     decorate_annotation("intersection_size", {
       grid.text(cs[od], x = seq_along(cs), y = unit(cs[od], "native") + unit(2, "pt"), 
-                default.units = "native", just = "bottom", gp = gpar(fontsize = input$upset.font.size, fontfamily = 'serif')
+                default.units = "native", just = "bottom", gp = gpar(fontsize = input$upset.font.size, fontfamily = input$font_type)
       ) })
     
   }
