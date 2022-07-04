@@ -416,7 +416,7 @@ tabPanel("TCR analysis",
                         downloadButton('downloadTABLE.QC3','Download table')
                         
                ),
-               # UI Treemap -----
+# UI Treemap -----
                tabPanel("Treemap",
                         fluidRow(
                           
@@ -457,7 +457,7 @@ tabPanel("TCR analysis",
                           column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_scTREE','Download PNG'))
                         ),
                ),
-               # UI circular plot -----
+# UI circular plot -----
                tabPanel("Chord diagram",
                         h5("If you see this error: 'not enough space for cells at track index '1'. 
                                            Adjust Text size (cex)"),
@@ -513,7 +513,7 @@ tabPanel("TCR analysis",
                         # tableOutput("out.col.table1")
                         
                ),
-               # UI Pie ----
+# UI Pie ----
                tabPanel("Pie chart",
                         fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this chain"),"")),
                                  column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","one colour"), selected = "random")),
@@ -549,7 +549,7 @@ tabPanel("TCR analysis",
              tabPanel("Motif analysis",
                       p("This section contains 4 tabs for motif analysis"),
                       tabsetPanel(
-                        # UI CDR3 length distribution graphs ----- 
+# UI CDR3 length distribution graphs ----- 
                         tabPanel("CDR3 length distribution",
                                  p(" "),
                                  h6("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
@@ -625,7 +625,7 @@ tabPanel("TCR analysis",
                                    column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_length','Download PNG'))
                                  ),
                         ),
-                        # UI motif -----
+# UI motif -----
                         tabPanel("Motif (amino acid)",
                                  p(" "),
                                  h6("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
@@ -659,7 +659,7 @@ tabPanel("TCR analysis",
                                    column(3,numericInput("resolution_PNG_motif","Resolution of PNG", value = 144)),
                                    column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_motif','Download PNG'))
                                  )),
-                        # UI motif NT -----
+# UI motif NT -----
                         tabPanel("Motif (nucleotide sequence)",
                                  h5("Select nucleotide column and CDR3 length"),
                                  verbatimTextOutput("length_nt"),
@@ -932,7 +932,7 @@ tabPanel("TCR analysis",
 # Overlap ----          
              tabPanel("Overlap",
                       tabsetPanel(
-                        # UI heatmap -----
+# UI heatmap -----
                         tabPanel("Heatmap",
                                  selectInput("group_hm", "Select specific groups", choices = c("yes", "no")),
                                  fluidRow(
@@ -962,7 +962,7 @@ tabPanel("TCR analysis",
                                    column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_heatmap','Download PNG'))
                                  ),
                         ),
-                        # upset plot -----
+# upset plot -----
                         tabPanel("Upset plot",
                                  fluidRow(
                                    column(3,selectInput("upset.select",label = h5("Select chain"), choices = "", selected = "")),
@@ -1019,7 +1019,7 @@ tabPanel("Paired TCR with Index data",
                                          textInput("name.colour2","Prefix of file name","ID.780_plate1.section1."),
                                          downloadButton('downloadTABLE_FACS','Download table')
                         ),
-                        # tab panel 2 (Other QC steps) ------
+# tab panel 2 (Other QC steps) ------
                         conditionalPanel(condition="input.tabselected==2",
                                          selectInput("dataset7", "Merged FACS and clone file for colouring", choices = c("test-csv" ,"own_csv")),
                                          fileInput('file_FACS.csv1', 'FACS+clone file',
@@ -1041,7 +1041,7 @@ tabPanel("Paired TCR with Index data",
                                          textInput("name.colour","Prefix of file name","ID.780_"),
                                          downloadButton('downloadTABLE_cleaning','Download table')
                         ),
-                        # conditional panel 3 -----
+# conditional panel 3 -----
                         conditionalPanel(condition="input.tabselected==3",
                                          selectInput("dataset_index.2", "Choose a dataset for complex plot:", choices = c("test-csv" ,"own_csv_file")),
                                          fileInput('file_FACS.csv2', 'File for dot plot',
@@ -1086,7 +1086,7 @@ tabPanel("Paired TCR with Index data",
            ),
            mainPanel(tabsetPanel(id = "tabselected",
                                  
-                                 # merging FACS file with clone file -----
+# merging FACS file with clone file -----
                                  tabPanel("Merging paired TCR with Index data",value = 1,
                                           fluidRow(column(4, selectInput("group_FACS","Group of data","")),
                                                    column(4, selectInput("indiv_FACS","Individual of data","780")),
@@ -1102,14 +1102,14 @@ tabPanel("Paired TCR with Index data",
                                           
                                  ),
                                  
-                                 # UI complex dotplot add columns if needed -----
+# UI complex dotplot add columns if needed -----
                                  tabPanel("Data cleaning steps",value = 2,
                                           
                                           selectInput("string.data","Recommended selecting for ab TCR data: Indiv, group,TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. Do not select flurochrome columns, or cloneCount","",multiple = T, width = "1200px"),
                                           div(DT::dataTableOutput("table.index.1")),
                                           
                                  ),
-                                 # UI complex dotplot -----
+# UI complex dotplot -----
                                  tabPanel("TCR with Index data plot",value = 3,
                                           
                                           
@@ -1958,7 +1958,7 @@ server  <- function(input, output, session) {
   
   TSV.file.chain <- reactive({
     dat <- chain_merge_IMGTonly()
-    dat$id <- paste0(input$tcr_lab,1:dim(dat)[1]) 
+    dat$id <- paste0(dat$Indiv,".",dat$group,"-",dat$well) 
     
     
     
@@ -3262,18 +3262,30 @@ server  <- function(input, output, session) {
       print(Chain1_length())
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
-  
+  # download summary table
   table.len.download <- reactive( {
     df <- input.data2()
     df <- as.data.frame(df)
-    df <- as.data.frame(df)
-    df <- df[,-grep("Sequence*",names(df))]  
-    df <- df[,-grep("allele*",names(df))]  
-    df <- df[,-grep("well",names(df))]  
-    
+
     if (input$type.tree == "raw data") {
-      df2 <- ddply(df,names(df[-c(1)]),numcolwise(sum))
-      df3 <- df2[,c(grep("JUNCTION",names(df2)))]
+      df1 <-  df[names(df) %in% c("cloneCount",
+                                  "Indiv",
+                                  "group",
+                                  "GVJ",
+                                  "DVDJ",
+                                  "AVJ",
+                                  "BVDJ",
+                                  names(df[grep("JUNCTION",names(df))]),
+                                  names(df[grep("IMGT",names(df))])
+      )]   
+      
+      df2 <- ddply(df1,names(df1[-c(1)]),numcolwise(sum))
+      df2
+      
+      df3 <-  df2[names(df2) %in% c(names(df2[grep("JUNCTION",names(df2))]),
+                                    names(df2[grep("IMGT",names(df2))])
+                 )]
+      
       for (i in 1:dim(df3)[1]) {
         df3[i,] <- nchar(df3[i,])
         df3
