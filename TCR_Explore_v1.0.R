@@ -516,7 +516,7 @@ tabPanel("TCR analysis",
 # UI Pie ----
                tabPanel("Pie chart",
                         fluidRow(column(2,selectInput("pie_chain",label = h5("Colour by this chain"),"")),
-                                 column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default","random","one colour"), selected = "random")),
+                                 column(2,selectInput("pie_colour.choise",label = h5("Colour"), choices =  c("default",'rainbow',"random","one colour"), selected = "random")),
                                  column(2, selectInput("cir.legend",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "none")),
                                  column(2,  numericInput("nrow.pie",label = h5("Rows"), value = 1)),
                                  column(2,  numericInput("size.circ",label = h5("Size of legend text"), value = 6))
@@ -4458,12 +4458,24 @@ server  <- function(input, output, session) {
     col.gg <- gg_fill_hue(length(num))
     length(num)
     
+    palette_rainbow <- rev(rainbow(length(num)))
     
-    if (input$pie_colour.choise == "default") {
+
+    
+    
+   if (input$pie_colour.choise == "default") {
       lapply(1:length(num), function(i) {
         colourInput(paste("col.pie", i, sep="_"), paste(num[i]), col.gg[i])        
       })
-    }
+   }
+    
+    
+    else if (input$pie_colour.choise == "rainbow") {
+      lapply(1:length(num), function(i) {
+        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), palette_rainbow[i])        
+      }) }
+    
+    
     else if (input$pie_colour.choise == "random") {
       palette1 <- distinctColorPalette(length(num))
       lapply(1:length(num), function(i) {
