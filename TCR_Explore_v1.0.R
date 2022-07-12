@@ -2895,6 +2895,7 @@ server  <- function(input, output, session) {
     num <- as.data.frame(unique(df1$chain))
     
     col.gg <- gg_fill_hue(dim(num)[1])
+    
     unique.col <- as.data.frame(unique(df$chain))
     
     palette_rainbow <- rev(rainbow(dim(num)[1]))
@@ -4432,7 +4433,7 @@ server  <- function(input, output, session) {
       session,
       "pie_chain",
       choices=names(input.data2()),
-      selected = "AVJ_aCDR3_BVJ_bCDR3")
+      selected = "AV")
     
   })
   
@@ -4444,7 +4445,6 @@ server  <- function(input, output, session) {
       selected = c("CD8","IFN")) 
   }) 
   
-  
   cols_pie <- reactive({
     dat <- input.data2();
     validate(
@@ -4452,41 +4452,36 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     dat <- as.data.frame(dat)
-    df <- as.data.frame(ddply(dat,(c(input$group_column,input$pie_chain)),numcolwise(sum)))
-    names(df) <- c("group","chain","cloneCount")
-    num <- unique(df$chain)
-    col.gg <- gg_fill_hue(length(num))
-    length(num)
+    num <- unique(dat[names(dat) %in% input$pie_chain])
     
-    palette_rainbow <- rev(rainbow(length(num)))
+    col.gg <- gg_fill_hue(dim(num)[1])
     
-
-    
+    palette_rainbow <- rev(rainbow(dim(num)[1]))
     
    if (input$pie_colour.choise == "default") {
-      lapply(1:length(num), function(i) {
-        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), col.gg[i])        
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.pie", i, sep="_"), paste(num[i,]), col.gg[i])        
       })
    }
     
     
     else if (input$pie_colour.choise == "rainbow") {
-      lapply(1:length(num), function(i) {
-        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), palette_rainbow[i])        
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.pie", i, sep="_"), paste(num[i,]), palette_rainbow[i])        
       }) }
     
     
     else if (input$pie_colour.choise == "random") {
-      palette1 <- distinctColorPalette(length(num))
-      lapply(1:length(num), function(i) {
-        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), palette1[i])        
+      palette1 <- distinctColorPalette(dim(num)[1])
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.pie", i, sep="_"), paste(num[i,]), palette1[i])        
       })
       
     }
     
     else {
-      lapply(1:length(num), function(i) {
-        colourInput(paste("col.pie", i, sep="_"), paste(num[i]), input$one.colour.default)        
+      lapply(1:dim(num)[1], function(i) {
+        colourInput(paste("col.pie", i, sep="_"), paste(num[i,]), input$one.colour.default)        
       })
       
       
@@ -4502,15 +4497,28 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     dat <- as.data.frame(dat)
-    df <- as.data.frame(ddply(dat,(c(input$group_column,input$pie_chain)),numcolwise(sum)))
-    names(df) <- c("group","chain","cloneCount")
-    
-    
-    num <- unique(df$chain)
-    lapply(1:length(num), function(i) {
+    num <- unique(dat[names(dat) %in% input$pie_chain])
+    col.gg <- gg_fill_hue(dim(num)[1])
+    palette_rainbow <- rev(rainbow(dim(num)[1]))
+
+    lapply(1:dim(num)[1], function(i) {
       input[[paste("col.pie", i, sep="_")]]
     })
   })
+  
+  # df1 <- dat[names(dat) %in% c(input$count2,input$fill2,input$sub_group2,input$group_column)]
+  # df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
+  # unique.col <- as.data.frame(unique(dat[names(dat) %in% input$fill2]))
+  # names(unique.col) <- "V1"
+  # unique.col$tree_palette <- cols
+  # 
+  # 
+  # 
+  # df3 <- as.data.frame(merge(df2,unique.col,by.x=input$fill2,by.y = "V1"))
+  # 
+  # 
+  # df3$ID.names <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.tree.order)
+  
   
   pie_chart <- function() {
     set.seed(123)
@@ -4519,27 +4527,28 @@ server  <- function(input, output, session) {
       need(nrow(dat)>0,
            error_message_val1)
     )
-    dat <- as.data.frame(dat)
+    
+    df1 <- dat[names(dat) %in% c("cloneCount",input$pie_chain,input$group_column)]
+    df2 <- as.data.frame(ddply(dat,names(df1)[-c(1)],numcolwise(sum)))
+    unique.col <- unique(dat[names(dat) %in% input$pie_chain])
+    names(unique.col) <- "V1"
+    
     cols <- unlist(colors_pie())
+
+    unique.col$palette <- cols
     
-    df <- as.data.frame(ddply(dat,(c(input$group_column,input$pie_chain)),numcolwise(sum)))
-    names(df) <- c("group","chain","cloneCount")
+    df3 <- as.data.frame(merge(df2,unique.col,by.x=input$pie_chain,by.y = "V1"))
     
+    df <- transform(df3, percent = ave(cloneCount, get(input$group_column), FUN = prop.table))
     
+    df$group2 <- factor(df3[,names(df3) %in% input$group_column],levels = input$string.data.pie.order)
     
-    palette <- cols
-    a <- unique(df$chain)
-    df$chain <- factor(df$chain,levels = a,labels=a)
-    df <- transform(df, percent = ave(cloneCount, group, FUN = prop.table))
-    
-    df$group <- factor(df$group,levels = unique(input$string.data.pie.order) )
-    
-    vals9$pie <- ggplot(df, aes(x="", y=percent, fill=chain)) +
+    vals9$pie <- ggplot(df, aes(x="", y=percent, fill=get(input$pie_chain))) +
       geom_bar(width = 1, stat = "identity",aes(colour = "black")) +
-      scale_fill_manual(values=palette) +
+      scale_fill_manual(values=unique(df$palette)) +
       scale_color_manual(values = "black") +
       coord_polar("y", start=0) + 
-      facet_wrap(~df$group,nrow = input$nrow.pie) +
+      facet_wrap(~df$group2,nrow = input$nrow.pie) +
       theme(
         axis.text = element_blank(),
         axis.ticks = element_blank(),
