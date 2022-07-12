@@ -2317,7 +2317,7 @@ server  <- function(input, output, session) {
       vals22$Treemap22 <- ggplot(df3, aes(area = get(input$count2),
                                           fill = get(input$fill2),
                                           subgroup = get(input$sub_group2))) +
-        geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
+        geom_treemap(colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
