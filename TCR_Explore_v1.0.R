@@ -1985,8 +1985,6 @@ server  <- function(input, output, session) {
     TSV.file.chain()
   })
   
-  
-  
   output$chain_table_IMGT.QC1 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
     df1 <- input.data.IMGT_afterQC();
     df1 <- as.data.frame(df1)
@@ -2078,13 +2076,35 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     df <- as.data.frame(df)
+    
+    df.Vgene_A <- as.data.frame(do.call(rbind, strsplit(as.character(df$V.GENE.and.allele_A), ",")))
+    df$V.GENE.and.allele_A <- df.Vgene_A$V1
+    df.Vgene_B <- as.data.frame(do.call(rbind, strsplit(as.character(df$V.GENE.and.allele_B), ",")))
+    df$V.GENE.and.allele_B <- df.Vgene_B$V1
+    df.Jgene_A <- as.data.frame(do.call(rbind, strsplit(as.character(df$J.GENE.and.allele_A), ",")))
+    df$J.GENE.and.allele_A <- df.Jgene_A$V1
+    
+    
+    df$V.GENE.and.allele_A <- gsub("AV","TRAV", df$V.GENE.and.allele_A)
+    df$V.GENE.and.allele_A <- gsub("DV","TRDV", df$V.GENE.and.allele_A)
+    df$V.GENE.and.allele_B <- gsub("BV","TRBV", df$V.GENE.and.allele_B)
+    
+    df$J.GENE.and.allele_A <- gsub("AJ","TRAJ", df$J.GENE.and.allele_A)
+    df$J.GENE.and.allele_B <- gsub("BJ","TRBJ", df$J.GENE.and.allele_B)
+    
     df2 <- df[,c("Indiv","group","cloneCount","V.GENE.and.allele_A","J.GENE.and.allele_A","JUNCTION..AA._A","JUNCTION_A","V.GENE.and.allele_B","J.GENE.and.allele_B","JUNCTION..AA._B","JUNCTION_B")] 
     
     names(df2) <- c("subject","epitope","count","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq")
     
     df2$well_id <- paste("well")
+  
+    
     df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_a_gene","j_a_gene","cdr3_a_aa","cdr3_a_nucseq","v_b_gene","j_b_gene","cdr3_b_aa","cdr3_b_nucseq","well_id"),numcolwise(sum)))
+    
+    df3$well_id <- paste("Clone_",rownames(df3),".",df3$subject,"-",df3$epitope,sep="")
+    
     df3 <- df3[,c(1,2,12,3:11)]
+    
     df3
     
   })
@@ -2097,12 +2117,31 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     df <- as.data.frame(df)
+    
+    df.Vgene_G <- as.data.frame(do.call(rbind, strsplit(as.character(df$V.GENE.and.allele_G), ",")))
+    df$V.GENE.and.allele_G <- df.Vgene_G$V1
+    df.Vgene_D <- as.data.frame(do.call(rbind, strsplit(as.character(df$V.GENE.and.allele_D), ",")))
+    df$V.GENE.and.allele_D <- df.Vgene_D$V1
+    df.Jgene_D <- as.data.frame(do.call(rbind, strsplit(as.character(df$J.GENE.and.allele_D), ",")))
+    df$J.GENE.and.allele_D <- df.Jgene_D$V1
+    
+    
+    df$V.GENE.and.allele_D <- gsub("DV","TRDV", df$V.GENE.and.allele_D)
+    df$V.GENE.and.allele_G <- gsub("GV","TRGV", df$V.GENE.and.allele_G)
+    
+    df$J.GENE.and.allele_D <- gsub("DJ","TRDJ", df$J.GENE.and.allele_D)
+    df$J.GENE.and.allele_G <- gsub("GJ","TRGJ", df$J.GENE.and.allele_G)
+    
+    
     df2 <- df[,c("Indiv","group","cloneCount","V.GENE.and.allele_G","J.GENE.and.allele_G","JUNCTION..AA._G","JUNCTION_G","V.GENE.and.allele_D","J.GENE.and.allele_D","JUNCTION..AA._D","JUNCTION_D")] 
     
     names(df2) <- c("subject","epitope","count","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq")
     
     df2$well_id <- paste("well")
     df3 <- as.data.frame(ddply(df2,c("subject","epitope","v_g_gene","j_g_gene","cdr3_g_aa","cdr3_g_nucseq","v_d_gene","j_d_gene","cdr3_d_aa","cdr3_d_nucseq","well_id"),numcolwise(sum)))
+    
+    df3$well_id <- paste("Clone_",rownames(df3),".",df3$subject,"-",df3$epitope,sep="")
+    
     df3 <- df3[,c(1,2,12,3:11)]
     df3
     
