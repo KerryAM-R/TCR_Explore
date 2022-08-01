@@ -1,3 +1,5 @@
+options(shiny.maxRequestSize=30*1024^2)
+
 ## volcano plots
 require("markdown")
 require("rmarkdown")
@@ -253,7 +255,7 @@ navbarMenu("QC",
                                                     downloadButton('downloadTABLE_IMGTonly','Download table')
                                    ),
                                    
-                                   conditionalPanel(condition="input.QC_panel==2 || input.QC_panel==3",
+                                   conditionalPanel(condition="input.QC_panel==2 || input.QC_panel==3 ||input.QC_panel==4",
                                                     
                                                     selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own_data1")),
                                                     
@@ -271,7 +273,11 @@ navbarMenu("QC",
                                    conditionalPanel(condition="input.QC_panel==3",
                                                     textInput("tcr_lab","ID for TCRdist","human_tcr"),
                                                     downloadButton('downloadTABLE.TSV','Download tsv file for TCRdist')
-                                   )
+                                   ), 
+                                   conditionalPanel(condition = "input.QC_panel==4",
+                                                    downloadButton('downloadTABLE.QC1.single.chain','Download single chain file')
+                                                    
+                                                    )
                                    
                       ),
                       mainPanel(
@@ -294,10 +300,13 @@ navbarMenu("QC",
                                              div(DT::dataTableOutput("chain_table_IMGT.QC1"))
                                     ),
                                     tabPanel("TCRdist output file",value = 3,
-                                             tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
+                                             tags$head(tags$style("#chain_table_IMGT.tcrdist  {white-space: nowrap;  }")),
                                              div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
                                              
-                                    )
+                                    ),
+                                    tabPanel("Single chain file", value = 4),
+                                    div(DT::dataTableOutput("single.chain_table_IMGT.QC1")),
+                                    
                         )
                       )
                       
@@ -1627,9 +1636,7 @@ server  <- function(input, output, session) {
         inFile12$datapath)}
     
   })
-  
-  
-  
+
   Pass.Fail.NA <- reactive({
     df1 <- input.data.IMGT_afterQC();
     
@@ -1815,7 +1822,6 @@ server  <- function(input, output, session) {
       dat
       
     }
-    
     else if (input$IMGT_chain2 =="gd" & input$sheet2 == "Summary+JUNCTION") {
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
       df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
@@ -1956,6 +1962,118 @@ server  <- function(input, output, session) {
     
   })
   
+  chain_single.chain_IMGT <- reactive({
+    df1 <- input.data.IMGT_afterQC();
+    
+    validate(
+      need(nrow(df1)>0,
+           "Upload file")
+    )
+    
+    df1 <- as.data.frame(df1)
+    df1$clone_quality <- gsub("pass","pass",df1$clone_quality,ignore.case = T)
+    df1$clone_quality <- gsub("fail","fail",df1$clone_quality,ignore.case = T)
+    df <- subset(df1,df1$clone_quality=="pass")
+    df <- as.data.frame(df)
+    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..")]
+    
+    df.Vgene <- as.data.frame(do.call(rbind, strsplit(as.character(df2$V.GENE.and.allele), ",")))
+    df2$V.GENE <- df.Vgene$V1
+    y = dim(df2)[2]
+    y
+    df2$V.GENE <- gsub(" ","",df2$V.GENE)
+    df2$cloneCount <- 1
+    
+    if (input$sheet2 == "Summary+JUNCTION") {
+      
+      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      
+      df2$ID <- df_name2$V1
+      head(df2)
+      df2$Indiv.group <- df_name3$V1
+      df2$Indiv <-df_name5$V1
+      df2$group <- df_name5$V2
+      df2$well <- df_name3$V2
+      
+      df2 <- df2[!names(df2) %in% c("ID","Sequence.number","Sequence.ID","V.DOMAIN.Functionality","JUNCTION.frame","JUNCTION")]
+      df2 <- df2[,c(9:13,1:8)]
+      df2
+
+      dat <- as.data.frame(df2)
+      dat$TRV <- paste(dat$V.GENE)
+      dat$TRJ <- paste(dat$J.GENE.and.allele,sep="")
+      dat$TRD <- paste(dat$D.GENE.and.allele,sep="")
+      
+      dat$TRV <- gsub("[*]0.","",dat$TRV)
+      dat$TRJ <- gsub("[*]0.","",dat$TRJ)
+      dat$TRD <- gsub("[*]0.","",dat$TRD)
+      
+      dat$TRVJ <- paste(dat$TRV,dat$TRJ,sep=".")
+      dat$TRVDJ <- paste(dat$TRV,dat$TRD,dat$TRJ,sep=".")
+    
+
+       dat$TRVDJ <- gsub(".NA.",".",dat$TRVDJ)
+
+
+      dat$TRVJ_CDR3 <- paste(dat$TRVJ,dat$JUNCTION..AA.,sep="_")
+      dat$TRVDJ_CDR3 <- paste(dat$TRVDJ,dat$JUNCTION..AA.,sep="_")
+
+      dat$TRD <- gsub("NA","-",dat$TRD)
+      head(dat)
+      # 
+      dat
+      
+    }
+    else {
+      
+      
+      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
+      
+      df2$ID <- df_name2$V1
+      head(df2)
+      df2$Indiv.group <- df_name3$V1
+      df2$Indiv <-df_name5$V1
+      df2$group <- df_name5$V2
+      df2$well <- df_name3$V2
+      
+      df2 <- df2[!names(df2) %in% c("ID","Sequence.number","Sequence.ID","V.DOMAIN.Functionality","JUNCTION.frame","JUNCTION")]
+      df2 <- df2[,c(9:13,1:8)]
+      df2
+      
+      dat <- as.data.frame(df2)
+      dat$TRV <- paste(dat$V.GENE)
+      dat$TRJ <- paste(dat$J.GENE.and.allele,sep="")
+      dat$TRD <- paste(dat$D.GENE.and.allele,sep="")
+      
+      dat$TRV <- gsub("[*]0.","",dat$TRV)
+      dat$TRJ <- gsub("[*]0.","",dat$TRJ)
+      dat$TRD <- gsub("[*]0.","",dat$TRD)
+      
+      dat$TRVJ <- paste(dat$TRV,dat$TRJ,sep=".")
+      dat$TRVDJ <- paste(dat$TRV,dat$TRD,dat$TRJ,sep=".")
+      
+      
+      dat$TRVDJ <- gsub(".NA.",".",dat$TRVDJ)
+      
+      
+      dat$TRVJ_CDR3 <- paste(dat$TRVJ,dat$AA.JUNCTION,sep="_")
+      dat$TRVDJ_CDR3 <- paste(dat$TRVDJ,dat$AA.JUNCTION,sep="_")
+      
+      dat$TRD <- gsub("NA","-",dat$TRD)
+      head(dat)
+      # 
+      dat
+      
+    }
+
+  })
+  
+  
+  # TSV output
   TSV.file.chain <- reactive({
     dat <- chain_merge_IMGTonly()
     dat$id <- paste0(dat$Indiv,".",dat$group,"-",dat$well) 
@@ -1984,7 +2102,19 @@ server  <- function(input, output, session) {
   output$chain_table_IMGT.tcrdist <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
     TSV.file.chain()
   })
+  output$downloadTABLE.TSV <- downloadHandler(
+    filename = function(){
+      paste("TCRdist.tsv", sep = "")
+    },
+    content = function(file){
+      df <- TSV.file.chain()
+      df <- as.data.frame(df)
+      
+      write.table(df, file, quote=FALSE, sep='\t', row.names = F)
+      
+    } )
   
+  # paired chain output
   output$chain_table_IMGT.QC1 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
     df1 <- input.data.IMGT_afterQC();
     df1 <- as.data.frame(df1)
@@ -2011,17 +2141,35 @@ server  <- function(input, output, session) {
       write.csv(df,file, row.names = FALSE)
     } )
   
-  output$downloadTABLE.TSV <- downloadHandler(
+
+  
+  # single chain oytput 
+  output$single.chain_table_IMGT.QC1 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
+    df1 <- input.data.IMGT_afterQC();
+    df1 <- as.data.frame(df1)
+    a <- subset(df1 ,is.na(df1$clone_quality)==TRUE)
+    if (dim(a)[1]>0) {
+      df <- as.data.frame("please complete QC analysis")
+      names(df) <- " "
+      df
+    }
+    else {
+      df <- chain_single.chain_IMGT()
+      df <- as.data.frame(df)
+      df
+      
+    }
+  })
+  output$downloadTABLE.QC1.single.chain <- downloadHandler(
     filename = function(){
-      paste("TCRdist.tsv", sep = "")
+      paste("single.chain_TCR_file",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
-      df <- TSV.file.chain()
+      df <- chain_single.chain_IMGT()
       df <- as.data.frame(df)
-      
-      write.table(df, file, quote=FALSE, sep='\t', row.names = F)
-      
+      write.csv(df,file, row.names = FALSE)
     } )
+  
   
   
   # summarised table -----
