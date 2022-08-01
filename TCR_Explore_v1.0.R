@@ -304,8 +304,9 @@ navbarMenu("QC",
                                              div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
                                              
                                     ),
-                                    tabPanel("Single chain file", value = 4),
-                                    div(DT::dataTableOutput("single.chain_table_IMGT.QC1")),
+                                    tabPanel("Single chain file", value = 4,
+                                    div(DT::dataTableOutput("single.chain_table_IMGT.QC1"))
+                                    ),
                                     
                         )
                       )
