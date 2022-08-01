@@ -2233,7 +2233,7 @@ server  <- function(input, output, session) {
                      "order_name","release_date",
                      "upload_date","primer_set",
                      "total_outofframe_reads",
-                     "fraction_productive","seq_reads",
+                     "fraction_productive",
                      "sequence_result_status","productive_clonality","stop_rearrangements",
                      "outofframe_rearrangements","total_rearrangements","total_reads",
                      "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties",
