@@ -84,7 +84,8 @@ Nucleotide <- function (Nucleotide, seqlength) {
   return(count)
 }
 
-options(shiny.maxRequestSize=100*1024^2)
+options(shiny.maxRequestSize=200*1024^2)
+
 credentials <- data.frame(
   user = c("shiny", "shinymanager"),
   password = c("azerty", "12345"),
@@ -210,7 +211,7 @@ navbarMenu("QC",
                         ),
                         fluidRow(
                           column(4,selectInput("indiv_miss","Add Indiv label", choices = c("No","Yes"))),
-                          column(4,selectInput("group_miss","Add Group label", choices = c("No","Yes"))),
+                          column(8,selectInput("group_miss","Add GroupChain-MultipleWells label", choices = c("No","Yes"))),
                           
                         ),
                         
@@ -221,10 +222,10 @@ navbarMenu("QC",
                                           textInput("indiv.miss.name","Individual ID","Other"),
                                           
                                         )),
-                                 column(4,
+                                 column(8,
                                         conditionalPanel(
                                           condition = "input.group_miss == 'Yes'",
-                                          textInput("group.miss.name","Group ID","Other"),
+                                          textInput("group.miss.name","Group ID","LabA-1"),
                                           
                                         ),
                                         
@@ -402,14 +403,12 @@ tabPanel("Convert to TCR_Explore file format",
            ),
            mainPanel(
              tabsetPanel(
-               tabPanel("Converting to TCR_Explore"),
+               tabPanel("Converting to TCR_Explore",
                h5("Upload eiter .tsv, .csv or .txt files to convert to TCR_Explore format"),
                p("Rows with missing sequences are removed from V and J gene columns"),
                p("If using ImmunoSEQ data, there is an additional filtering step to only keep in-frame sequences"),
                p(" "),
-               tabPanel("Video of conversion process",
-                        uiOutput("video7"),
-               ),
+               
                
                
                fluidRow(
@@ -426,7 +425,11 @@ tabPanel("Convert to TCR_Explore file format",
                fluidRow(column(12, selectInput("col.to.remove","Columns to remove","",multiple = T, width = "1200px") )),
                div(DT::dataTableOutput("ImmunoSeq.table"))
              ),
+             tabPanel("Video of conversion process",
+                      uiOutput("video7"),
+             ),
              
+             ),
              
            ),
          ),
