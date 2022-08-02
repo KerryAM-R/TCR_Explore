@@ -244,7 +244,7 @@ navbarMenu("QC",
                     
            ),    
 # UI IMGT only ----
-           tabPanel("IMGT",
+           tabPanel("IMGT (Sanger Sequencing)",
                     sidebarLayout(
                       sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
                                    conditionalPanel(condition="input.QC_panel==1",
@@ -403,9 +403,9 @@ tabPanel("Convert to TCR_Explore file format",
            mainPanel(
              tabsetPanel(
                tabPanel("Converting to TCR_Explore"),
-               h5("Upload eiter .tsv, .csv or .txt files to convert to TCR explore format"),
+               h5("Upload eiter .tsv, .csv or .txt files to convert to TCR_Explore format"),
                p("Rows with missing sequences are removed from V and J gene columns"),
-               p("If using ImmunoSEQ data, there is an additional filtering step to only keep inframe sequences"),
+               p("If using ImmunoSEQ data, there is an additional filtering step to only keep in-frame sequences"),
                p(" "),
                fluidRow(
                  column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","Other"))),
@@ -2357,7 +2357,6 @@ server  <- function(input, output, session) {
     
     x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
     x3$TRV <- gsub("^TCR","",x3$TRV)
-    
     
     x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
     x3$TRD <- gsub("^TCR","",x3$TRD)
