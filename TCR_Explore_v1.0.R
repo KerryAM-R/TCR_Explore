@@ -312,30 +312,9 @@ navbarMenu("QC",
                       
                     )
            ),
-# ImmunoSEQ ====
-          tabPanel("ImmunoSeq QC",
-                   sidebarLayout(
-                     sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
-                                  selectInput("dataset_TSV.Immunoseq", "Choose a dataset:", choices = c("Demo.gd.test-data", "Immunoseq.own-data")),
-                                  fileInput('file_TSV.Immunoseq', 'TSV ImmunoSEQ(R) file',
-                                            accept=c('.tsv',".TSV")),
-                                  downloadButton('downloadTABLE.Immunoseq','Download filtered table')
-                                  
-                                  
-                     ),
-                   mainPanel(
-                     tabsetPanel(
-                       tabPanel("filtering ImmunoSeq file"),
-                       selectInput("countcolumn","Count column",choices = ""),
-                       fluidRow(column(12, selectInput("col.to.remove","Columns to remove","",multiple = T, width = "1200px") )),
-                       div(DT::dataTableOutput("ImmunoSeq.table"))
-                     )
-                     
-                   ),
-                   ),
-              ),
+
 # .ab1 chromatogram file -----
-           tabPanel("Check .ab1 files (under development)",
+           tabPanel("Check .ab1 files",
                     sidebarLayout(
                       sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
                                    selectInput("dataset_.ab1", "Choose a dataset:", choices = c(".ab1-test-data", ".ab1-own_data")),
@@ -394,6 +373,60 @@ navbarMenu("QC",
                     ),
                     
            ),
+# ImmunoSEQ ====
+
+tabPanel("Convert to TCR_Explore file format",
+         sidebarLayout(
+           sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
+                        selectInput("dataset_TSV.Immunoseq", "Choose a dataset:", choices = c("Demo.gd.test-data", "Immunoseq.own-data")),
+                        fileInput('file_TSV.Immunoseq', 'File to upload',
+                                  accept=c('.tsv',".csv",".txt")),
+                        
+                        radioButtons("sep", "Separator",
+                                     choices = c(Comma = ",",
+                                                 Semicolon = ";",
+                                                 Tab = "\t"),
+                                     selected = "\t"),
+                        
+                        # Input: Select quotes ----
+                        radioButtons("quote", "Quote",
+                                     choices = c(None = "",
+                                                 "Double Quote" = '"',
+                                                 "Single Quote" = "'"),
+                                     selected = '"'),
+                        
+                        
+                        downloadButton('downloadTABLE.Immunoseq','Download filtered table')
+                        
+                        
+           ),
+           mainPanel(
+             tabsetPanel(
+               tabPanel("Converting to TCR_Explore"),
+               h5("Upload eiter .tsv, .csv or .txt files to convert to TCR explore format"),
+               p("Rows with missing sequences are removed from V and J gene columns"),
+               p("If using ImmunoSEQ data, there is an additional filtering step to only keep inframe sequences"),
+               p(" "),
+               fluidRow(
+                 column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","Other"))),
+                        column(3, selectInput("countcolumn","Count column",choices = "")),
+               ),
+               
+               fluidRow(
+                        column(3, selectInput("V.GENE.clean","Variable gene column",choices = "")),
+                        column(3, selectInput("D.GENE.clean","Diversity gene column",choices = "")),
+                        column(3, selectInput("J.GENE.clean","Junction gene column",choices = "")),
+                        column(3, selectInput("CDR3.gene.clean","CDR3 amino acid column",choices = "")),
+                        ),
+               fluidRow(column(12, selectInput("col.to.remove","Columns to remove","",multiple = T, width = "1200px") )),
+               div(DT::dataTableOutput("ImmunoSeq.table"))
+             )
+             
+           ),
+         ),
+),
+
+
            
            
 ),
@@ -1912,7 +1945,6 @@ server  <- function(input, output, session) {
       
       dat
     }
-    
     else  {
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
       df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
@@ -2206,18 +2238,18 @@ server  <- function(input, output, session) {
     else {
       dataframe <- read.table(
         inFile_immunoseq$datapath,
-        sep = "\t",
+        sep = input$sep,
+        quote = input$quote,
         header = T)}
     
   })
 
-    
     observe({
       
         updateSelectInput(
           session,
           "countcolumn",
-          choices=names(input.data.Immunoseq()),
+          choices=names(TSV.col.names()),
           selected = c("templates"))
      
     }) 
@@ -2226,21 +2258,73 @@ server  <- function(input, output, session) {
       
       updateSelectInput(
         session,
+        "J.GENE.clean",
+        choices=names(TSV.col.names()),
+        selected = c("j_gene"))
+      
+    })
+    
+    
+    observe({
+      
+      updateSelectInput(
+        session,
+        "V.GENE.clean",
+        choices=names(TSV.col.names()),
+        selected = c("v_gene"))
+      
+    })
+    
+    
+    observe({
+      
+      updateSelectInput(
+        session,
+        "D.GENE.clean",
+        choices=names(TSV.col.names()),
+        selected = c("d_gene"))
+      
+    })
+    
+    observe({
+      
+      updateSelectInput(
+        session,
+        "CDR3.gene.clean",
+        choices=names(TSV.col.names()),
+        selected = c("amino_acid"))
+      
+    })
+    
+    
+    observe({
+      
+      updateSelectInput(
+        session,
         "col.to.remove",
-        choices=names(input.data.Immunoseq()),
+        choices=names(TSV.col.names()),
         selected = c("product_subtype","frame_type","total_dj_reads",
                      "productive_entropy","rearrangement_type",
                      "order_name","release_date",
                      "upload_date","primer_set",
                      "total_outofframe_reads",
-                     "fraction_productive",
+                     "fraction_productive","sample_tags","sku","total_templates",
                      "sequence_result_status","productive_clonality","stop_rearrangements",
-                     "outofframe_rearrangements","total_rearrangements","total_reads",
-                     "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties",
+                     "outofframe_rearrangements","total_rearrangements","total_reads","sample_cell",
+                     "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties","antibody",
                      "sample_clonality", "max_productive_frequency","sample_entropy","sample_simpson_clonality",
                      "max_frequency","productive_simpson_clonality","total_stop_reads","total_productive_reads"
         ))
     }) 
+    
+    
+    TSV.col.names <- reactive({
+      x <- as.data.frame(input.data.Immunoseq())
+      x2 <- x %>%
+        select_if(~ !any(is.na(.)))
+      
+      x2
+    })
     
     
   TSV.file.Immunoseq <- reactive({
@@ -2252,24 +2336,42 @@ server  <- function(input, output, session) {
     
     x2 <- x2 %>% mutate_all(na_if,"")
     
-    x2 <- subset(x2, x2$frame_type=="In")
-    x2
+    if (input$datasource == "ImmunoSEQ") {
+      x2 <- subset(x2, x2$frame_type=="In")
+    }
     
-     x2 <- x2 %>% drop_na(v_gene,j_gene)
+    else {
+      x2 <- x2
+    }
+    
+    
+    x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
 
-    x2 <- data.frame(cloneCount = x2[names(x2) %in% input$countcolumn], x2)
+    x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
     names(x2)[1] <- "cloneCount"
-    x3 <- x2[!names(x2) %in% input$col.to.remove]
+    
+    x3 <- x2
 
-    x3$TRJ <- gsub("^TCR","",x3$j_family)
-    x3$TRV <- gsub("^TCR","",x3$v_family)
-    x3$TRD <- gsub("^TCR","",x3$d_gene)
+    x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
+    x3$TRJ <- gsub("^TCR","",x3$TRJ)
+    
+    x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
+    x3$TRV <- gsub("^TCR","",x3$TRV)
+    
+    
+    x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
+    x3$TRD <- gsub("^TCR","",x3$TRD)
+    
     x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
     x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
     x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
-    x3$TRVDJ <- gsub("NA","-",x3$TRVDJ)
+    x3$TRD <- gsub("NA","-",x3$TRD)
+
+    x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+    x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
     
-    x3$TRVJ_CDR3 <- paste(x3$TRVJ,x3$amino_acid,sep="_")
+    x3 <- x3[!names(x3) %in% input$col.to.remove]
+    
     x3
 
     
