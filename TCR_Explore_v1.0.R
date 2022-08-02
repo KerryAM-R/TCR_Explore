@@ -388,7 +388,7 @@ tabPanel("Convert to TCR_Explore file format",
                                                  Tab = "\t"),
                                      selected = "\t"),
                         
-                        # Input: Select quotes ----
+                        
                         radioButtons("quote", "Quote",
                                      choices = c(None = "",
                                                  "Double Quote" = '"',
@@ -407,6 +407,11 @@ tabPanel("Convert to TCR_Explore file format",
                p("Rows with missing sequences are removed from V and J gene columns"),
                p("If using ImmunoSEQ data, there is an additional filtering step to only keep in-frame sequences"),
                p(" "),
+               tabPanel("Video of conversion process",
+                        uiOutput("video7"),
+               ),
+               
+               
                fluidRow(
                  column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","Other"))),
                         column(3, selectInput("countcolumn","Count column",choices = "")),
@@ -420,7 +425,8 @@ tabPanel("Convert to TCR_Explore file format",
                         ),
                fluidRow(column(12, selectInput("col.to.remove","Columns to remove","",multiple = T, width = "1200px") )),
                div(DT::dataTableOutput("ImmunoSeq.table"))
-             )
+             ),
+             
              
            ),
          ),
@@ -1246,27 +1252,31 @@ server  <- function(input, output, session) {
   
   # video outputs -----
   output$video <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/mMkHpiLt_Hg", width = 1000, height = 666.6666)
+    tags$iframe(src = "https://www.youtube.com/embed/YkKJdqxz0f4", width = 1000, height = 666.6666)
   })
   
   output$video2 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/bxC-OYBTFig",  width = 1000, height = 666.6666)
+    tags$iframe(src = "https://www.youtube.com/embed/fjH06AbMjYE",  width = 1000, height = 666.6666)
   })
   
   output$video3 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/nxq_SX6Rt9o", width = 1000, height = 666.6666)
+    tags$iframe(src = "https://www.youtube.com/embed/d5IOs72kl5A", width = 1000, height = 666.6666)
   })
   
   output$video4 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/Y3HjPZzHnSc",  width = 1000, height = 666.6666)
+    tags$iframe(src = "https://www.youtube.com/embed/wjCGSgmKrZA",  width = 1000, height = 666.6666)
   })
-  
+
   output$video5 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/NY35nCEx_oY",  width = 1000, height = 666.6666)
+    tags$iframe(src = "https://www.youtube.com/embed/1qVL4m8Bf4o",  width = 1000, height = 666.6666)
   })
   
   output$video6 <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/juZrSQDDhQA",  width = 1000, height = 666.6666)
+    tags$iframe(src = "https://www.youtube.com/embed/H_vzlJ3mOrQ",  width = 1000, height = 666.6666)
+  })
+  
+  output$video7 <- renderUI({
+    tags$iframe(src = "https://www.youtube.com/embed/g5xJHdMj4uA",  width = 1000, height = 666.6666)
   })
   
   # .ab1 files for checking heitogenity ----
