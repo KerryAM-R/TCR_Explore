@@ -2502,6 +2502,9 @@ server  <- function(input, output, session) {
     else if (input$datasource == "MiXCR") {
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       names(x2)[1] <- "cloneCount"
+      
+      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
+      
       x3 <- x2
       
       x3$TRV <- str_remove(x3[,names(x3) %in% input$V.GENE.clean], "\\*00")
@@ -2535,8 +2538,12 @@ server  <- function(input, output, session) {
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       names(x2)[1] <- "cloneCount"
       
+      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
+      
       x3 <- x2
       
+      x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
+      x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
       
       x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
       x3$TRJ <- gsub("^TCR","",x3$TRJ)
@@ -2562,7 +2569,7 @@ server  <- function(input, output, session) {
   
   })
 
-  output$ImmunoSeq.table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
+  output$ImmunoSeq.table <- DT::renderDataTable(escape = FALSE, filter = "top", options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
       df <- TSV.file.Immunoseq()
       df <- as.data.frame(df)
       df
@@ -2570,7 +2577,7 @@ server  <- function(input, output, session) {
   
   output$downloadTABLE.Immunoseq <- downloadHandler(
     filename = function(){
-      paste("TCR_Explore.analysis.file",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste("TCR_Explore.analysis.file-",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
       df <- TSV.file.Immunoseq()
