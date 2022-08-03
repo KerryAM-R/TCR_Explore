@@ -412,7 +412,7 @@ tabPanel("Convert to TCR_Explore file format",
                
                
                fluidRow(
-                 column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","Other"))),
+                 column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","MiXCR","Other"))),
                         column(3, selectInput("countcolumn","Count column",choices = "")),
                ),
                
@@ -2256,80 +2256,198 @@ server  <- function(input, output, session) {
         header = T)}
     
   })
-
+ # count column 
     observe({
-      
+      if (input$datasource == "ImmunoSEQ") {
         updateSelectInput(
           session,
           "countcolumn",
           choices=names(TSV.col.names()),
           selected = c("templates"))
-     
+        
+      }
+      else if (input$datasource == "MiXCR") {
+      
+        updateSelectInput(
+          session,
+          "countcolumn",
+          choices=names(TSV.col.names()),
+          selected = c("cloneCount"))
+        
+      }
+      else {
+        updateSelectInput(
+          session,
+          "countcolumn",
+          choices=names(TSV.col.names()),
+          selected = c("count"))
+      }
+      
     }) 
     
+    # J gene
     observe({
       
-      updateSelectInput(
-        session,
-        "J.GENE.clean",
-        choices=names(TSV.col.names()),
-        selected = c("j_gene"))
+      if (input$datasource == "ImmunoSEQ") {
+        updateSelectInput(
+          session,
+          "J.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("j_gene"))
+        
+      }
+      else if (input$datasource == "MiXCR") {
+        
+        updateSelectInput(
+          session,
+          "J.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("bestJHit"))
+        
+      }
       
+      else {
+        updateSelectInput(
+          session,
+          "J.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("j_gene"))
+      }
+
+    })
+    # V gene
+    observe({
+      if (input$datasource == "ImmunoSEQ") {
+        updateSelectInput(
+          session,
+          "V.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("v_gene"))
+        
+      }
+      else if (input$datasource == "MiXCR") {
+        
+        updateSelectInput(
+          session,
+          "V.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("bestVHit"))
+        
+      }
+      
+      else {
+        updateSelectInput(
+          session,
+          "V.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("v_gene"))
+      }
+    })
+    # D gene
+    observe({
+      if (input$datasource == "ImmunoSEQ") {
+        updateSelectInput(
+          session,
+          "D.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("d_gene"))
+        
+      }
+      else if (input$datasource == "MiXCR") {
+        
+        updateSelectInput(
+          session,
+          "D.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("bestDHit"))
+        
+      }
+      
+      else {
+        updateSelectInput(
+          session,
+          "D.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("d_gene"))
+      }
+
     })
     
-    
     observe({
-      
-      updateSelectInput(
-        session,
-        "V.GENE.clean",
-        choices=names(TSV.col.names()),
-        selected = c("v_gene"))
-      
-    })
-    
-    
-    observe({
-      
-      updateSelectInput(
-        session,
-        "D.GENE.clean",
-        choices=names(TSV.col.names()),
-        selected = c("d_gene"))
-      
-    })
-    
-    observe({
-      
+      if (input$datasource == "ImmunoSEQ") {
       updateSelectInput(
         session,
         "CDR3.gene.clean",
         choices=names(TSV.col.names()),
+        
         selected = c("amino_acid"))
+        
+        }
+        else if (input$datasource == "MiXCR") {
+          updateSelectInput(
+            session,
+            "CDR3.gene.clean",
+            choices=names(TSV.col.names()),
+          selected = c("aaSeqCDR3"))
+        }
+      
+      else {
+        updateSelectInput(
+          session,
+          "CDR3.gene.clean",
+          choices=names(TSV.col.names()),
+          selected = c("JUNCTION"))
+      }
+        
       
     })
     
-    
     observe({
+      
+      if (input$datasource == "ImmunoSEQ") {
       
       updateSelectInput(
         session,
         "col.to.remove",
         choices=names(TSV.col.names()),
-        selected = c("product_subtype","frame_type","total_dj_reads",
-                     "productive_entropy","rearrangement_type",
-                     "order_name","release_date",
-                     "upload_date","primer_set",
-                     "total_outofframe_reads",
-                     "fraction_productive","sample_tags","sku","total_templates",
-                     "sequence_result_status","productive_clonality","stop_rearrangements",
-                     "outofframe_rearrangements","total_rearrangements","total_reads","sample_cell",
-                     "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties","antibody",
-                     "sample_clonality", "max_productive_frequency","sample_entropy","sample_simpson_clonality",
-                     "max_frequency","productive_simpson_clonality","total_stop_reads","total_productive_reads"
-        ))
+        
+        
+          selected = c("product_subtype","frame_type","total_dj_reads",
+                       "productive_entropy","rearrangement_type",
+                       "order_name","release_date",
+                       "upload_date","primer_set",
+                       "total_outofframe_reads",
+                       "fraction_productive","sample_tags","sku","total_templates",
+                       "sequence_result_status","productive_clonality","stop_rearrangements",
+                       "outofframe_rearrangements","total_rearrangements","total_reads","sample_cell",
+                       "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties","antibody",
+                       "sample_clonality", "max_productive_frequency","sample_entropy","sample_simpson_clonality",
+                       "max_frequency","productive_simpson_clonality","total_stop_reads","total_productive_reads"
+          ))
+        }
+        
+      
+      else if (input$datasource == "MiXCR") {
+        
+        updateSelectInput(
+          session,
+          "col.to.remove",
+          choices=names(TSV.col.names()),
+          selected = c()
+        )
+        
+      }
+      
+      
+        else {
+          updateSelectInput(
+            session,
+            "col.to.remove",
+            choices=names(TSV.col.names()),
+            selected = c()
+          )
+        }
     }) 
-    
     
     TSV.col.names <- reactive({
       x <- as.data.frame(input.data.Immunoseq())
@@ -2349,44 +2467,99 @@ server  <- function(input, output, session) {
     
     x2 <- x2 %>% mutate_all(na_if,"")
     
+    #ImmunoSEQ 
     if (input$datasource == "ImmunoSEQ") {
       x2 <- subset(x2, x2$frame_type=="In")
+      
+      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
+      
+      x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
+      names(x2)[1] <- "cloneCount"
+      
+      x3 <- x2
+
+      x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
+      x3$TRJ <- gsub("^TCR","",x3$TRJ)
+      
+      x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
+      x3$TRV <- gsub("^TCR","",x3$TRV)
+      
+      x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
+      x3$TRD <- gsub("^TCR","",x3$TRD)
+      
+      x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
+      x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
+      x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
+      x3$TRD <- gsub("NA","-",x3$TRD)
+      
+      x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      
+      x3 <- x3[!names(x3) %in% input$col.to.remove]
     }
     
+    # mixcr 
+    else if (input$datasource == "MiXCR") {
+      x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
+      names(x2)[1] <- "cloneCount"
+      x3 <- x2
+      
+      x3$TRV <- str_remove(x3[,names(x3) %in% input$V.GENE.clean], "\\*00")
+      x3$TRV <- gsub("^TR","",x3$TRV)
+      
+      x3$TRD <- str_remove(x3[,names(x3) %in% input$D.GENE.clean], "\\*00")
+      x3$TRD <- gsub("^TR","",x3$TRD)
+      
+      x3$TRJ <- str_remove(x3[,names(x3) %in% input$J.GENE.clean], "\\*00")
+      x3$TRJ <- gsub("^TR","",x3$TRJ)
+      
+      
+      x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
+      x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
+      
+      x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
+      x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
+      x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
+      x3$TRD <- gsub("NA","-",x3$TRD)
+      x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      
+      x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
+
+    }
+    
+    # other data 
     else {
-      x2 <- x2
+      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
+      
+      x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
+      names(x2)[1] <- "cloneCount"
+      
+      x3 <- x2
+      
+      
+      x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
+      x3$TRJ <- gsub("^TCR","",x3$TRJ)
+      
+      x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
+      x3$TRV <- gsub("^TCR","",x3$TRV)
+      
+      x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
+      x3$TRD <- gsub("^TCR","",x3$TRD)
+      
+      x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
+      x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
+      x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
+      x3$TRD <- gsub("NA","-",x3$TRD)
+      
+      x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      
+      x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
     }
-    
-    
-    x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
 
-    x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
-    names(x2)[1] <- "cloneCount"
-    
-    x3 <- x2
-
-    x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
-    x3$TRJ <- gsub("^TCR","",x3$TRJ)
-    
-    x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
-    x3$TRV <- gsub("^TCR","",x3$TRV)
-    
-    x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
-    x3$TRD <- gsub("^TCR","",x3$TRD)
-    
-    x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
-    x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
-    x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
-    x3$TRD <- gsub("NA","-",x3$TRD)
-
-    x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-    x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-    
-    x3 <- x3[!names(x3) %in% input$col.to.remove]
-    
-    x3
-
-    
+  x3
+  
   })
 
   output$ImmunoSeq.table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
@@ -2397,7 +2570,7 @@ server  <- function(input, output, session) {
   
   output$downloadTABLE.Immunoseq <- downloadHandler(
     filename = function(){
-      paste("cleaned.Immunoseq_file",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste("TCR_Explore.analysis.file",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
       df <- TSV.file.Immunoseq()
