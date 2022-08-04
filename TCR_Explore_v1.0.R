@@ -395,6 +395,8 @@ tabPanel("Convert to TCR_Explore file format",
                                                  "Double Quote" = '"',
                                                  "Single Quote" = "'"),
                                      selected = '"'),
+                        textInput("group.imm","Group ID","Group"),
+                        textInput("indiv.imm","Individual ID","ID"),
 
                         downloadButton('downloadTABLE.Immunoseq','Download filtered table')
                         
@@ -2472,6 +2474,8 @@ server  <- function(input, output, session) {
       x2 <- subset(x2, x2$frame_type=="In")
       
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
+      x2$group <- input$group.imm
+      x2$indiv <- input$indiv.imm
       names(x2)[1] <- "cloneCount"
       
       x3 <- x2
