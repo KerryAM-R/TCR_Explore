@@ -383,20 +383,19 @@ tabPanel("Convert to TCR_Explore file format",
                         fileInput('file_TSV.Immunoseq', 'File to upload',
                                   accept=c('.tsv',".csv",".txt")),
                         
-                        radioButtons("sep", "Separator",
+                        radioButtons("sep.imm", "Separator",
                                      choices = c(Comma = ",",
                                                  Semicolon = ";",
                                                  Tab = "\t"),
                                      selected = "\t"),
                         
                         
-                        radioButtons("quote", "Quote",
+                        radioButtons("quote.imm", "Quote",
                                      choices = c(None = "",
                                                  "Double Quote" = '"',
                                                  "Single Quote" = "'"),
                                      selected = '"'),
-                        
-                        
+
                         downloadButton('downloadTABLE.Immunoseq','Download filtered table')
                         
                         
@@ -408,8 +407,6 @@ tabPanel("Convert to TCR_Explore file format",
                p("Rows with missing sequences are removed from V and J gene columns"),
                p("If using ImmunoSEQ data, there is an additional filtering step to only keep in-frame sequences"),
                p(" "),
-               
-               
                
                fluidRow(
                  column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","MiXCR","Other"))),
@@ -455,7 +452,7 @@ tabPanel("TCR analysis",
                         #textInput(inputId = "lab1", label = "Group label of file 1",value = "Ex.vivo"),
                         tags$head(tags$style(HTML(".shiny-notification {position:fixed;top: 50%;left: 30%;right: 30%;}"))),
                         tags$head(tags$style(HTML('.progress-bar {background-color: purple;}'))),
-                        selectInput("dataset", "Choose a dataset:", choices = c("ab-test-data2", "own_data2")),
+                        selectInput("dataset", "Choose a dataset:", choices = c("ab-test-data2","ImmunoSEQ-test-data", "own_data2")),
                         fileInput('file2', 'Select file for single samples',
                                   accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                         
@@ -2251,11 +2248,21 @@ server  <- function(input, output, session) {
     else {
       dataframe <- read.table(
         inFile_immunoseq$datapath,
-        sep = input$sep,
-        quote = input$quote,
+        sep = input$sep.imm,
+        quote = input$quote.imm,
         header = T)}
     
   })
+    
+    # for the observe event
+    TSV.col.names <- reactive({
+      x <- as.data.frame(input.data.Immunoseq())
+      x2 <- x %>%
+        select_if(~ !any(is.na(.)))
+      
+      x2
+    })
+    
  # count column 
     observe({
       if (input$datasource == "ImmunoSEQ") {
@@ -2284,7 +2291,6 @@ server  <- function(input, output, session) {
       }
       
     }) 
-    
     # J gene
     observe({
       
@@ -2372,7 +2378,7 @@ server  <- function(input, output, session) {
       }
 
     })
-    
+    # amino acid 
     observe({
       if (input$datasource == "ImmunoSEQ") {
       updateSelectInput(
@@ -2415,14 +2421,16 @@ server  <- function(input, output, session) {
           selected = c("product_subtype","frame_type","total_dj_reads",
                        "productive_entropy","rearrangement_type",
                        "order_name","release_date",
-                       "upload_date","primer_set",
-                       "total_outofframe_reads",
+                       "upload_date","primer_set","cdr3_length","frequency",
+                       "total_outofframe_reads","sample_catalog_tags","sample_rich_tags_json",
                        "fraction_productive","sample_tags","sku","total_templates",
                        "sequence_result_status","productive_clonality","stop_rearrangements",
-                       "outofframe_rearrangements","total_rearrangements","total_reads","sample_cell",
+                       "outofframe_rearrangements","total_rearrangements","total_reads","sample_cells","fraction_productive_of_cells_mass_estimate", "sample_cells_mass_estimate","sample_amount_ng",
                        "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties","antibody",
                        "sample_clonality", "max_productive_frequency","sample_entropy","sample_simpson_clonality",
-                       "max_frequency","productive_simpson_clonality","total_stop_reads","total_productive_reads"
+                       "max_frequency","productive_simpson_clonality","total_stop_reads","total_productive_reads",
+                       "v_deletions",	"d5_deletions",	"d3_deletions",	"j_deletions",	"n2_insertions",
+                       "n1_insertions",	"v_index",	"n1_index",	"n2_index",	"d_index",	"j_index",	"v_family_ties",	"d_family_ties",	"d_gene_ties",	"d_allele_ties",	"j_gene_ties"
           ))
         }
         
@@ -2448,19 +2456,9 @@ server  <- function(input, output, session) {
           )
         }
     }) 
-    
-    TSV.col.names <- reactive({
-      x <- as.data.frame(input.data.Immunoseq())
-      x2 <- x %>%
-        select_if(~ !any(is.na(.)))
-      
-      x2
-    })
-    
-    
+
   TSV.file.Immunoseq <- reactive({
     x <- as.data.frame(input.data.Immunoseq())
-    
     
     x2 <- x %>%
       select_if(~ !any(is.na(.)))
@@ -2471,31 +2469,37 @@ server  <- function(input, output, session) {
     if (input$datasource == "ImmunoSEQ") {
       x2 <- subset(x2, x2$frame_type=="In")
       
-      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
-      
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       names(x2)[1] <- "cloneCount"
       
       x3 <- x2
 
-      x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
-      x3$TRJ <- gsub("^TCR","",x3$TRJ)
+      # x3 <- x3[!is.na(x3[names(x3) %in% c("v_gene","j_gene",input$V.GENE.clean,input$J.GENE.clean)]),]
       
       x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
       x3$TRV <- gsub("^TCR","",x3$TRV)
       
+      x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
+      x3$TRJ <- gsub("^TCR","",x3$TRJ)
+
       x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
+      # x3[is.na(x3$TRD)] <- "-"
       x3$TRD <- gsub("^TCR","",x3$TRD)
+      
+      x3 <- x3[!is.na(x3[names(x3) %in% c("TRV")]),]
+      x3 <- x3[!is.na(x3[names(x3) %in% c("TRJ")]),]
       
       x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
       x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
       x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
-      x3$TRD <- gsub("NA","-",x3$TRD)
       
+
       x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
       x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
       
       x3 <- x3[!names(x3) %in% input$col.to.remove]
+      x3[is.na(x3)] <- "Missing"
+
     }
     
     # mixcr 
@@ -2503,9 +2507,9 @@ server  <- function(input, output, session) {
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       names(x2)[1] <- "cloneCount"
       
-      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
-      
       x3 <- x2
+      
+      x3 <- x3[!is.na(x3[names(x2) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
       
       x3$TRV <- str_remove(x3[,names(x3) %in% input$V.GENE.clean], "\\*00")
       x3$TRV <- gsub("^TR","",x3$TRV)
@@ -2538,21 +2542,20 @@ server  <- function(input, output, session) {
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       names(x2)[1] <- "cloneCount"
       
-      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
+     
       
       x3 <- x2
+      
+      x3 <- x3[!is.na(x3[names(x2) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
       
       x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
       x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
       
       x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
-      x3$TRJ <- gsub("^TCR","",x3$TRJ)
       
       x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
-      x3$TRV <- gsub("^TCR","",x3$TRV)
       
       x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
-      x3$TRD <- gsub("^TCR","",x3$TRD)
       
       x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
       x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
@@ -2708,7 +2711,6 @@ server  <- function(input, output, session) {
     
   })
   
-  
   output$chain_table_IMGT.QC3 <- DT::renderDataTable(escape = FALSE, options = list(autoWidth = FALSE, lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
     df1 <- input.data.IMGT_afterQC();
     df1 <- as.data.frame(df1)
@@ -2783,11 +2785,18 @@ server  <- function(input, output, session) {
     })
   
   # file for analytical plots -----
-  input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2(),"own_data2" = own.data2())})
-  test.data2 <- reactive({
+  input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2_TCR.Explore(), "ImmunoSEQ-test-data" = test.data2_ImmunoSEQ(),"own_data2" = own.data2())})
+  test.data2_TCR.Explore <- reactive({
     # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
     dataframe = read.csv("test-data/Group/paired_TCR_file2022.05.24.csv",header=T) 
   })
+  
+  test.data2_ImmunoSEQ <- reactive({
+    # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
+    dataframe = read.csv("test-data/Group/ImmunoSEQ.test.TCR_Explore.analysis.file-2022.08.04.csv",header=T) 
+  })
+  
+  
   own.data2 <- reactive({
     inFile2 <- input$file2 
     if (is.null(inFile2)) return(NULL)
@@ -3024,7 +3033,7 @@ server  <- function(input, output, session) {
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
   
-  # circular plot =====
+  # chord plot =====
   observe({
     updateSelectInput(
       session,
