@@ -2476,6 +2476,7 @@ server  <- function(input, output, session) {
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       x2$group <- input$group.imm
       x2$indiv <- input$indiv.imm
+      x2$group.indiv <- paste(x2$group,x2$indiv,sep=".")
       names(x2)[1] <- "cloneCount"
       
       x3 <- x2
