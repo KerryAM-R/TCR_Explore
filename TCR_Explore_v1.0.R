@@ -510,7 +510,8 @@ tabPanel("TCR analysis",
                           column(2, selectInput("sub_group2",label = h5("Separate panels by"),"" )),
                           # column(3,selectInput( "wrap",label = h5("Group"),"" )),
                           column(2,selectInput( "count2",label = h5("Count column"),"")),
-                          column(2, selectInput("tree.lab",label = h5 ("Add label"),choices = c("yes","no")))
+                          column(2, selectInput("tree.lab",label = h5 ("Add label"),choices = c("yes","no"))),
+                          column(2, colourInput("Treemap.text.colour","Text colour",value = "black"))
                           
                         ),
                         fluidRow(column(3,
@@ -2936,7 +2937,7 @@ server  <- function(input, output, session) {
         geom_treemap(colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
-                                   colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
+                                   colour = input$Treemap.text.colour, fontface = "italic", min.size = 0,show.legend = F) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
         theme(strip.text = element_text(size = input$panel.text.size.tree, family = input$font_type))+
         theme(strip.background =element_rect(fill=input$strip.colour.tree))+
@@ -2961,7 +2962,7 @@ server  <- function(input, output, session) {
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))+
+        theme(strip.text = element_text(size = input$panel.text.size.tree, family = input$font_type))+
         theme(strip.background =element_rect(fill=input$strip.colour.tree))+
         theme(strip.text = element_text(colour = input$strip.text.colour.tree))
       vals22$Treemap22
@@ -2983,7 +2984,7 @@ server  <- function(input, output, session) {
         geom_treemap_subgroup_text(place = "centre", grow = T, alpha = 1, family = input$font_type,
                                    colour = "black", fontface = "italic", min.size = 0,show.legend = F) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))+
+        theme(strip.text = element_text(size = input$panel.text.size.tree, family = input$font_type))+
         theme(strip.background =element_rect(fill=input$strip.colour.tree))+
         theme(strip.text = element_text(colour = input$strip.text.colour.tree))
       vals22$Treemap22
@@ -3002,7 +3003,7 @@ server  <- function(input, output, session) {
         geom_treemap(aes(alpha = 1),colour="white",show.legend = F, fill = df3$tree_palette) +
         geom_treemap_subgroup_border(colour = "white", show.legend = F,size=12) +
         facet_wrap(~df3$ID.names,nrow = input$nrow.tree) +
-        theme(strip.text = element_text(size = 20, family = input$font_type))+
+        theme(strip.text = element_text(size = input$panel.text.size.tree, family = input$font_type))+
         theme(strip.background =element_rect(fill=input$strip.colour.tree))+
         theme(strip.text = element_text(colour = input$strip.text.colour.tree))
       vals22$Treemap22
