@@ -30,8 +30,6 @@ library("shinyWidgets")
 library("showtext")
 library("ggseqlogo")
 library("sangerseqR")
-# library(shinydashboard)
-# library(shinymanager)
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -1257,7 +1255,7 @@ server  <- function(input, output, session) {
   
   # video outputs -----
   output$video <- renderUI({
-    tags$iframe(src = "https://www.youtube.com/embed/YkKJdqxz0f4", width = 1000, height = 666.6666)
+    tags$iframe(src = "https://www.youtube.com/embed/IGNzlz3hQAc", width = 1000, height = 666.6666)
   })
   
   output$video2 <- renderUI({
