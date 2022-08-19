@@ -3,15 +3,14 @@
 ## Paired Sanger sequencing QC process
 
 Step 1. Convert the .seq to .fasta files (QC -> SEQ to FASTA file merger)
-- add in the required file naming conversion e.g. Individual.groupChain-initialwell
-- 
+- Add in the required file naming conversion *e.g.* Individual.groupChain-initialwell
 - If more identifiers are required for your analysis, they can be added in later. 
 
-Step 2. Upload the .fasta file to [IMGT Vquest](https://www.imgt.org/IMGT_vquest/input)
+Step 2. Upload the .fasta file to [IMGT/Vquest](https://www.imgt.org/IMGT_vquest/input)
 - select the species (e.g. Homo Sapiens) and receptor type or locus (e.g. TR)
 - Upload .fasta file to chose file
-- go to C. Excel file -> unchecked all -> check 1. (summary) and 6. (Junction)
-  + If you download all 12 tab, move the Junction tab to position 2
+- C. Excel file -> unchecked all -> Check 1. (Summary) and 6. (Junction)
+  + Alternatively you download all 12 tab, move the Junction tab to position 2
 - Download vquest.xls file by selecting the start button
 - Repeat this process for every .fasta file
 
@@ -23,17 +22,18 @@ Step 3. Downloading TCR_Explore QC file
 ***NOTE:*** *If steps 1 and 2 were completed prior to this process and the Junction sheet is missing, the following process can be completed with __'Summary'__ sheet only. However, without this sheet, one cannot download the TCRdist3 file in the 'TCR analysis -> overview of TCR pairing -> summary table', as the JUNCTION nucleotide sequences will be missing.* 
 
 Step 4. Fill in the QC file
-- Copy all sequences into the one .csv file, if more than one plate is present add a number infront of the intial well
+- Copy all sequences into the one .csv file, if more than one plate is present add a number in front of the initial well
 - The program adds three columns to the end of the file
   - 'V.sequencing.quality.check' 
-    - Will list the following issues: No alignment, Unproductive issue, V identity issue, J identity issue or No issue flagged by IMGT
+    + Will list the following issues: No alignment, Unproductive issue, V identity issue, J identity issue or No issue flagged by IMGT
   - 'clone_quality'
-    - If V.sequencing.quality.check reported 'No issue flagged by IMGT' the program pre-fills in as a pass, as the test-data highlighted all 151 sequences had high quality chromatograms
-    - The remaining rows in will be filled in as `NA`
-    - The `NA` will need to be filled in based on the chromatogram quality which can be check in QC -> Check .ab1 files
+    + If V.sequencing.quality.check reported 'No issue flagged by IMGT' the program pre-fills in as a pass, as the test-data highlighted all 151 sequences had high quality chromatograms
+    - The remaining rows in will be filled in as `NA`. These `NA` will need to be replaced with either **'pass'** or **'fail'** in based on the chromatogram quality 
+    + Can be viewed in QC -> Check .ab1 files.
+    + Alternatively, the .ab1 can viewed in programs including FinchTV (Mac) or Chromas (Windows)
     - We recommend checking the quality of the chromatogram from the pre-filled in 'pass' sequences
   - 'comments'
-    - Fill in based on `NA` e.g. High quality sequence (pass), two sequence (fail), cannot resolve frameshift/stop sequence (fail), messy sequences (fail)
+    + Fill in based on `NA` *e.g.* High quality sequence (pass), two sequence (fail), cannot resolve frameshift/stop sequence (fail), messy sequences (fail)
 
 
 Step 5. Creating the file needed for paired TCR_Explore
@@ -54,7 +54,7 @@ Step 5. Creating the file needed for paired TCR_Explore
 
 Step 5. Downloading filtered file
 - Upload the filled in IMGT_onlyQC.csv to QC -> IMGT (Sanger sequencing) -> tab 2. Paired chain file -> Completed QC file (.csv) 
-- Go to the Tab 4. Single chain file, which does not require specifyign if the data was alpha-beta or gamma-delta
+- Go to the Tab 4. Single chain file, which does not require specifying if the data was alpha-beta or gamma-delta
 - Download single chain file
 
 #### Non-Sanger sequencing data
@@ -68,5 +68,5 @@ Step 5. Downloading filtered file
 - A video explain this process is in available. 
 
 - For the ImmunoSEQ processed data, TCR_Explore will remove rows with missing information (e.g. NA in both V and J genes)
-***NOTE:*** *For other sources, the user will have to manually remove non-functional sequence. Contact* __kerry.mullan@monash.edu__ *if you have a specific filtering requirement.*
+***NOTE:*** *For other sources, the user will have to manually remove non-functional sequence. Contact* ***Kerry.mullan@monash.edu*** *if you have a specific filtering requirement.*
 
