@@ -269,7 +269,7 @@ navbarMenu("QC",
                                    ),
                                    
                                    conditionalPanel(condition="input.QC_panel==3",
-                                                    textInput("tcr_lab","ID for TCRdist","human_tcr"),
+                                                    # textInput("tcr_lab","ID for TCRdist","human_tcr"),
                                                     downloadButton('downloadTABLE.TSV','Download tsv file for TCRdist')
                                    ), 
                                    conditionalPanel(condition = "input.QC_panel==4",
@@ -297,14 +297,17 @@ navbarMenu("QC",
                                              
                                              div(DT::dataTableOutput("chain_table_IMGT.QC1"))
                                     ),
+                                    
+                                    tabPanel("Single chain file", value = 4,
+                                             div(DT::dataTableOutput("single.chain_table_IMGT.QC1"))
+                                    ),
+                                    
                                     tabPanel("TCRdist output file",value = 3,
                                              tags$head(tags$style("#chain_table_IMGT.tcrdist  {white-space: nowrap;  }")),
                                              div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
                                              
                                     ),
-                                    tabPanel("Single chain file", value = 4,
-                                    div(DT::dataTableOutput("single.chain_table_IMGT.QC1"))
-                                    ),
+
                                     
                         )
                       )
