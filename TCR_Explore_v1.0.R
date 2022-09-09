@@ -30,6 +30,7 @@ library("shinyWidgets")
 library("showtext")
 library("ggseqlogo")
 library("sangerseqR")
+require("scales")
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -89,6 +90,23 @@ credentials <- data.frame(
   password = c("azerty", "12345"),
   stringsAsFactors = FALSE
 )
+
+# 95% confidence interval
+quantiles_95 <- function(x) {
+  r <- quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95))
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+middle <- function(x) { r <- quantile(x, probs=c(0.25, 0.25, 0.5, 0.75, 0.75))
+names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+r
+}
+
+o <- function(x) {
+  subset(x, x < quantiles_95(x)[1] | quantiles_95(x)[5] < x)
+}
+
 
 graph_type <- c("histogram","density")
 axis_density_group <- c("x-axis","y-axis")
@@ -564,10 +582,12 @@ tabPanel("TCR analysis",
                             column(2, colourInput("colour.chord.line","Line colour","black")),
                             column(2, sliderInput("line.chord.type","Line type (0 = no line)",min=0,max=6,value=1)),
                             column(2,numericInput("thickness.chord.line","Thickness of line", value = 2)),
-                            column(2, sliderInput("unselected.chord.transparacy","Transparancy unselected",min=0,max=1,value=0.75,step = 0.05)),
-                            column(2, sliderInput("selected.chord.transparacy","Transparancy selected",min=0,max=1,value=0,step = 0.05)),
+                            column(2, sliderInput("unselected.chord.transparacy","Transparancy unselected",min=0,max=1,value=0.1,step = 0.05)),
+                            column(2, sliderInput("selected.chord.transparacy","Transparancy selected",min=0,max=1,value=1,step = 0.05)),
                           ),
                         ),
+                        
+                        # plotOutput("colour.trans.test"),
                         fluidRow(column(3,
                                         wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 600px",
                                                   uiOutput('myPanel_circ'))),
@@ -917,6 +937,7 @@ tabPanel("TCR analysis",
                                  fluidRow(
                                    
                                    column(3,selectInput("index.type",label = h5("Type of inverse SDI"), choices =  c("Inverse SDI","Sample size corrected Inverse SDI"))),
+                                  
                                    
                                    column(3,selectInput("inv.simp_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
                                    
@@ -931,6 +952,12 @@ tabPanel("TCR analysis",
                                                         choices = simp.index.names,
                                                         selected = "total # clones"
                                    ))),
+                                 fluidRow(
+                                   column(3,selectInput("IQR_95","Select type of error bars",choices = c("IQR","95% CI"))),
+                                   conditionalPanel(
+                                     condition = "IQR_95 == '95% CI'",
+                                   column(3,selectInput("show_all_dots","Type of 95%CI", choices= c("Show outliers only","Colour all dots"))))
+                                 ),
                                  fluidRow(
                                    
                                    
@@ -1525,8 +1552,9 @@ server  <- function(input, output, session) {
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
       df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
                                                    ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
-                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
-                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
+                                                          ifelse(as.numeric(df_chain1$`V-REGION identity %`<=90),"V Identity issue",
+                                                                 ifelse(as.numeric(df_chain1$`J-REGION identity %`)<=90,"J Identity issue","No issue flagged by IMGT"))))
+      
       df_chain1$clone_quality <- ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT","pass",NA)
       
       df_chain1$comments <- NA
@@ -2682,7 +2710,6 @@ server  <- function(input, output, session) {
     
   })
   
-  
   chain_table_summary.TCRdist3.gd <- reactive({
     df <- input.data2()
     validate(
@@ -2819,7 +2846,7 @@ server  <- function(input, output, session) {
     
   })
   
-  # Tree map ------
+  # Treemap ------
   
   
   observe({
@@ -3214,13 +3241,79 @@ server  <- function(input, output, session) {
     df.col.2 <- rbind(df.col1,df.col.j)
     length(t(df.col.2))
     col2 <- unlist(colors_cir())
-    df.col.2$colour <- col2
-    grid.col <- as.data.frame(as.matrix(t(as.data.frame(df.col.2$colour))))
-    names(grid.col) <- df.col.2$V1
-    grid.col <- as.data.frame(grid.col)
-    grid.col
+    
+    if (input$circ_lab =="colour selected clone/s (label)"|input$circ_lab =="colour selected clone/s (no label)") {
+      my_col_alpha_all <- col2
+      
+      for(i in 1:length(col2)) {
+        my_col_alpha_all[i] <- ifelse(df.col.2[i,1] %in% c(input$string.data.circ.order),
+                                      adjustcolor(col2[i], alpha.f =input$selected.chord.transparacy),
+                                      adjustcolor(col2[i], alpha.f =input$unselected.chord.transparacy))
+      }
+      
+      df.col.2$colour <- my_col_alpha_all
+      grid.col <- as.data.frame(as.matrix(t(as.data.frame(df.col.2$colour))))
+      names(grid.col) <- df.col.2$V1
+      grid.col <- as.data.frame(grid.col)
+      grid.col
+      
+    }
+    
+    else {
+      df.col.2$colour <- col2
+      grid.col <- as.data.frame(as.matrix(t(as.data.frame(df.col.2$colour))))
+      names(grid.col) <- df.col.2$V1
+      grid.col <- as.data.frame(grid.col)
+      grid.col
+      
+    }
+    
+
     
   })
+  
+  
+  output$colour.trans.test <- renderPlot({
+    
+    dat <- input.data2();
+    validate(
+      need(nrow(dat)>0,
+           error_message_val1)
+    )
+    hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    df.col1 <- as.data.frame(unique(hierarchy[,1]))
+    names(df.col1) <- "V1"
+    df.col.j <- as.data.frame(unique(hierarchy[,2]))
+    names(df.col.j) <- "V1"
+    df.col.2 <- rbind(df.col1,df.col.j)
+    length(t(df.col.2))
+    col2 <- unlist(colors_cir())
+    
+    if (input$circ_lab =="colour selected clone/s (label)" |input$circ_lab =="colour selected clone/s (no label)" ) {
+      my_col_alpha_all <- col2
+
+      for(i in 1:length(col2)) {
+        my_col_alpha_all[i] <- ifelse(df.col.2[i,1] %in% c(input$string.data.circ.order),
+                                      adjustcolor(col2[i], alpha.f =input$selected.chord.transparacy),
+                                      adjustcolor(col2[i], alpha.f =input$unselected.chord.transparacy))
+      }
+
+
+      show_col(my_col_alpha_all)
+
+    }
+
+    else {
+    show_col(col2)
+    }
+  })
+    
+   
+    
+  
+  
+  
   output$out.col.table1 <- renderTable({
     dat <- input.data2();
     validate(
@@ -3260,6 +3353,7 @@ server  <- function(input, output, session) {
     
     
   })
+  
   Circular_plot2 <- function () {
     
     dat <- input.data2();
@@ -3277,8 +3371,6 @@ server  <- function(input, output, session) {
     
     chain2 <- as.data.frame(ddply(hierarchy,names(hierarchy)[-c(1,3)],numcolwise(sum)))
     chain2 <- chain2[order(chain2$cloneCount, decreasing = T),]
-    
-    
     
     df.col1 <- as.data.frame(chain1[,1])
     names(df.col1) <- "V1"
@@ -3324,6 +3416,7 @@ server  <- function(input, output, session) {
     }
     # 'colour selected clone/s (label)' || 'colour selected clone/s (no label)''
     else if (input$circ_lab =="colour selected clone/s (label)") {
+      lwd_mat = hierarchy
       
       # line thickness
       lwd_mat = hierarchy
@@ -3331,9 +3424,9 @@ server  <- function(input, output, session) {
       lwd_mat[rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- input$thickness.chord.line
       lwd_mat[!rownames(lwd_mat) %in% input$string.data.circ.order & lwd_mat=="x"] <- 0
       lwd_mat[lwd_mat==0] <- 1
-
-
-      # # boarder colour
+      
+      
+      # boarder colour
       border_mat <- hierarchy
       border_mat[border_mat>0] <- 1
       border_mat[rownames(border_mat) %in% input$string.data.circ.order & border_mat==1] <- input$colour.chord.line
@@ -3341,16 +3434,19 @@ server  <- function(input, output, session) {
       border_mat[border_mat==0] <- NA
       border_mat
       
-      # line type
+      # line type 
       lty_mat = hierarchy
       lty_mat[lty_mat>0] <- input$line.chord.type
       
-      # transparancy
+      # transparancy 
       alpha_mat <- hierarchy
       alpha_mat[alpha_mat>0] <- 1
       alpha_mat[rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$selected.chord.transparacy
       alpha_mat[!rownames(alpha_mat) %in% input$string.data.circ.order & alpha_mat==1] <- input$unselected.chord.transparacy
       alpha_mat
+
+      
+      
       
       circos.clear()
       #par(new = TRUE) # <- magic
@@ -3360,7 +3456,7 @@ server  <- function(input, output, session) {
                    link.lty = lty_mat,
                    link.lwd = lwd_mat,
                    link.border = border_mat,
-                   transparency = alpha_mat,
+                   # transparency = alpha_mat,
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       # we go back to the first track and customize sector labels
       circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -3415,7 +3511,7 @@ server  <- function(input, output, session) {
                    link.lty = lty_mat,
                    link.lwd = lwd_mat,
                    link.border = border_mat,
-                   transparency = alpha_mat,
+                   # transparency = alpha_mat,
                    preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
       # we go back to the first track and customize sector labels
       circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -5583,8 +5679,6 @@ server  <- function(input, output, session) {
   group.diversity1 <- function() {
     both <- inv.simpson.index()
     
-    
-    
     both <- as.data.frame(both)
     
     cols <- unlist(colors_inv.simp())
@@ -5600,31 +5694,88 @@ server  <- function(input, output, session) {
     
     if (input$index.type == "Sample size corrected Inverse SDI") {
       
+      if (input$IQR_95=="95% CI" ) {
+      
       vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index_div_unique.samp))+
-        geom_boxplot(show.legend = F)+
-        geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
-                     dotsize = 1,
-                     sshow.legend = T,
-                     stackdir = "center", binpositions="all", stackgroups=TRUE
-        ) +
-        theme_classic() +
-        scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
-        theme(text=element_text(size=20,family=input$font_type),
-              axis.title = element_text(colour="black", size=20,family=input$font_type),
-              axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              legend.title  =element_blank(),
-              legend.position = input$legend.placement.simp,
-              legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
-        guides(fill=guide_legend(ncol=input$col.num.simp)) +
-        xlab("")+
-        ylab("Inverse SDI (corrected)")
+        stat_summary(fun.data = quantiles_95, geom = "errorbar", position = position_dodge(1)) +       
+        stat_summary(fun.data = middle, geom = "boxplot", position = position_dodge(1))  
+        
+        if (input$show_all_dots=="Colour all dots") {
+          vals11$Simp1 +
+            theme_classic() +
+            geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
+                         dotsize = 1,
+                         show.legend = T,
+                         stackdir = "center", binpositions="all", stackgroups=TRUE
+            ) +
+            scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+            theme(text=element_text(size=20,family=input$font_type),
+                  axis.title = element_text(colour="black", size=20,family=input$font_type),
+                  axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                  axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+                  axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                  axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                  legend.title  =element_blank(),
+                  legend.position = input$legend.placement.simp,
+                  legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+            guides(fill=guide_legend(ncol=input$col.num.simp)) +
+            xlab("")+
+            ylab("Inverse SDI (corrected)")
+          
+        }
+        
       
-      vals11$Simp1
       
+      else {
+        vals11$Simp1 +
+          
+          stat_summary(fun.y = o, geom="point", position = position_dodge(1), shape = 1) +
+          theme_classic() +
+          scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+          theme(text=element_text(size=20,family=input$font_type),
+                axis.title = element_text(colour="black", size=20,family=input$font_type),
+                axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                legend.title  =element_blank(),
+                legend.position = input$legend.placement.simp,
+                legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+          guides(fill=guide_legend(ncol=input$col.num.simp)) +
+          xlab("")+
+          ylab("Inverse SDI (corrected)")
+      }
+
+
+      }
       
+      else {
+        
+        vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index_div_unique.samp))+
+          geom_boxplot(show.legend = F)+
+          geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
+                       dotsize = 1,
+                       show.legend = T,
+                       stackdir = "center", binpositions="all", stackgroups=TRUE
+          ) +
+          theme_classic() +
+          scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+          theme(text=element_text(size=20,family=input$font_type),
+                axis.title = element_text(colour="black", size=20,family=input$font_type),
+                axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+                legend.title  =element_blank(),
+                legend.position = input$legend.placement.simp,
+                legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+          guides(fill=guide_legend(ncol=input$col.num.simp)) +
+          xlab("")+
+          ylab("Inverse SDI (corrected)")
+        
+        vals11$Simp1
+        
+      }
       
     }
     
@@ -5714,8 +5865,6 @@ server  <- function(input, output, session) {
         
         vals12$Simp2
       }}
-    
-    
     else {
       if (input$scale_x_continuous_x=="scientific") {
         vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
@@ -5863,8 +6012,7 @@ server  <- function(input, output, session) {
     if (is.null(vals)){return(NULL)}
     vals$conf.int
   })
-  
-  
+
   output$downloadTABLE_simpson.inv <- downloadHandler(
     filename = function(){
       paste("inv.simpson.index",gsub("-", ".", Sys.Date()),".csv", sep = "")
