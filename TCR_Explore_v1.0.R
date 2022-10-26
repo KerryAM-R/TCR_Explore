@@ -430,7 +430,7 @@ tabPanel("Convert to TCR_Explore file format",
                p(" "),
                
                fluidRow(
-                 column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","MiXCR","Other"))),
+                 column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","MiXCR","10x_scSeq","Other"))),
                         column(3, selectInput("countcolumn","Count column",choices = "")),
                ),
                
@@ -439,6 +439,13 @@ tabPanel("Convert to TCR_Explore file format",
                         column(3, selectInput("D.GENE.clean","Diversity gene column",choices = "")),
                         column(3, selectInput("J.GENE.clean","Junction gene column",choices = "")),
                         column(3, selectInput("CDR3.gene.clean","CDR3 amino acid column",choices = "")),
+                        
+                        conditionalPanel(condition = "input.datasource == '10x_scSeq'",
+                                         column(3,selectInput("V.GENE.clean2","Variable gene column (2)",choices = "")),
+                                         column(3,selectInput("J.GENE.clean2","Junction gene column (2)",choices = "")),
+                                         column(3, selectInput("CDR3.gene.clean2","CDR3 amino acid column",choices = ""))
+                                         )
+                        
                         ),
                fluidRow(column(12, selectInput("col.to.remove","Columns to remove","",multiple = T, width = "1200px") )),
                div(DT::dataTableOutput("ImmunoSeq.table"))
@@ -1551,9 +1558,10 @@ server  <- function(input, output, session) {
       
       df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
       df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
+                                                   ifelse(df_chain1$`V-DOMAIN Functionality`== "rearranged sequence (but no junction found","no junction found",
                                                    ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
                                                           ifelse(as.numeric(df_chain1$`V-REGION identity %`<=90),"V Identity issue",
-                                                                 ifelse(as.numeric(df_chain1$`J-REGION identity %`)<=90,"J Identity issue","No issue flagged by IMGT"))))
+                                                                 ifelse(as.numeric(df_chain1$`J-REGION identity %`)<=90,"J Identity issue","No issue flagged by IMGT")))))
       
       df_chain1$clone_quality <- ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT","pass",NA)
       
@@ -2316,6 +2324,18 @@ server  <- function(input, output, session) {
           selected = c("cloneCount"))
         
       }
+      
+      else if (input$datasource == "10x_scSeq") {
+        
+        updateSelectInput(
+          session,
+          "countcolumn",
+          choices=names(TSV.col.names()),
+          selected = c("number_clonotypes"))
+        
+      }  
+      
+      
       else {
         updateSelectInput(
           session,
@@ -2346,6 +2366,17 @@ server  <- function(input, output, session) {
         
       }
       
+      else if (input$datasource == "10x_scSeq") {
+        
+        updateSelectInput(
+          session,
+          "J.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("j_gene_B"))
+        
+      }  
+      
+      
       else {
         updateSelectInput(
           session,
@@ -2375,6 +2406,17 @@ server  <- function(input, output, session) {
         
       }
       
+      else if (input$datasource == "10x_scSeq") {
+        
+        updateSelectInput(
+          session,
+          "V.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("v_gene_B"))
+        
+      }
+      
+      
       else {
         updateSelectInput(
           session,
@@ -2400,6 +2442,16 @@ server  <- function(input, output, session) {
           "D.GENE.clean",
           choices=names(TSV.col.names()),
           selected = c("bestDHit"))
+        
+      }
+      
+      else if (input$datasource == "10x_scSeq") {
+        
+        updateSelectInput(
+          session,
+          "D.GENE.clean",
+          choices=names(TSV.col.names()),
+          selected = c("d_gene_B"))
         
       }
       
@@ -2430,6 +2482,15 @@ server  <- function(input, output, session) {
             choices=names(TSV.col.names()),
           selected = c("aaSeqCDR3"))
         }
+      
+      
+      else if (input$datasource == "10x_scSeq") {
+        updateSelectInput(
+          session,
+          "CDR3.gene.clean",
+          choices=names(TSV.col.names()),
+          selected = c("cdr3_amino_acid_B"))
+      }
       
       else {
         updateSelectInput(
@@ -2467,9 +2528,8 @@ server  <- function(input, output, session) {
                        "n1_insertions",	"v_index",	"n1_index",	"n2_index",	"d_index",	"j_index",	"v_family_ties",	"d_family_ties",	"d_gene_ties",	"d_allele_ties",	"j_gene_ties"
           ))
         }
-        
-      
-      else if (input$datasource == "MiXCR") {
+
+      else {
         
         updateSelectInput(
           session,
@@ -2480,16 +2540,42 @@ server  <- function(input, output, session) {
         
       }
       
+    })
+    
+    
+    observe({
       
-        else {
-          updateSelectInput(
-            session,
-            "col.to.remove",
-            choices=names(TSV.col.names()),
-            selected = c()
-          )
-        }
-    }) 
+      updateSelectInput(
+        session,
+        "V.GENE.clean2",
+        choices=names(TSV.col.names()),
+        selected = c("v_gene_A")
+      )
+      
+    })
+    
+    observe({
+      
+      updateSelectInput(
+        session,
+        "J.GENE.clean2",
+        choices=names(TSV.col.names()),
+        selected = c("j_gene_A")
+      )
+      
+    })
+    
+    
+    observe({
+      
+      updateSelectInput(
+        session,
+        "CDR3.gene.clean2",
+        choices=names(TSV.col.names()),
+        selected = c("cdr3_amino_acid_A")
+      )
+      
+    })
 
   TSV.file.Immunoseq <- reactive({
     x <- as.data.frame(input.data.Immunoseq())
@@ -2570,6 +2656,78 @@ server  <- function(input, output, session) {
       
       x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
 
+    }
+    # paired 10x scSeq
+    
+    else if (input$datasource == "10x_scSeq") {
+      x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
+      names(x2)[1] <- "cloneCount"
+      
+      for (i in 1:dim(x2)[2]) {
+        x2[,i]   <- gsub(";",",",x2[,i])
+      }
+      
+      x2$group <- input$group.imm
+      x2$indiv <- input$indiv.imm
+      x2$group.indiv <- paste(x2$group,x2$indiv,sep=".")
+      names(x2)[1] <- "cloneCount"
+      
+      x3 <- x2
+      
+      df_name <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean2]), ",")))
+      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean2]), ",")))
+      
+      x3$AV <- df_name[,1]
+      x3$AJ <- df_name2[,1]
+      x3$AJ <- gsub("[*]0.","",x3$AJ)
+      x3$AJ <- gsub(",, AJ..","",x3$AJ)
+      x3$AJ <- gsub(",, AJ.","",x3$AJ)
+      
+      x3$AVJ <- paste(x3$AV,".",x3$AJ,sep="")
+      x3$AV <- gsub("[*]0.","",x3$AV)
+      x3$AVJ <- gsub("[*]0.","",x3$AVJ)
+      
+      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean]), ",")))
+      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean]), ",")))
+      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$D.GENE.clean]), ",")))
+      
+      x3$BV <- df_name3[,1]
+      x3$BJ <- df_name4[,1]
+      x3$BD <- df_name5[,1]
+      
+      
+      x3$BVJ <- paste(x3$BV,".",x3$BJ,sep="")
+      x3$BVDJ <- paste(x3$BV,".",x3$BD,".",x3$BJ,sep="")
+      
+      x3$BV <- gsub("[*]0.","",x3$BV)
+      x3$BJ <- gsub("[*]0.","",x3$BJ)
+      x3$BD <- gsub("[*]0.","",x3$BD)
+      x3$BD <- gsub(" ","",x3$BD)
+      x3$BVJ <- gsub("[*]0.","",x3$BVJ)
+      x3$BVDJ <- gsub("[*]0.","",x3$BVDJ)
+      x3$BVDJ <- gsub(".NA.",".",x3$BVDJ)
+      
+      x3$AJ <- gsub("TR","",x3$AJ)
+      x3$AVJ <- gsub("TR","",x3$AVJ)
+      x3$AVJ <- gsub("AJ","J",x3$AVJ)
+      x3$AVJ.BVJ <- paste(x3$AVJ,"_",x3$BVJ,sep="")
+      x3$AVJ.BVDJ <- paste(x3$AVJ,"_",x3$BVDJ,sep="")
+  
+      x3$AVJ_aCDR3 <- paste(x3$AVJ,x3[,names(x3) %in% input$CDR3.gene.clean2],sep="_")
+      x3$BVJ_bCDR3 <- paste(x3$BVJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      x3$BVDJ_bCDR3 <- paste(x3$BVDJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      
+      x3$AVJ_aCDR3_BVJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVJ_bCDR3,sep=" & ")
+      x3$AVJ_aCDR3_BVDJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVDJ_bCDR3,sep=" & ")
+      x3$BD <- gsub("NA","-",x3$BD)
+      
+      x3 <- x3[!names(x3) %in% input$col.to.remove]
+      x3[is.na(x3)] <- "Missing"
+      
+      x3 <- subset(x3, !x3$AJ=="Missing")
+      x3 <- subset(x3, !x3$BJ=="Missing")
+      x3[is.na(x3)] <- " "
+      
     }
     
     # other data 
