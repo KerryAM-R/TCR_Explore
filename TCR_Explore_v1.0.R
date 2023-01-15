@@ -14,7 +14,7 @@ require("dplyr")
 require("reshape2")
 require("treemapify") # tremap plot
 require("circlize")
-require("motifStack")
+require("motifStack") # pcm2pfm function
 require("scales") # to access break formatting functions
 require("flowCore")
 require("readxl")
@@ -28,9 +28,15 @@ require("vegan") # diversity statistic
 require("VLF") ## aa.count.function
 library("shinyWidgets")
 library("showtext")
-library("ggseqlogo")
+library("ggseqlogo") # motif plot
 library("sangerseqR")
 require("scales")
+
+require("umap")
+require("fpc")
+require("fossil")
+
+library(shinybusy)
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -47,8 +53,7 @@ credentials <- data.frame(
 font <- as.data.frame(font_families())
 font
 names(font) <- "Fonts"
-test_fun <- function()
-{
+test_fun <- function() {
   for (i in 1:15) {
     incProgress(1/15)
     sum(runif(1000000,0,1))
@@ -58,6 +63,7 @@ test_fun <- function()
 index <- c("shannon", "simpson","invsimpson")
 ASN$cols <- colorset(alphabet="AA",
                      colorScheme="chemistry")
+
 draw_colnames_rotate <- function (coln, gaps, ...) {
   coord = pheatmap:::find_coordinates(length(coln), gaps)
   x = coord$coord - 0.5 * coord$size
@@ -97,16 +103,13 @@ quantiles_95 <- function(x) {
   names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
   r
 }
-
 middle <- function(x) { r <- quantile(x, probs=c(0.25, 0.25, 0.5, 0.75, 0.75))
 names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
 r
 }
-
 o <- function(x) {
   subset(x, x < quantiles_95(x)[1] | quantiles_95(x)[5] < x)
 }
-
 
 graph_type <- c("histogram","density")
 axis_density_group <- c("x-axis","y-axis")
@@ -137,7 +140,7 @@ tags$head(
                             padding-bottom:30px !important;
                             height: 20px;
                             }'))),
-
+# tutorials -----
 tabPanel("Tutorials",
          navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                       tabPanel("Overview",
@@ -259,7 +262,54 @@ navbarMenu("QC",
                     )
                     
                     
-           ),    
+           ),
+# automating the .ab1 QC procecss -----
+tabPanel("Automated .ab1 QC", 
+         fluidPage(
+           sidebarPanel(
+            
+                              fileInput("file1_ab1.file",
+                                        "Choose .ab1 files from directory",
+                                        multiple = TRUE,
+                                        accept=c('.ab1')),
+                              actionButton("go_ab1","Upload or update file"),
+                              fluidRow(
+                                column(4,selectInput("indiv_miss_ab1","Add Indiv label", choices = c("No","Yes"))),
+                                column(8,selectInput("group_miss_ab1","Add GroupChain-MultipleWells label", choices = c("No","Yes"))),
+                                
+                              ),
+                              
+                              
+                              fluidRow(column(4,
+                                              conditionalPanel(
+                                                condition = "input.indiv_miss_ab1 == 'Yes'",
+                                                textInput("indiv.miss.name_ab1","Individual ID","Other"),
+                                                
+                                              )),
+                                       column(8,
+                                              conditionalPanel(
+                                                condition = "input.group_miss_ab1 == 'Yes'",
+                                                textInput("group.miss.name_ab1","Group ID","LabA-1"),
+                                                
+                                              ),
+                                              
+                                       )
+                              ),
+                              textInput("ab1.name","name of file","test-data"),
+                              downloadButton('downloadData_ab1_QC_file','Download single chain file')
+            
+           ),
+         
+           mainPanel(
+             add_busy_spinner(spin = "fading-circle"),
+           tableOutput('contents_ab1')
+           
+           ),
+ 
+  
+         )
+  
+),
 # UI IMGT only ----
            tabPanel("IMGT (Sanger Sequencing)",
                     sidebarLayout(
@@ -268,9 +318,19 @@ navbarMenu("QC",
                                                     selectInput("dataset_IMGT3", "Choose a dataset:", choices = c("ab-test-data1", "own_data")),
                                                     fileInput('file_IMGT3', 'Select file for IMGT datafile',
                                                               accept=c('xls/xlsx', '.xls')),
-                                                    downloadButton('downloadTABLE_IMGTonly','Download table')
+                                                    
+                                                    fileInput('file_ab1_QC', 'Select file QC ab1 file',
+                                                              accept=c('csv', '.csv')),
+                                                    conditionalPanel(condition="input.auto_QC==11",
+                                                                     downloadButton('downloadTABLE_IMGTonly','Download man QC table'),
+                                                    ),
+                                                    conditionalPanel(condition="input.auto_QC==12",
+                                                                     downloadButton('downloadTABLE_IMGTonly_auto','Download auto QC table')
+                                                    ),
+                                                    
+                                                    
                                    ),
-                                   
+                                    
                                    conditionalPanel(condition="input.QC_panel==2 || input.QC_panel==3 ||input.QC_panel==4",
                                                     
                                                     selectInput("dataset_IMGT_afterQC", "Choose a dataset:", choices = c("ab-test-data1", "own_data1")),
@@ -292,46 +352,66 @@ navbarMenu("QC",
                                    ), 
                                    conditionalPanel(condition = "input.QC_panel==4",
                                                     downloadButton('downloadTABLE.QC1.single.chain','Download single chain file')
-                                                    
-                                                    )
-                                   
+                                                    ),
+                                   textInput("IMGT_name_df","File name",""),
                       ),
                       mainPanel(
                         tabsetPanel(id = "QC_panel",
                                     tabPanel("IMGT create QC file",value = 1,
                                              h4("Fill in the 'clone_quality' column with lowercase: pass or fail"), 
-                                             h4("Add comments if desired"),
+                                             # h4("Add comments if desired"),
                                              fluidRow(column(4, selectInput("sheet","Information included", choices = c("Summary+JUNCTION","Summary"))),
-                                                      column(8, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'), width = "800px")),
+                                                      # column(8, selectInput("include.origin","Include VDJ (n/p) origins (Summary+JUNCTION only)",choices = c("no",'yes'), width = "800px")),
                                              ),
-                                             tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
-                                             div(DT::dataTableOutput("IMGT2_out")),
+                                             tabsetPanel(id= "auto_QC",
+                                               tabPanel("Check uploaded files",value =10,
+                                                        tags$head(tags$style("#IMGT2_out  {white-space: nowrap;  }")),
+                                                        div(DT::dataTableOutput("IMGT2_out")),
+                                                        div(DT::dataTableOutput("IMGT2_out_ab1"))
+                                                        
+                                                        ),
+                                               tabPanel("QC file (manual interrogation)", value = 11,
+                                                        div(DT::dataTableOutput("IMGT2_original_out")),
+                                               ),
+                                               
+                                               
+                                               tabPanel("QC file with .ab1 scoring", value = 12,
+                                                        div(DT::dataTableOutput("IMGT2_out2")),
+                                                        )
+                                             ),
+                                             
+                                            
+                                            
                                              
                                     ),
-                                    tabPanel("Paired chain file",value = 2,
-                                             tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
-                                             div(DT::dataTableOutput("Pass.Fail.NA_table")),
-                                             
-                                             
-                                             div(DT::dataTableOutput("chain_table_IMGT.QC1"))
-                                    ),
+# multiple .ab1 files -----
+                       
+                                                  
+                                                  
+                                                  tabPanel("Paired chain file",value = 2,
+                                                           tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
+                                                           div(DT::dataTableOutput("Pass.Fail.NA_table")),
+                                                           
+                                                           
+                                                           div(DT::dataTableOutput("chain_table_IMGT.QC1"))
+                                                  ),
+                                                  
+                                                  tabPanel("Single chain file", value = 4,
+                                                           div(DT::dataTableOutput("single.chain_table_IMGT.QC1"))
+                                                  ),
+                                                  
+                                                  tabPanel("TCRdist output file",value = 3,
+                                                           tags$head(tags$style("#chain_table_IMGT.tcrdist  {white-space: nowrap;  }")),
+                                                           div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
+                                                           
+                                                  ),
+              
+                                                  
+                                      )
+                                    )
                                     
-                                    tabPanel("Single chain file", value = 4,
-                                             div(DT::dataTableOutput("single.chain_table_IMGT.QC1"))
-                                    ),
-                                    
-                                    tabPanel("TCRdist output file",value = 3,
-                                             tags$head(tags$style("#chain_table_IMGT.tcrdist  {white-space: nowrap;  }")),
-                                             div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
-                                             
-                                    ),
-
-                                    
-                        )
-                      )
-                      
-                    )
-           ),
+                                  )
+                         ),
 
 # .ab1 chromatogram file -----
            tabPanel("Check .ab1 files",
@@ -650,7 +730,7 @@ tabPanel("TCR analysis",
                ),
              )),
              tabPanel("Motif analysis",
-                      p("This section contains 4 tabs for motif analysis"),
+                      # p("This section contains 4 tabs for motif analysis"),
                       tabsetPanel(
 # UI CDR3 length distribution graphs ----- 
                         tabPanel("CDR3 length distribution",
@@ -665,11 +745,14 @@ tabPanel("TCR analysis",
                                    conditionalPanel(
                                      condition = "input.graph_type == 'histogram'",
                                      column(2,selectInput( "selected_group_len","Group","" )),
+                                     column(2, selectInput("sep_hist_group","Wrap by group",choices = c("yes","no"), selected = "no")),
                                      column(2,selectInput("chain.hist.col","Colour by:",""))),
                                    
                                    conditionalPanel(
                                      condition = "input.graph_type == 'density'",
-                                     column(3,sliderInput("alpha.density","Transparency",min=0, max = 1,value = 0.25, step = 0.05))
+                                     column(3,sliderInput("alpha.density","Transparency",min=0, max = 1,value = 0.25, step = 0.05)),
+                                     column(2, selectInput("facet_by_group","Wrap by group",choices = c("yes","no"), selected = "no")),
+                                     
                                      
                                    ),
                                    
@@ -735,6 +818,10 @@ tabPanel("TCR analysis",
                                  h6("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
                                  h5("Select amino acid column and CDR3 length"),
                                  verbatimTextOutput("length"),
+                                 fluidRow(
+                                   column(6,div(DT::dataTableOutput("length.table"))),
+                                   column(6,div(DT::dataTableOutput("Motif"))),
+                                 ),
                                  
                                  fluidRow(
                                    column(2, checkboxInput("compar.lab.motif.aa.single","Add Label",value = T)),
@@ -742,12 +829,12 @@ tabPanel("TCR analysis",
                                    column(2,style = "margin-top: 15px;",numericInput("len","CDR3 amino acid length", value = 15)),                               
                                    column(2,selectInput( "group_selected_motif",label = h5("Group 1 (top)"),"" )),
                                    column(2,selectInput( "group_selected_motif2",label = h5("Group 2 (bottom)"),"" )),
-                                   column(2, selectInput("comarpison.aa.motif",label = h5("Type of comparison"), choices= c("single.group1","compare two groups")))
+                                   column(2, selectInput("comarpison.aa.motif",label = h5("Type of comparison"), choices= c("single.group1","compare two groups"))),
+                                   column(2,style = "margin-top: 15px;",numericInput("font_size_motif","Font size", value = 6)),  
+                                   column(2,style = "margin-top: 15px;",numericInput("font_legend_motif","Legend size", value = 12)),  
+                                   
                                  ),
-                                 fluidRow(
-                                   column(6,div(DT::dataTableOutput("length.table"))),
-                                   column(6,div(DT::dataTableOutput("Motif"))),
-                                 ),
+                                 
                                  plotOutput("Motif_plot"),
                                  h4("Exporting amino acid plot"),
                                  fluidRow(
@@ -929,105 +1016,135 @@ tabPanel("TCR analysis",
                         
                         
 # UI inverse simpson index -----
-                        tabPanel("Inverse Simpson Diversity Index",
+                        tabPanel("Diversity Index",
                                  p("Inverse Simpson Diversity Index: ∞=infinite diversity and 1=limited diversity"),
-                                 fluidRow(
-                                   column(3,selectInput("group_column_simp",label = h5("First ID column"),
-                                                        "")),
-                                   column(3,selectInput("group_column_simp3",label = h5("Second ID column"),
-                                                        "")),
-                                   column(3,selectInput("group_column_simp2",label = h5("Unique clone column"),
-                                                        "")),                            
-                                 ),
-                                 fluidRow(column(12, div(DT::dataTableOutput("table_display.diversity")))),
-                                 downloadButton('downloadTABLE_simpson.inv','Download table'),
-                                 fluidRow(
+                                 conditionalPanel(
+                                       condition = "input.QC_panel_Simp == 2 || input.QC_panel_Simp == 3",
+                                       fluidRow(column(3,selectInput("index.type",label = h5("Type of Diversity"), 
+                                                                     choices =  c("shannon_div", "Pielou_even", "inverse_simp", "inverse_simp_corrected","chao1_div"), selected = "Pielou_even"),),
+                                                column(3, selectInput("group1_column",label = h5("Column of group"), 
+                                                                      ""))),
+                                       
+                                       
+                                      
+                                       ),
                                    
-                                   column(3,selectInput("index.type",label = h5("Type of inverse SDI"), choices =  c("Inverse SDI","Sample size corrected Inverse SDI"))),
-                                  
-                                   
-                                   column(3,selectInput("inv.simp_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
-                                   
-                                   column(2,selectInput("group.index",label = h5("x-axis group"),
-                                                        "")),
-                                   
-                                   column(2,selectInput("group2.index",label = h5("Colour by this group"),
-                                                        "")),
-                                   
-                                   
-                                   column(2,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
-                                                        choices = simp.index.names,
-                                                        selected = "total # clones"
-                                   ))),
-                                 fluidRow(
-                                   column(3,selectInput("IQR_95","Select type of error bars",choices = c("IQR","95% CI"))),
-                                   conditionalPanel(
-                                     condition = "IQR_95 == '95% CI'",
-                                   column(3,selectInput("show_all_dots","Type of 95%CI", choices= c("Show outliers only","Colour all dots"))))
-                                 ),
-                                 fluidRow(
-                                   
-                                   
-                                   column(3,selectInput("scale_x_continuous_x",label = h5("Number abbreivation"),
-                                                        choices = c("scientific","natural"), selected = "natural")),
-                                   column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 1)),
-                                   column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
-                                   column(3,numericInput("legend.text.simp",label = h5("Legend text size"),value = 12)),
-                                   
-                                   
-                                   
-                                 ),
-                                 fluidRow(
-                                   column(3,
-                                          wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 400px",
-                                                    uiOutput('myPanel.inv.simp'))),
-                                   column(4,plotOutput("simpson.index1", height="400px")),
-                                   column(4,plotOutput("simpson.index2", height="400px"))),
-                                 fluidRow(
-                                   
-                                   
-                                   column(2, numericInput("conf","confidence of T test", value =0.95, max = 0.99)),
-                                   column(2,selectInput("group1_column",label = h5("Column of group"), 
-                                                        "")),
-                                   column(2,selectInput( "group1_selected",label = h5("Group1"),"" )),
-                                   column(2,selectInput( "group2_selected",label = h5("Group2"),"" )),
-                                   column(2,  selectInput("tail",
-                                                          label = "Please Select a relationship you want to test:",
-                                                          choices = c("Two.tailed" = "two.sided", 
-                                                                      "one.tailed(Less)" = "less",
-                                                                      "one.tailed(Greater)" = "greater")))
+                                
+                                 tabsetPanel(id = "QC_panel_Simp",
+                                   tabPanel("Table and selecting groups",value =1,
+                                   fluidRow(
+                                     column(3,selectInput("group_column_simp",label = h5("First ID column"),
+                                                          "")),
+                                     column(3,selectInput("group_column_simp3",label = h5("Second ID column"),
+                                                          "")),
+                                     column(3,selectInput("group_column_simp2",label = h5("Unique clone column"),
+                                                          "")),                            
+                                   ),
+                                   fluidRow(column(12, div(DT::dataTableOutput("table_display.diversity")))),
+                                   downloadButton('downloadTABLE_simpson.inv','Download table'),
                                  ),
                                  
-                                 fluidRow(
-                                   column(2,   radioButtons("varequal",
-                                                            "Assume equal variance:",
-                                                            choices = c("Yes" = "y",
-                                                                        "No" = "n"))),
-                                   column(2,radioButtons("paired",
-                                                         "Paired?",
-                                                         choices = c("Yes" = "y",
-                                                                     "No" = "n"))),
-                                   
+                                 tabPanel("Graph",value =2,
+                                          fluidRow(
+                                            column(3,selectInput("inv.simp_colour.choise",label = h5("Colour"), choices =  c("default","random","grey"))),
+                                            
+                                            column(2,selectInput("group.index",label = h5("x-axis group"),
+                                                                 "")),
+                                            
+                                            column(2,selectInput("group2.index",label = h5("Colour by this group"),
+                                                                 "")),
+                                            
+                                            
+                                            column(2,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
+                                                                 choices = simp.index.names,
+                                                                 selected = "total # clones"
+                                            )),
+                                            column(3,checkboxInput("scale_x_continuous_x","Change to scientific values",value = F)),
+                                            
+                                            ),
+                                          # fluidRow(
+                                          # column(3,selectInput("IQR_95","Select type of error bars",choices = c("IQR","95% CI"))),
+                                          #   conditionalPanel(
+                                          #     condition = "IQR_95 == '95% CI'",
+                                          #   column(3,selectInput("show_all_dots","Type of 95%CI", choices= c("Show outliers only","Colour all dots"))))
+                                          # ),
+                                          fluidRow(
+                                            column(3,numericInput("col.num.simp",label = h5("Legend columns"),value = 1)),
+                                            column(3, selectInput("legend.placement.simp",label=h5("Legend location"),choices = c("top","bottom","left","right","none"),selected = "right")),
+                                            column(3,numericInput("legend.text.simp",label = h5("Legend text size"),value = 12)),
+                                          ),
+                                          fluidRow(
+                                            column(3,
+                                                   wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 400px",
+                                                             uiOutput('myPanel.inv.simp'))),
+                                            column(4,plotOutput("simpson.index1", height="400px")),
+                                            column(4,plotOutput("simpson.index2", height="400px"))
+                                          ),
+                                          
+                                          fluidRow(
+                                            column(3,numericInput("width_simpson.inv", "Width of PDF", value=10)),
+                                            column(3,numericInput("height_simpson.inv", "Height of PDF", value=6)),
+                                            column(3),
+                                            column(3,style = "margin-top: 25px;",downloadButton('downloadPlot_simpson.inv','Download PDF'))
+                                          ),
+                                          fluidRow(
+                                            column(3,numericInput("width_png_simpson.inv","Width of PNG", value = 1600)),
+                                            column(3,numericInput("height_png_simpson.inv","Height of PNG", value = 900)),
+                                            column(3,numericInput("resolution_PNG_simpson.inv","Resolution of PNG", value = 144)),
+                                            column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_simpson.inv','Download PNG'))
+                                          )
+                                          
+                                          ),
+                                 tabPanel("Statistics",value =3,
+                                         
+                                          tabsetPanel(
+                                            tabPanel("T-test",
+                                                     fluidRow(
+
+                                                       column(2, numericInput("conf","confidence of T test", value =0.95, max = 0.99)),
+                                                       
+                                                       column(2,selectInput( "group1_selected",label = h5("Group1"),"" )),
+                                                       column(2,selectInput( "group2_selected",label = h5("Group2"),"" )),
+                                                       column(2,  selectInput("tail",
+                                                                              label = "Please Select a relationship you want to test:",
+                                                                              choices = c("Two.tailed" = "two.sided", 
+                                                                                          "one.tailed(Less)" = "less",
+                                                                                          "one.tailed(Greater)" = "greater")))
+                                                     ),
+                                                     
+                                                     fluidRow(
+                                                       column(2,   radioButtons("varequal",
+                                                                                "Assume equal variance:",
+                                                                                choices = c("Yes" = "y",
+                                                                                            "No" = "n"))),
+                                                       column(2,radioButtons("paired",
+                                                                             "Paired?",
+                                                                             choices = c("Yes" = "y",
+                                                                                         "No" = "n"))),
+                                                       column(3, selectInput( "test_ttest","Type of test",choices= c("parametric","non-parametric")))
+                                                       
+                                                     ),
+                                                     
+                                                     verbatimTextOutput('tvalue'),
+                                                     
+                                                     ),
+                                            tabPanel("ANOVA",
+                                                     verbatimTextOutput('aov_test'),
+                                                     verbatimTextOutput('postaov_test')
+                                                     )
+                                          ),
+                                          
+
+                                          
+                                          
+                                          
+                                          )
                                  ),
-                                 p("The observed t test statistic :"),
-                                 textOutput('tvalue'),
-                                 p("The p-value is"),
-                                 textOutput('pvalue'),
-                                 p("The confidence intervalue is:"),
-                                 textOutput("confidence.int"),
-                                 
-                                 fluidRow(
-                                   column(3,numericInput("width_simpson.inv", "Width of PDF", value=10)),
-                                   column(3,numericInput("height_simpson.inv", "Height of PDF", value=6)),
-                                   column(3),
-                                   column(3,style = "margin-top: 25px;",downloadButton('downloadPlot_simpson.inv','Download PDF'))
-                                 ),
-                                 fluidRow(
-                                   column(3,numericInput("width_png_simpson.inv","Width of PNG", value = 1600)),
-                                   column(3,numericInput("height_png_simpson.inv","Height of PNG", value = 900)),
-                                   column(3,numericInput("resolution_PNG_simpson.inv","Resolution of PNG", value = 144)),
-                                   column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_simpson.inv','Download PNG'))
-                                 )
+
+
+
+      
+                                
                                  
                                  # gini index is created from Lorentz Surface Calculation pone.0125373.s004.xlsx
                                  
@@ -1077,16 +1194,27 @@ tabPanel("TCR analysis",
                                  fluidRow(
                                    column(3,selectInput("upset.select",label = h5("Select chain"), choices = "", selected = "")),
                                    column(3,selectInput("upset.group.select",label = h5("Group column (max 31 groups)"), choices = "",selected= "")),
+                                   column(3, selectInput("upset_anno","Colouring options",choices = c("default", "Colour by degree"))),
                                  ),
                                  
                                  selectInput("order.of.group",label = h5("Group column (max 31 groups)"), choices = "",selected= "", multiple = T, width = "1200px"),
                                  
-                                 
-                                 
+                                fluidRow(
+                                  
+                                  column(3, colourInput("right_annotation_colour","Colour of bar (right)",value = "black")),
+                                  column(3, colourInput("top_annotation_colour","Colour of bar (top)",value = "black")),
+                                  conditionalPanel(condition = "input.upset_anno == 'Colour by degree'",
+                                                   column(6,textInput("upset_colours_list1","Colour of dots by degree", value="darkgreen,purple")),
+                                                   
+                                  ),
+                                ),
                                  
                                  fluidRow(
+                                   column(2, numericInput("upset.point.size","Size of point",value = 5)),
+                                   column(2, numericInput("upset.lwd","Line width",value = 2)),
                                    column(3,numericInput("upset.text.size","Size of text",value = 20)),
-                                   column(3,numericInput("upset.font.size","Size of number",value = 12)),
+                                   column(3,numericInput("upset.font.size","Size of number (top)",value = 12)),
+                                   column(3,numericInput("font.size.anno.upset","Size of number (right)",value = 12)),
                                  ),
                                  
                                  plotOutput("UpSet.plot", height = "600px"),
@@ -1160,7 +1288,7 @@ tabPanel("Paired TCR with Index data",
                                          fluidRow(
                                            column(4,selectInput("x.axis2",label = h5("Select x-axis"),"")),
                                            column(4,selectInput("y.axis2",label = h5("Select y-axis"),"")),
-                                           column(4,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
+                                           
                                          ),
                                          fluidRow(
                                            column(4, selectInput("grid.lines.dot", label = h5("Add gridlines?"), choices = c("no","yes"))),
@@ -1214,13 +1342,40 @@ tabPanel("Paired TCR with Index data",
                                  
 # UI complex dotplot add columns if needed -----
                                  tabPanel("Data cleaning steps",value = 2,
-                                          
-                                          selectInput("string.data","Recommended selecting for ab TCR data: Indiv, group,TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. Do not select flurochrome columns, or cloneCount","",multiple = T, width = "1200px"),
-                                          div(DT::dataTableOutput("table.index.1")),
-                                          
+                                          tabsetPanel(
+                                            tabPanel("Conversion to bioexponetional",
+                                                     selectInput("string.data","Recommended selecting for ab TCR data: Indiv, group,TRBV,CDR3b.Sequence, TRBJ, TRAV, CDR3a.Sequence, TRAJ, AJ, BJ and AJBJ. Do not select flurochrome columns, or cloneCount","",multiple = T, width = "1200px"),
+                                                     div(DT::dataTableOutput("table.index.1")),
+                                                     
+                                                     ),
+                                            tabPanel("UMAP reduction",
+                                                     selectInput("string.data_UMAP","Select flurochrome columns for dimension reduction (UMAP)","",multiple = T, width = "1200px"),
+                                                     fluidRow(
+                                                       column(4,numericInput("lower_range","Lower number of clusters",value=2)),
+                                                       column(4,numericInput("upper_range","Upper number of clusters",value=10)),
+                                                     ),
+                                                     div(DT::dataTableOutput("table.index.UMAP")),
+                                                     h4("Average of each flurochrome per cluster (log10 transformed)"),
+                                                     div(DT::dataTableOutput("table.index.UMAP2")),
+                                                     )  
+                                                      ),
                                  ),
 # UI complex dotplot -----
                                  tabPanel("TCR with Index data plot",value = 3,
+                                          fluidRow(
+                                            column(4,selectInput( "plot_type_umap","type of plot",choices = c("overlaid dot plot","Normal"))),
+                                            
+                                            conditionalPanel(
+                                              condition = "input.plot_type_umap == 'overlaid dot plot'",
+                                              column(4,selectInput("density_dotplot",label = h5("Add histogram"), choices = c("no","yes"))),
+                                              
+                                            ),
+                                            
+                                              
+                                              column(4,selectInput( "Add_ellipse","Add ellipse to clusters",choices = c("no","yes"))),
+                                            
+                                          ),
+                                          # div(DT::dataTableOutput("Add_size")),
                                           
                                           
                                           fluidRow(column(3,
@@ -1319,6 +1474,74 @@ server  <- function(input, output, session) {
     tags$iframe(src = "https://www.youtube.com/embed/g5xJHdMj4uA",  width = 1000, height = 666.6666)
   })
   
+  
+  # read in multiple .ab1 fles -----
+  
+  
+  getData_ab1 <- eventReactive(input$go_ab1, {
+    inFile.ab1 <- input$file1_ab1.file
+    if (is.null(inFile.ab1)){
+      return(NULL)
+    }
+    
+    else {
+      
+      numfiles = nrow(inFile.ab1) 
+      df_total = data.frame()
+      
+      for (i in 1:numfiles) { 
+        tryCatch({
+          hetsangerseq<- readsangerseq(input$file1_ab1.file[[i, 'datapath']]) 
+          hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
+          Primaryseq <- primarySeq(hetcalls, string = TRUE)
+          secondary_seq <- secondarySeq(hetcalls, string = TRUE)
+          
+          pa <- pairwiseAlignment(primarySeq(hetcalls), secondarySeq(hetcalls))
+          pa_score <- pa@score
+          len_pa <- length(hetcalls@secondarySeq)[1]
+          pa_score_base <- pa_score/len_pa
+          
+          
+          if (input$indiv_miss_ab1 == "Yes" && input$group_miss_ab1 == "No") {
+            name_temp <- paste(input$indiv.miss.name_ab1,".",inFile.ab1[i,1],sep = "")
+          }
+          
+          else if (input$indiv_miss_ab1 == "No" && input$group_miss_ab1 == "Yes") {
+            name_temp <- paste(input$group.miss.name_ab1,inFile.ab1[i,1],sep = "")
+          }
+          
+          else if (input$indiv_miss_ab1 == "Yes" && input$group_miss_ab1 == "Yes") {
+            name_temp <- paste(input$indiv.miss.name_ab1,".", input$group.miss.name_ab1,inFile.ab1[i,1],sep = "")
+          }
+          else {
+            name_temp <- paste(inFile.ab1[i,1],sep = "") 
+          }
+          
+          name_temp <- gsub(".ab1","", name_temp)
+          
+          df <- cbind(name_temp,pa_score,len_pa,pa_score_base)
+          df_total <- rbind(df_total,df)
+          
+        }, error=function(e){}) 
+      }
+      df_total 
+      
+      }
+
+  })
+  
+  output$contents_ab1 <- renderTable( 
+    getData_ab1() 
+  )
+  
+  output$downloadData_ab1_QC_file <- downloadHandler(
+    filename = function() { 
+      paste(input$ab1.name, " .ab1 QC ", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) { 
+      write.csv(getData_ab1(), file, row.names=F)   
+    })
+  
   # .ab1 files for checking heitogenity ----
   input.data_IMGT.ab1 <- reactive({switch(input$dataset_.ab1,".ab1-test-data" = test.data_ab.ab1(), ".ab1-own_data" = own.data.ab1())})
   test.data_ab.ab1 <- reactive({
@@ -1395,8 +1618,6 @@ server  <- function(input, output, session) {
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
   
-  
-  
   output$alignment <- renderPrint({
     
     hetsangerseq <- input.data_IMGT.ab1()
@@ -1409,6 +1630,8 @@ server  <- function(input, output, session) {
     pa <- pairwiseAlignment(primarySeq(hetcalls), secondarySeq(hetcalls))
     print(writePairwiseAlignments(pa))
   })
+  
+  
   
   # create and merge .seq to fasta files -----
   getData <- reactive({
@@ -1477,7 +1700,6 @@ server  <- function(input, output, session) {
       write.table(getData(), file, row.names=F, col.names = F,quote = F)   
     })
   
-  
   # IMGT only  -----
   input.data_IMGT.xls3 <- reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab.xls3(), "own_data" = own.data.IMGT3())})
   test.data_ab.xls3 <- reactive({
@@ -1517,14 +1739,15 @@ server  <- function(input, output, session) {
       need(nrow(df1)>0,
            "Upload file")
     )
-    
-    if (input$include.origin == "no" && input$sheet == "Summary+JUNCTION") {
+    df1
+    if (input$sheet == "Summary+JUNCTION") {
       df2 <- input.data_IMGT.xls4();
-      
+
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","JUNCTION (with frameshift)","CDR3-IMGT (with frameshift)","Sequence")]
+      
       df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","V-REGION")]
-      
       df_chain1 <- merge(df3,df4,by=c("Sequence number","Sequence ID"))
+      df_chain1
       df_chain1 <- as.data.frame(df_chain1)
       df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
@@ -1555,28 +1778,77 @@ server  <- function(input, output, session) {
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
       df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
       df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
-      
-      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
-                                                   ifelse(df_chain1$`V-DOMAIN Functionality`== "rearranged sequence (but no junction found","no junction found",
-                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
-                                                          ifelse(as.numeric(df_chain1$`V-REGION identity %`<=90),"V Identity issue",
-                                                                 ifelse(as.numeric(df_chain1$`J-REGION identity %`)<=90,"J Identity issue","No issue flagged by IMGT")))))
-      
-      df_chain1$clone_quality <- ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT","pass",NA)
-      
-      df_chain1$comments <- NA
+
+      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION)
       df_chain1
+      name_temp2  <- as.data.frame(do.call(rbind, strsplit(as.character(df_chain1$`Sequence ID`), ".seq")))
       
+      df_chain1$name_temp <- name_temp2$V1
+      df_chain1
     }
-    else if (input$include.origin == "yes" && input$sheet == "Summary+JUNCTION") {
-      
+
+    else  {
+      df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","Sequence", "AA JUNCTION" )]
+
+      df_chain1 <- df3
+      df_chain1 <- as.data.frame(df_chain1)
+      df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('Musmus ','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('Musmus ','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('Musmus ','',df_chain1$`D-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('see comment','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('see comment','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('see comment','',df_chain1$`D-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('[(]','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('[)]','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub(' F','',df_chain1$`D-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('[(]','',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('[)]','',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub(' F,','',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub(' F','',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('[[]','',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('[]]','',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('F','',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
+      df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
+      df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
+      df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
+      df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
+
+      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION)
+      name_temp2  <- as.data.frame(do.call(rbind, strsplit(as.character(df_chain1$`Sequence ID`), ".seq")))
+      df_chain1$name_temp <- name_temp2$V1
+
+      df_chain1
+
+    }
+    
+    
+  })
+  
+  IMGT2_original <- reactive({
+    df1 <- input.data_IMGT.xls3();
+    
+    validate(
+      need(nrow(df1)>0,
+           "Upload file")
+    )
+    df1
+    if (input$sheet == "Summary+JUNCTION") {
       df2 <- input.data_IMGT.xls4();
+      
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","JUNCTION (with frameshift)","CDR3-IMGT (with frameshift)","Sequence")]
       
-      df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","3'V-REGION","P3'V","N-REGION","N1-REGION","P5'D","D-REGION", "P3'D","P5'D1","D1-REGION","P3'D1", "N2-REGION","P5'D2",    "D2-REGION","P3'D2",    "N3-REGION", "P5'D3","D3-REGION","P3'D3",    "N4-REGION","P5'J","5'J-REGION")]
-      
+      df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","V-REGION")]
       df_chain1 <- merge(df3,df4,by=c("Sequence number","Sequence ID"))
+      df_chain1
       df_chain1 <- as.data.frame(df_chain1)
       df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
@@ -1601,26 +1873,22 @@ server  <- function(input, output, session) {
       df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
+      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
       df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
       df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
       df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
       df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
       
-      
-      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
-                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
-                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
-                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
-      df_chain1$clone_quality <- NA 
-      df_chain1$comments <- NA
+      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION)
       df_chain1
+      name_temp2  <- as.data.frame(do.call(rbind, strsplit(as.character(df_chain1$`Sequence ID`), ".seq")))
       
+      df_chain1$name_temp <- name_temp2$V1
+      df_chain1
     }
-    else if (input$include.origin == "no" && input$sheet == "Summary") {
+    
+    else  {
       df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","Sequence", "AA JUNCTION" )]
       
       df_chain1 <- df3
@@ -1655,76 +1923,153 @@ server  <- function(input, output, session) {
       df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
       df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
       
-      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
-                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
-                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
-                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
-      df_chain1$clone_quality <- NA 
-      df_chain1$comments <- NA
+      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION)
+      # name_temp2  <- as.data.frame(do.call(rbind, strsplit(as.character(df_chain1$`Sequence ID`), ".seq")))
+      # df_chain1$name_temp <- name_temp2$V1
+      
       df_chain1
       
     }
-    else {
-      df3 <- df1[names(df1) %in% c("Sequence number","Sequence ID","V-DOMAIN Functionality", "V-GENE and allele","V-REGION identity %","J-GENE and allele","J-REGION identity %","D-GENE and allele","JUNCTION frame","Sequence", "AA JUNCTION")]
-      # names(df3)[11] <- "JUNCTION (AA)"
-      
-      # df4 <- df2[names(df2) %in% c("Sequence number","Sequence ID","JUNCTION","JUNCTION (AA)","JUNCTION (with frameshift)","JUNCTION (AA) (with frameshift)","CDR3-IMGT","CDR3-IMGT (AA)","3'V-REGION","P3'V","N-REGION","N1-REGION","P5'D","D-REGION", "P3'D","P5'D1","D1-REGION","P3'D1", "N2-REGION","P5'D2",    "D2-REGION","P3'D2",    "N3-REGION", "P5'D3","D3-REGION","P3'D3",    "N4-REGION","P5'J","5'J-REGION")]
-      df_chain1 <- df3
-      df_chain1 <- as.data.frame(df_chain1)
-      df_chain1$`J-GENE and allele` <- gsub('Homsap ','',df_chain1$`J-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('Homsap ','',df_chain1$`V-GENE and allele`)
-      df_chain1$`D-GENE and allele` <- gsub('Homsap ','',df_chain1$`D-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub('Musmus ','',df_chain1$`J-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('Musmus ','',df_chain1$`V-GENE and allele`)
-      df_chain1$`D-GENE and allele` <- gsub('Musmus ','',df_chain1$`D-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub('see comment','',df_chain1$`J-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('see comment','',df_chain1$`V-GENE and allele`)
-      df_chain1$`D-GENE and allele` <- gsub('see comment','',df_chain1$`D-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub('[(]','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub('[)]','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-      df_chain1$`D-GENE and allele` <- gsub(' F','',df_chain1$`D-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('[(]','',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('[)]','',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub(' F,','',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub(' F','',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('[[]','',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('[]]','',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('F','',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub(' or ',', ',df_chain1$`V-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub(' ','',df_chain1$`V-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' F','',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub(' or ',', ',df_chain1$`J-GENE and allele`)
-      df_chain1$`J-GENE and allele` <- gsub('TR','',df_chain1$`J-GENE and allele`)
-      df_chain1$`V-GENE and allele` <- gsub('TR','',df_chain1$`V-GENE and allele`)
-      df_chain1$`D-GENE and allele` <- gsub('TR','',df_chain1$`D-GENE and allele`)
-      df_chain1$`V-DOMAIN Functionality` <- gsub(' [(]see comment','',df_chain1$`V-DOMAIN Functionality`)
-      df_chain1$`V-DOMAIN Functionality` <- gsub('[)]','',df_chain1$`V-DOMAIN Functionality`)
-      
-      df_chain1$JUNCTION <- toupper(df_chain1$JUNCTION) 
-      df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
-                                                   ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
-                                                          ifelse(df_chain1$`V-REGION identity %`<=90,"V Identity issue",
-                                                                 ifelse(df_chain1$`J-REGION identity %`<=90,"J Identity issue","No issue flagged by IMGT"))))
-      df_chain1$clone_quality <- NA 
-      df_chain1$comments <- NA
-      df_chain1
-      
-    }
+    df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`== "No rearrangement found","No arrangement",
+                                                 ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
+                                                        ifelse(df_chain1$`V-DOMAIN Functionality`=="rearranged sequence (but no junction found","Junction not found",
+                                                               ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
+                                                                      ifelse(as.numeric(df_chain1$`V-REGION identity %`<=90),"V Identity issue",
+                                                                             ifelse(as.numeric(df_chain1$`J-REGION identity %`)<=80,"J Identity issue",
+                                                                                    "No issue flagged by IMGT"))))))
+    
+    
+    df_chain1$chromatogram_check <- NA
+    df_chain1$clone_quality <- ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT","pass",NA)
+    df_chain1$comments <- NA
+    df_chain1
     
   })
   
-  output$IMGT2_out <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
-    IMGT2()
+  output$IMGT2_original_out <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
+    IMGT2_original()
   })
   
   output$downloadTABLE_IMGTonly <- downloadHandler(
     filename = function(){
-      paste("IMGT_only.QC",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste(input$IMGT_name_df," IMGT_manual ",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
-      df <- IMGT2()
+      df <- IMGT2_original()
+      write.csv(df,file, row.names = FALSE)
+    } )
+  
+  output$IMGT2_out <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
+    IMGT2()
+  })
+  
+  input.data_IMGT.ab1 <-  reactive({switch(input$dataset_IMGT3,"ab-test-data1" = test.data_ab1(), "own_data" = own.data.ab1())})
+  test.data_ab1 <- reactive({
+    dataframe = read.csv("test-data/QC/QC .ab1 files/E0630 .ab1 QC 2022-12-30.csv") 
+  })
+  own.data.ab1 <- reactive({
+    inFile_ab1 <- input$file_ab1_QC
+    if (is.null(inFile_ab1)) return(NULL)
+    
+    else {
+      dataframe <- read.csv(
+        inFile_ab1$datapath
+        
+      )}
+    
+  })
+  
+  output$IMGT2_out_ab1 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
+    df1 <- as.data.frame(input.data_IMGT.ab1())
+    
+    validate(
+      need(nrow(df1)>0,
+           "Upload file")
+    )
+    
+     df1
+  })
+
+  IMGT_ab1_QC_merge <- reactive({
+    df_chain1 <- as.data.frame(IMGT2())
+    ab1_File <- as.data.frame(input.data_IMGT.ab1())
+    validate(
+      need(nrow(df_chain1)>0 & nrow(ab1_File)>0,
+           "Upload file")
+    )
+    
+    df_chain1 <- merge(df_chain1,ab1_File,by = "name_temp")
+    df_chain1 <- df_chain1[ , !(names(df_chain1) %in%  c("name_temp"))]
+
+    df_chain1$V.sequence.quality.check <- ifelse(df_chain1$`V-DOMAIN Functionality`== "No rearrangement found","No arrangement",
+                                                 ifelse(df_chain1$`V-DOMAIN Functionality`=="unproductive", "Unproductive issue",
+                                                        ifelse(df_chain1$`V-DOMAIN Functionality`=="rearranged sequence (but no junction found","Junction not found",
+                                                                ifelse(df_chain1$`V-DOMAIN Functionality`=="No results", "No alignment",
+                                                                       ifelse(as.numeric(df_chain1$`V-REGION identity %`<=90),"V Identity issue",
+                                                                              ifelse(as.numeric(df_chain1$`J-REGION identity %`)<=80,"J Identity issue",
+                                                                                     "No issue flagged by IMGT"))))))
+
+
+    df_chain1$chromatogram_check <- ifelse(df_chain1$pa_score_base < 0.2,"Poor",
+                                           ifelse(df_chain1$pa_score_base > 1,"Very high",
+                                                  ifelse(df_chain1$pa_score_base > 0.9, "High",
+                                                         ifelse(df_chain1$pa_score_base >0.7,"Moderate","Low"))))
+
+    df_chain1$clone_quality <- ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT" & df_chain1$chromatogram_check=="Very high",'pass',
+                                      ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT" & df_chain1$chromatogram_check=="High",'pass',
+                                      ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT" & df_chain1$chromatogram_check=="Moderate",'pass',
+                                      ifelse(df_chain1$V.sequence.quality.check=="No alignment" |
+                                                      df_chain1$chromatogram_check=="Poor" |
+                                                      df_chain1$V.sequence.quality.check=="No arrangement" |
+                                                      df_chain1$chromatogram_check=="Low" ,'fail',
+                                                    ifelse(df_chain1$V.sequence.quality.check=="unproductive" &
+                                                             df_chain1$chromatogram_check=="Very high","fail",
+
+                                                    ifelse( df_chain1$chromatogram_check=="Very high" & df_chain1$V.sequence.quality.check=="Junction not found", "fail",
+
+                                                    ifelse(df_chain1$chromatogram_check=="Very high" & df_chain1$V.sequence.quality.check=="J Identity issue","pass",
+                                                    ifelse(df_chain1$chromatogram_check=="Very high" & df_chain1$V.sequence.quality.check=="V Identity issue","pass",
+
+                                                     ifelse(df_chain1$chromatogram_check=="High" & df_chain1$V.sequence.quality.check=="J Identity issue","pass",
+                                                     ifelse(df_chain1$chromatogram_check=="High" & df_chain1$V.sequence.quality.check=="V Identity issue","pass",
+                                                     
+                                                           	
+                                                    'fail'))))))))))
+    #
+
+    df_chain1$comment <- ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT" & df_chain1$chromatogram_check=="Very high",NA,
+                                      ifelse(df_chain1$V.sequence.quality.check=="No issue flagged by IMGT" & df_chain1$chromatogram_check=="High",NA,
+                                             ifelse(df_chain1$chromatogram_check=="Moderate" & df_chain1$V.sequence.quality.check=="No issue flagged by IMGT","possible need to check moderate quality",
+                                             ifelse(df_chain1$V.sequence.quality.check=="No alignment" |
+                                                      df_chain1$chromatogram_check=="Poor" |
+                                                      df_chain1$V.sequence.quality.check=="No arrangement" |
+                                                      df_chain1$chromatogram_check=="Low" ,'Either poor sequence quality or no sequence called',
+                                                    ifelse(df_chain1$V.sequence.quality.check=="Unproductive issue" &
+                                                             df_chain1$chromatogram_check=="Very high","Unproductive high quality sequence, possibly resolvable",
+
+                                                           ifelse( df_chain1$chromatogram_check=="Very high" & df_chain1$V.sequence.quality.check=="Junction not found", "No Junction found",
+
+                                                      ifelse(df_chain1$chromatogram_check=="Very high" & df_chain1$V.sequence.quality.check=="J Identity issue","Possible J identity issue",
+                                                      ifelse(df_chain1$chromatogram_check=="Very high" & df_chain1$V.sequence.quality.check=="V Identity issue","Possible V identity issue",
+
+                                                      ifelse(df_chain1$chromatogram_check=="High" & df_chain1$V.sequence.quality.check=="J Identity issue","Possible J identity issue",
+                                                      ifelse(df_chain1$chromatogram_check=="High" & df_chain1$V.sequence.quality.check=="V Identity issue","Possible V identity issue",
+                                                                                     'Other possible issue'))))))))))
+
+    df_chain1
+    # ab1_File
+  })
+  
+  output$IMGT2_out2 <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
+    IMGT_ab1_QC_merge()
+  })
+  
+  output$downloadTABLE_IMGTonly_auto <- downloadHandler(
+    filename = function(){
+      paste(input$IMGT_name_df," IMGT_auto ",gsub("-", ".", Sys.Date()),".csv", sep = "")
+    },
+    content = function(file){
+      df <- IMGT_ab1_QC_merge()
       write.csv(df,file, row.names = FALSE)
     } )
   
@@ -1755,10 +2100,11 @@ server  <- function(input, output, session) {
     df1$clone_quality <- gsub("pass","pass",df1$clone_quality,ignore.case = T)
     df1$clone_quality <- gsub("fail","fail",df1$clone_quality,ignore.case = T)
     df1$cloneCount <- 1
-    df2 <- df1[,c("cloneCount","clone_quality","V.sequence.quality.check")] 
+    df2 <- df1[,c("cloneCount","clone_quality","V.sequence.quality.check","chromatogram_check")] 
     
-    as.data.frame(ddply(df2,c("clone_quality","V.sequence.quality.check"),numcolwise(sum)))
+    as.data.frame(ddply(df2,c("clone_quality","V.sequence.quality.check","chromatogram_check"),numcolwise(sum)))
     
+
     
   })
   
@@ -1786,7 +2132,7 @@ server  <- function(input, output, session) {
     df1$clone_quality <- gsub("fail","fail",df1$clone_quality,ignore.case = T)
     df <- subset(df1,df1$clone_quality=="pass")
     df <- as.data.frame(df)
-    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..")]
+    df2 <- df[!names(df) %in% c("V.sequence.quality.check","clone_quality","comments","JUNCTION..with.frameshift.","CDR3.IMGT..with.frameshift.","JUNCTION..AA...with.frameshift.","Sequence.number","V.REGION.identity..","J.REGION.identity..","comment","pa_score","len_pa","pa_score_base","chromatogram_check")]
     
     df.Vgene <- as.data.frame(do.call(rbind, strsplit(as.character(df2$V.GENE.and.allele), ",")))
     df2$V.GENE <- df.Vgene$V1
@@ -1820,7 +2166,7 @@ server  <- function(input, output, session) {
       
       merged_chain <- merge(chain1,chain2,by =x)
       head(merged_chain)
-      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B"))]
+      merged_chain2 <- merged_chain[ , -which(names(merged_chain) %in% c("ID","Sequence.ID_A","Sequence.ID_B","V.DOMAIN.Functionality_A","V.DOMAIN.Functionality_B","D.GENE.and.allele_A","JUNCTION.frame_A","JUNCTION.frame_B","comment_A","comment_B"))]
       names(merged_chain2)
       dat <- merged_chain2
       dat$AV <- paste(dat$V.GENE_A)
@@ -2133,8 +2479,6 @@ server  <- function(input, output, session) {
       
     }
     else {
-      
-      
       df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(df2$Sequence.ID), "_")))
       df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name2$V1), ".-")))
       df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(df_name3$V1), "[.]")))
@@ -2148,7 +2492,6 @@ server  <- function(input, output, session) {
       
       df2 <- df2[!names(df2) %in% c("ID","Sequence.number","Sequence.ID","V.DOMAIN.Functionality","JUNCTION.frame","JUNCTION")]
       df2 <- df2[,c(9:13,1:8)]
-      df2
       
       dat <- as.data.frame(df2)
       dat$TRV <- paste(dat$V.GENE)
@@ -2161,11 +2504,7 @@ server  <- function(input, output, session) {
       
       dat$TRVJ <- paste(dat$TRV,dat$TRJ,sep=".")
       dat$TRVDJ <- paste(dat$TRV,dat$TRD,dat$TRJ,sep=".")
-      
-      
       dat$TRVDJ <- gsub(".NA.",".",dat$TRVDJ)
-      
-      
       dat$TRVJ_CDR3 <- paste(dat$TRVJ,dat$AA.JUNCTION,sep="_")
       dat$TRVDJ_CDR3 <- paste(dat$TRVDJ,dat$AA.JUNCTION,sep="_")
       
@@ -2210,7 +2549,7 @@ server  <- function(input, output, session) {
   })
   output$downloadTABLE.TSV <- downloadHandler(
     filename = function(){
-      paste("TCRdist.tsv", sep = "")
+      paste(input$IMGT_name_df," TCRdist.tsv", sep = "")
     },
     content = function(file){
       df <- TSV.file.chain()
@@ -2239,7 +2578,7 @@ server  <- function(input, output, session) {
   })
   output$downloadTABLE.QC1 <- downloadHandler(
     filename = function(){
-      paste("paired_TCR_file",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste(input$IMGT_name_df," paired_TCR_file ",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
       df <- chain_merge_IMGTonly()
@@ -2268,7 +2607,7 @@ server  <- function(input, output, session) {
   })
   output$downloadTABLE.QC1.single.chain <- downloadHandler(
     filename = function(){
-      paste("single.chain_TCR_file",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste(input$IMGT_name_df," single.chain_TCR_file ",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
       df <- chain_single.chain_IMGT()
@@ -2502,7 +2841,6 @@ server  <- function(input, output, session) {
         
       
     })
-    
     observe({
       
       if (input$datasource == "ImmunoSEQ") {
@@ -2541,8 +2879,6 @@ server  <- function(input, output, session) {
       }
       
     })
-    
-    
     observe({
       
       updateSelectInput(
@@ -2553,7 +2889,6 @@ server  <- function(input, output, session) {
       )
       
     })
-    
     observe({
       
       updateSelectInput(
@@ -2564,8 +2899,6 @@ server  <- function(input, output, session) {
       )
       
     })
-    
-    
     observe({
       
       updateSelectInput(
@@ -2775,7 +3108,7 @@ server  <- function(input, output, session) {
   
   output$downloadTABLE.Immunoseq <- downloadHandler(
     filename = function(){
-      paste("TCR_Explore.analysis.file-",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste(input$IMGT_name_df," TCR_Explore.analysis.file-",gsub("-", ".", Sys.Date()),".csv", sep = "")
     },
     content = function(file){
       df <- TSV.file.Immunoseq()
@@ -3099,7 +3432,8 @@ server  <- function(input, output, session) {
     
     if (is.null(input$col_1)) {
       cols <- rep("#000000", ncol(dat))
-    } else {
+    } 
+    else {
       cols <- unlist(colors())
     }
     
@@ -3891,7 +4225,7 @@ server  <- function(input, output, session) {
     df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
     df1
     
-    datatable(df1, extensions = "Buttons", options = list(searching = TRUE,
+    datatable(df1, extensions = "Buttons",filter = "top", options = list(searching = TRUE,
                                                           ordering = TRUE,
                                                           buttons = c('copy','csv', 'excel'),
                                                           dom = 'Bfrtip',
@@ -3951,31 +4285,83 @@ server  <- function(input, output, session) {
       df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
       df1$unique <- 1
       max.1 <- ddply(df1, c(input$group_column,"len1"),numcolwise(sum))
-      max.2 <- subset(max.1, get(input$group_column)==input$selected_group_len)
-      max.hist <- max(max.2$unique)+1
       
-      vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
-        geom_bar() + 
-        scale_fill_manual(values = df.col.hist$col) +
-        theme_bw()  +
-        theme(legend.title = element_blank(),
-              legend.position = input$hist.density.legend) +
-        labs(y="Count",
-             x="CDR3 length distribution",
-             title="") +
-        theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
-          axis.title.x = element_text(colour="black",angle=0,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
-          legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
-        ) +
-        scale_y_continuous(limits = c(0, max.hist), breaks = seq(0,max.hist,by = input$ybreaks), expand = c(0, 0))+
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0, 0)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-        guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
+      if (input$sep_hist_group == "yes") {
+        df <- input.data2(); 
+        df <- as.data.frame(df)
+        df <- df[names(df) %in% c("cloneCount",input$group_column,input$aa.or.nt,input$chain.hist.col)]
+        df.names <-  df[ , -which(names(df) %in% c("cloneCount"))]
+        df1 <- ddply(df,names(df.names) ,numcolwise(sum))
+        
+        df1$len1 <- nchar(df1[,grep(input$aa.or.nt,names(df1))])
+        df1$chain <- df1[,names(df1) %in% input$chain.hist.col]
+        df1 <- df1[order(df1$chain, decreasing = F),]
+        df1$chain <- factor(df1$chain,levels = unique(df1$chain))
+        df.col.2 <- as.data.frame(hist.col.table())
+        names(df.col.2) <- c("V1","col")
+        df2 <- merge(df.col.2,df1,by.x="V1",by.y=input$chain.hist.col,sort = F)
+        df1 <- df2
+        
+        df.col.hist <- df.col.2[df.col.2$V1 %in% unique(df1$chain),]
+        df1$unique <- 1
+        max.1 <- ddply(df1, c(input$group_column,"len1"),numcolwise(sum))
+        
+        max.2 <- max.1
+        max.hist <- max(max.2$unique)+1
+        
+        vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
+          geom_bar() + 
+          scale_fill_manual(values = df.col.hist$col) +
+          theme_bw()  +
+          theme(legend.title = element_blank(),
+                legend.position = input$hist.density.legend) +
+          labs(y="Count",
+               x="CDR3 length distribution",
+               title="") +
+          theme(
+            axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
+            axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+            axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+            axis.title.x = element_text(colour="black",angle=0,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
+            legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
+          ) +
+          scale_y_continuous(limits = c(0, max.hist), breaks = seq(0,max.hist,by = input$ybreaks), expand = c(0, 0))+
+          scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0, 0)) +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+          guides(fill=guide_legend(ncol=input$col.num.CDR3len)) +
+          facet_grid(get(input$group_column)~.)
+        vals4$bar.len
+        
+        
+      }
       
-      vals4$bar.len
+      else {
+        max.2 <- subset(max.1, get(input$group_column)==input$selected_group_len)
+        max.hist <- max(max.2$unique)+1
+        
+        vals4$bar.len <- ggplot(df1,aes(x=len1,fill = chain)) +
+          geom_bar() + 
+          scale_fill_manual(values = df.col.hist$col) +
+          theme_bw()  +
+          theme(legend.title = element_blank(),
+                legend.position = input$hist.density.legend) +
+          labs(y="Count",
+               x="CDR3 length distribution",
+               title="") +
+          theme(
+            axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
+            axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+            axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+            axis.title.x = element_text(colour="black",angle=0,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
+            legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
+          ) +
+          scale_y_continuous(limits = c(0, max.hist), breaks = seq(0,max.hist,by = input$ybreaks), expand = c(0, 0))+
+          scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0, 0)) +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+          guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
+        vals4$bar.len
+        
+      }
       
     }
     else if (input$graph_type == "density" & input$type.tree == "raw data") {
@@ -3998,28 +4384,61 @@ server  <- function(input, output, session) {
       num <- as.data.frame(unique(df1[names(df1) %in% input$group_column]))
       num$col2 <- col2
       
-      vals4$bar.len <- ggplot(df1,aes(x=len1,colour = get(input$group_column),fill = get(input$group_column))) +
-        geom_density(alpha = input$alpha.density) +
-        scale_alpha(guide = 'none') + 
-        scale_color_manual(values = num$col2) +
-        scale_fill_manual(values = num$col2) +
-        theme_bw()  +
-        theme(legend.title = element_blank(),
-              legend.position = input$hist.density.legend) +
-        labs(y="Frequency",
-             x="CDR3 length distribution",
-             title="") +
-        theme(
-          axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
-          axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
-          axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
-          axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
-          legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
-        ) +
-        scale_y_continuous(expand = c(0,0), limits=c(0,max.hist)) +
-        scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0,0)) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-        guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
+     
+        
+      
+      if (input$facet_by_group =="yes") {
+        vals4$bar.len <-  vals4$bar.len <- ggplot(df1,aes(x=len1,colour = get(input$group_column),fill = get(input$group_column))) +
+          geom_density(alpha = input$alpha.density) +
+          scale_alpha(guide = 'none') + 
+          scale_color_manual(values = num$col2) +
+          scale_fill_manual(values = num$col2) +
+          theme_bw()  +
+          theme(legend.title = element_blank(),
+                legend.position = input$hist.density.legend) +
+          labs(y="Frequency",
+               x="CDR3 length distribution",
+               title="") +
+          theme(
+            axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
+            axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+            axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+            axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
+            legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
+          ) +
+          scale_y_continuous(expand = c(0,0), limits=c(0,max.hist)) +
+          scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0,0)) +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+          guides(fill=guide_legend(ncol=input$col.num.CDR3len)) +
+          facet_grid(get(input$group_column)~.)
+        
+      }
+      
+      else {
+        vals4$bar.len <- ggplot(df1,aes(x=len1,colour = get(input$group_column),fill = get(input$group_column))) +
+          geom_density(alpha = input$alpha.density) +
+          scale_alpha(guide = 'none') + 
+          scale_color_manual(values = num$col2) +
+          scale_fill_manual(values = num$col2) +
+          theme_bw()  +
+          theme(legend.title = element_blank(),
+                legend.position = input$hist.density.legend) +
+          labs(y="Frequency",
+               x="CDR3 length distribution",
+               title="") +
+          theme(
+            axis.title.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer2),
+            axis.text.y = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer),
+            axis.text.x = element_text(colour="black",family=input$font_type,size = input$hist.text.sizer,angle=0),
+            axis.title.x = element_text(colour="black",angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type,size = input$hist.text.sizer2),
+            legend.text = element_text(colour="black", size=input$legend.text.hist,family=input$font_type) 
+          ) +
+          scale_y_continuous(expand = c(0,0), limits=c(0,max.hist)) +
+          scale_x_continuous(limits = c(input$xlow, input$xhigh), breaks = seq(input$xlow, input$xhigh, by = input$xbreaks),expand = c(0,0)) +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+          guides(fill=guide_legend(ncol=input$col.num.CDR3len)) 
+      }
+      
       vals4$bar.len
     }
     else if (input$graph_type == "histogram" & input$type.tree == "Summarised data") {
@@ -4562,7 +4981,17 @@ server  <- function(input, output, session) {
     
     motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt2,names(df_subset))], ""))))
     rownames(motif) <- 1:dim(motif)[1]
-    motif
+    
+    
+    datatable(motif, extensions = "Buttons", options = list(searching = TRUE,
+                                                                        ordering = TRUE,
+                                                                        buttons = c('copy','csv', 'excel'),
+                                                                        dom = 'Bfrtip',
+                                                                        pageLength=2, 
+                                                                        lengthMenu=c(2,5,10,20,50,100), 
+                                                                        scrollX = TRUE
+    ))
+    
     
   })
   
@@ -4589,7 +5018,16 @@ server  <- function(input, output, session) {
     df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
     df_unique$Unique_clones <- 1
-    as.data.frame(ddply(df_unique,(c(input$group_column,"len1")),numcolwise(sum)))
+    motif <- as.data.frame(ddply(df_unique,(c(input$group_column,"len1")),numcolwise(sum)))
+    
+    datatable(motif, extensions = "Buttons", filter = "top", options = list(searching = TRUE,
+                                                            ordering = TRUE,
+                                                            buttons = c('copy','csv', 'excel'),
+                                                            dom = 'Bfrtip',
+                                                            pageLength=2, 
+                                                            lengthMenu=c(2,5,10,20,50,100), 
+                                                            scrollX = TRUE
+    ))
     
   })
   
@@ -4614,7 +5052,7 @@ server  <- function(input, output, session) {
     motif_count<-pcm2pfm(motif_count)
     motif_count
     
-    ggseqlogo(motif_count, seq_type='aa') + 
+    ggseqlogo(motif_count, seq_type='aa', method='p') + 
       ylab('bits')+ 
       geom_hline(yintercept=0) +
       geom_vline(xintercept=0) +
@@ -4625,9 +5063,9 @@ server  <- function(input, output, session) {
         axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
         legend.title  =element_blank(),
         legend.position = "right",
-        legend.text = element_text(colour="black", size=12,family=input$font_type))
+        legend.text = element_text(colour="black", size=input$font_legend_motif,family=input$font_type)
+        )
   })
-  
   
   Motif_compare_aa_group1 <- reactive({
     df <- input.data2();
@@ -4686,8 +5124,8 @@ server  <- function(input, output, session) {
         ylab('JS divergence') + 
         geom_hline(yintercept=0) +
         geom_vline(xintercept=0) +
-        annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_motif,size=10,face="plain",family=input$font_type)+
-        annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_motif2,size=10,face="plain",family=input$font_type)+
+        annotate(geom="text",x=1,y=Inf,vjust=2,label=input$group_selected_motif,size=input$font_size_motif,face="plain",family=input$font_type)+
+        annotate(geom="text",x=1,y=-Inf,vjust=-2,label=input$group_selected_motif2,size=input$font_size_motif,face="plain",family=input$font_type)+
         theme(
           axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
           axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
@@ -4695,7 +5133,7 @@ server  <- function(input, output, session) {
           axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
           legend.title  =element_blank(),
           legend.position = "right",
-          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+          legend.text = element_text(colour="black", size=input$font_legend_motif,family=input$font_type)) 
       
       vals33$geom_comp 
       
@@ -4713,7 +5151,7 @@ server  <- function(input, output, session) {
           axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
           legend.title  =element_blank(),
           legend.position = "right",
-          legend.text = element_text(colour="black", size=12,family=input$font_type)) 
+          legend.text = element_text(colour="black", size=input$font_legend_motif,family=input$font_type)) 
       
       vals33$geom_comp 
       
@@ -4937,8 +5375,6 @@ server  <- function(input, output, session) {
     
   })
   
-  
-  
   select_group_muscle <- function () {
     df <- input.data2();
     df <- as.data.frame(df)
@@ -5140,10 +5576,41 @@ server  <- function(input, output, session) {
         
       }
       else if (input$diff == "plot_one" && input$aa.nt.col=="ASN") {
-        vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
-                                      baseDistribution = probabilities,
-                                      alphabet = ASN, main = NULL)
-        vals44$plot.ggseq.2
+        
+        
+        df_unique <- chain_muscle()
+        validate(
+          need(nrow(df_unique)>0,
+               error_message_val1)
+        )
+        motif <- as.data.frame(t(as.data.frame(strsplit(df_unique[,grep("chain1",names(df_unique))], ""))))
+        z=dim(motif)[2]
+        z
+        df_unique1 <- subset(df_unique,df_unique$group==input$group_selected_two)
+        motif1 <- as.data.frame(t(as.data.frame(strsplit(df_unique1[,grep("chain1",names(df_unique1))], ""))))
+        motif_count1 <- aa.count.function(cbind(x=1,y=2,motif1), z)
+        motif_count1<-pcm2pfm(motif_count1)
+        
+        ggseqlogo(motif_count1, seq_type='aa', method='p') + 
+          ylab('bits')+ 
+          geom_hline(yintercept=0) +
+          geom_vline(xintercept=0) +
+          theme(
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            legend.title  =element_blank(),
+            legend.position = "right",
+            legend.text = element_text(colour="black", size=12,family=input$font_type))
+        
+        
+        # motif <- new("pcm", mat=as.matrix(motif_count1_aa), name="")
+        # 
+        # vals44$plot.ggseq.2 <- seqLogo(as.data.frame(motif_count1_aa), sparse = FALSE, drawLines = 1,
+        #                               baseDistribution = probabilities,
+        #                               alphabet = ASN, main = NULL)
+        # vals44$plot.ggseq.2
       }
       else if (input$diff == "plot_one" && input$aa.nt.col=="DNA") {
         vals44$plot.ggseq.2 <-seqLogo(as.data.frame(motif_count1_nt), sparse = FALSE, drawLines = 1,
@@ -5674,31 +6141,20 @@ server  <- function(input, output, session) {
            "Upload file")
     )
     
-    head(dataframe)
-    
     df1 <- ddply(dataframe,c(input$group_column_simp,input$group_column_simp2,input$group_column_simp3),numcolwise(sum))
     df1 <- df1[order(df1$cloneCount, decreasing = T),]
-    
     V1 <- df1[names(df1) %in% input$group_column_simp]
-    V1
     V2 <- df1[names(df1) %in% input$group_column_simp3]
     V1V2 <- cbind(V1,V2)
     names(V1V2) <- c("V1","V2")
-    
     df1$selected.groups <- paste(V1V2$V1,V1V2$V2,sep="_")
-    
-    
     df.group <- unique(df1[names(df1) %in% "selected.groups"])
     names(df.group) <- "V1"
     
     column.length <- length(df.group$V1)
-    column.length
-    
     df.group2 <- unique(df1[names(df1) %in% input$group_column_simp2])
     names(df.group2) <- "V1"
-    
     row.length <- length(df.group2$V1)
-    row.length
     
     m = matrix(NA,ncol=column.length, nrow=row.length)
     samps <- df.group$V1
@@ -5709,10 +6165,13 @@ server  <- function(input, output, session) {
     }
     m <- as.data.frame(m)
     names(m) <- samps
-    head(m)
-    m
     
-    a <- matrix(nrow=1,ncol=dim(m)[2])
+    richness_samp <- matrix(nrow=1,ncol=dim(m)[2])
+    inverse_simp <- matrix(nrow=1,ncol=dim(m)[2])
+    inverse_simp_corrected <- matrix(nrow=1,ncol=dim(m)[2])
+    shannon_div <- matrix(nrow=1,ncol=dim(m)[2])
+    chao1_div <- matrix(nrow=1,ncol=dim(m)[2])
+    Pielou_even <- matrix(nrow=1,ncol=dim(m)[2])
     b <- matrix(nrow=1,ncol=dim(m)[2])
     d <- matrix(nrow=1,ncol=dim(m)[2])
     
@@ -5720,18 +6179,21 @@ server  <- function(input, output, session) {
       
       samp <- m[,i]
       samp <- na.omit(samp)
-      a[,i] <- diversity(samp,"invsimpson")
+      richness_samp[,i] <-specnumber(samp)
+      inverse_simp[,i] <- diversity(samp,"invsimpson")
+      inverse_simp_corrected[,i] <- diversity(samp,"invsimpson")/(specnumber(samp))
+      shannon_div[,i] <- diversity(samp,"shannon")
+      Pielou_even[,i] <- diversity(samp,"shannon")/log(specnumber(samp))
+      chao1_div[,i] <-chao1(samp, taxa.row = TRUE)
       b[,i] <- sum(samp)
       d[,i] <- nrow(as.data.frame(samp))
     }
     
-    a1 <- rbind(a,b,d)  
+    a1 <- rbind(b, richness_samp, shannon_div, Pielou_even, inverse_simp,inverse_simp_corrected,chao1_div)  
     a1 <- as.data.frame(a1)
     names(a1) <- names(m)
-    a1 <- rbind(a,b,d)  
-    a1 <- as.data.frame(a1)
-    names(a1) <- names(m)
-    a1
+
+    
     df_name <- as.data.frame(do.call(rbind, strsplit(as.character(names(m)), "_")))
     df_name$both <- paste(df_name$V1,df_name$V2,sep = "_")
     head(df_name) 
@@ -5740,10 +6202,10 @@ server  <- function(input, output, session) {
     head(df_name) 
     
     a2 <- as.data.frame(t(a1))
-    names(a2) <- c("inv.simpson.index","total # clones","unique # clones")
+    names(a2) <- c("total # clones","unique # clones", "shannon_div", "Pielou_even", "inverse_simp","inverse_simp_corrected","chao1_div")
     a2
     both <- cbind(a2,df_name)
-    both$inv.simpson.index_div_unique.samp <- both$inv.simpson.index/both$`total # clones`
+    # both$get(input$index.type) <- both$inv.simpson.index/both$`total # clones`
     as.data.frame(both)
     
   }
@@ -5754,22 +6216,17 @@ server  <- function(input, output, session) {
     dat
   })
   
-  
   observe({
-    
     df <- as.list(c(input$group_column_simp,input$group_column_simp3,"both"))
-    
     updateSelectInput(
       session,
       "group.index",
       choices=df,
       selected= "group"
     )
-    
   })
   
   observe({
-    
     df <- as.list(c(input$group_column_simp,input$group_column_simp3,"both"))
     
     updateSelectInput(
@@ -5834,6 +6291,7 @@ server  <- function(input, output, session) {
       input[[paste("col.inv.simpson", i, sep="_")]]
     })
   })
+  
   group.diversity1 <- function() {
     both <- inv.simpson.index()
     
@@ -5850,23 +6308,17 @@ server  <- function(input, output, session) {
     unique.col$simp.inv_palette <- cols
     #    df3 <- as.data.frame(merge(both,unique.col,by.x="V1",by.y = "V1"))
     
-    if (input$index.type == "Sample size corrected Inverse SDI") {
-      
-      if (input$IQR_95=="95% CI" ) {
-      
-      vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index_div_unique.samp))+
-        stat_summary(fun.data = quantiles_95, geom = "errorbar", position = position_dodge(1)) +       
-        stat_summary(fun.data = middle, geom = "boxplot", position = position_dodge(1))  
-        
-        if (input$show_all_dots=="Colour all dots") {
-          vals11$Simp1 +
+    vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=get(input$index.type)))+
+      stat_summary(fun.data = quantiles_95, geom = "errorbar", position = position_dodge(1)) +       
+      stat_summary(fun.data = middle, geom = "boxplot", position = position_dodge(1))  +
             theme_classic() +
             geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
                          dotsize = 1,
                          show.legend = T,
                          stackdir = "center", binpositions="all", stackgroups=TRUE
             ) +
-            scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+      
+      scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
             theme(text=element_text(size=20,family=input$font_type),
                   axis.title = element_text(colour="black", size=20,family=input$font_type),
                   axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
@@ -5877,94 +6329,103 @@ server  <- function(input, output, session) {
                   legend.position = input$legend.placement.simp,
                   legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
             guides(fill=guide_legend(ncol=input$col.num.simp)) +
-            xlab("")+
-            ylab("Inverse SDI (corrected)")
-          
-        }
-        
-      
-      
-      else {
-        vals11$Simp1 +
-          
-          stat_summary(fun.y = o, geom="point", position = position_dodge(1), shape = 1) +
-          theme_classic() +
-          scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
-          theme(text=element_text(size=20,family=input$font_type),
-                axis.title = element_text(colour="black", size=20,family=input$font_type),
-                axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                legend.title  =element_blank(),
-                legend.position = input$legend.placement.simp,
-                legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
-          guides(fill=guide_legend(ncol=input$col.num.simp)) +
-          xlab("")+
-          ylab("Inverse SDI (corrected)")
-      }
-
-
-      }
-      
-      else {
-        
-        vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index_div_unique.samp))+
-          geom_boxplot(show.legend = F)+
-          geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
-                       dotsize = 1,
-                       show.legend = T,
-                       stackdir = "center", binpositions="all", stackgroups=TRUE
-          ) +
-          theme_classic() +
-          scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
-          theme(text=element_text(size=20,family=input$font_type),
-                axis.title = element_text(colour="black", size=20,family=input$font_type),
-                axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                legend.title  =element_blank(),
-                legend.position = input$legend.placement.simp,
-                legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
-          guides(fill=guide_legend(ncol=input$col.num.simp)) +
-          xlab("")+
-          ylab("Inverse SDI (corrected)")
-        
-        vals11$Simp1
-        
-      }
-      
-    }
-    
-    else {
-      vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=inv.simpson.index))+
-        geom_boxplot(show.legend = F)+
-        geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
-                     dotsize = 1,
-                     stackdir = "center", binpositions="all", stackgroups=TRUE,
-                     show.legend = T) +
-        theme_classic() +
-        scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
-        theme(text=element_text(size=20,family=input$font_type),
-              axis.title = element_text(colour="black", size=20,family=input$font_type),
-              axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-              axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-              legend.title  =element_blank(),
-              legend.position = input$legend.placement.simp,
-              legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
-        guides(fill=guide_legend(ncol=input$col.num.simp)) +
-        xlab("")+
-        ylab("Inverse SDI")
-      
-      vals11$Simp1
-    }
+            xlab("") +
+            ylab(input$index.type)
+    vals11$Simp1
     
     
+      # if (input$IQR_95=="95% CI" ) {
+      # 
+      # 
+      #   
+      #   if (input$show_all_dots=="Colour all dots") {
+      #     
+      #     vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=get(input$index.type)))+
+      #       stat_summary(fun.data = quantiles_95, geom = "errorbar", position = position_dodge(1)) +       
+      #       stat_summary(fun.data = middle, geom = "boxplot", position = position_dodge(1))  
+      #     
+      #     # vals11$Simp1 +
+      #     #   theme_classic() +
+      #     #   geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
+      #     #                dotsize = 1,
+      #     #                show.legend = T,
+      #     #                stackdir = "center", binpositions="all", stackgroups=TRUE
+      #     #   ) +
+      #     #   scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+      #     #   theme(text=element_text(size=20,family=input$font_type),
+      #     #         axis.title = element_text(colour="black", size=20,family=input$font_type),
+      #     #         axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #     #         axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+      #     #         axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #     #         axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #     #         legend.title  =element_blank(),
+      #     #         legend.position = input$legend.placement.simp,
+      #     #         legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+      #     #   guides(fill=guide_legend(ncol=input$col.num.simp)) +
+      #     #   xlab("")+
+      #     #   ylab("Inverse SDI (corrected)")
+      #     
+      #   }
+      #   
+      # 
+      # 
+      # else {
+      #   vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=get(input$index.type)))+
+      #     stat_summary(fun.data = quantiles_95, geom = "errorbar", position = position_dodge(1)) +       
+      #     stat_summary(fun.data = middle, geom = "boxplot", position = position_dodge(1))  
+      #   # vals11$Simp1 +
+      #   #   
+      #   #   stat_summary(fun.y = o, geom="point", position = position_dodge(1), shape = 1) +
+      #   #   theme_classic() +
+      #   #   scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+      #   #   theme(text=element_text(size=20,family=input$font_type),
+      #   #         axis.title = element_text(colour="black", size=20,family=input$font_type),
+      #   #         axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #   #         axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+      #   #         axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #   #         axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #   #         legend.title  =element_blank(),
+      #   #         legend.position = input$legend.placement.simp,
+      #   #         legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+      #   #   guides(fill=guide_legend(ncol=input$col.num.simp)) +
+      #   #   xlab("")+
+      #   #   ylab("Inverse SDI (corrected)")
+      # }
+      # 
+      # 
+      # }
+      # 
+      # else {
+      #   
+      #   vals11$Simp1 <- ggplot(both,aes(x=get(input$group.index),y=get(input$index.type)))+
+      #     geom_boxplot(show.legend = F)+
+      #     geom_dotplot(aes(fill=get(input$group2.index)),binaxis = 'y',
+      #                  dotsize = 1,
+      #                  show.legend = T,
+      #                  stackdir = "center", binpositions="all", stackgroups=TRUE
+      #     ) +
+      #     theme_classic() +
+      #     scale_fill_manual(values = c(unique.col$simp.inv_palette)) +
+      #     theme(text=element_text(size=20,family=input$font_type),
+      #           axis.title = element_text(colour="black", size=20,family=input$font_type),
+      #           axis.text.x = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #           axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+      #           axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #           axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+      #           legend.title  =element_blank(),
+      #           legend.position = input$legend.placement.simp,
+      #           legend.text = element_text(colour="black", size=input$legend.text.simp,family=input$font_type)) +
+      #     guides(fill=guide_legend(ncol=input$col.num.simp)) +
+      #     xlab("")+
+      #     ylab("Inverse SDI (corrected)")
+      #   
+      #   vals11$Simp1
+      #   
+      # }
     
   }
+  
+  
   group.diversity2 <- function() {
     both <- inv.simpson.index()
     cols <- unlist(colors_inv.simp())
@@ -5982,91 +6443,145 @@ server  <- function(input, output, session) {
     unique.col <- as.data.frame(unique(both[names(both) %in% input$group2.index]))
     names(unique.col) <- "V1"
     unique.col$simp.inv_palette <- cols
-    if (input$index.type == "Sample size corrected Inverse SDI") {
-      if (input$scale_x_continuous_x=="scientific") {
-        vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index_div_unique.samp,color=get(input$group2.index)))+
-          geom_point(size =3, alpha =1, show.legend =T)+
-          theme_bw() +
-          scale_color_manual(values=unique.col$simp.inv_palette) +
-          theme(text=element_text(size=20,family=input$font_type),
-                axis.title = element_text(colour="black", size=20,family=input$font_type),
-                axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                legend.title  =element_blank(),
-                legend.position = "none",
-                legend.text = element_text(colour="black", size=8,family=input$font_type)) +
-          # scale_alpha(guide = 'none') +
-          scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
-          labs(x="number of clones",
-               y="Inverse SDI (corrected)")
-        
-        vals12$Simp2
-      }
-      else {
-        vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index_div_unique.samp,color=get(input$group2.index)))+
-          geom_point(size =3, alpha =1, show.legend =T)+
-          theme_bw() +
-          scale_color_manual(values=unique.col$simp.inv_palette) +
-          theme(text=element_text(size=20,family=input$font_type),
-                axis.title = element_text(colour="black", size=20,family=input$font_type),
-                axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                legend.title  =element_blank(),
-                legend.position = "none",
-                legend.text = element_text(colour="black", size=8,family=input$font_type)) +
-          labs(x="number of clones",
-               y="Inverse SDI (corrected)")
-        
-        vals12$Simp2
-      }}
-    else {
-      if (input$scale_x_continuous_x=="scientific") {
-        vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
-          geom_point(size =3, alpha =1, show.legend =T)+
-          theme_bw() +
-          scale_color_manual(values=unique.col$simp.inv_palette) +
-          theme(text=element_text(size=20,family=input$font_type),
-                axis.title = element_text(colour="black", size=20,family=input$font_type),
-                axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                legend.title  =element_blank(),
-                legend.position = "none",
-                legend.text = element_text(colour="black", size=8,family=input$font_type)) +
-          # scale_alpha(guide = 'none') +
-          scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
-          labs(x="number of clones",
-               y="Inverse SDI")
-        
-        vals12$Simp2
-      }
-      else {
-        vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
-          geom_point(size =3, alpha =1, show.legend =T)+
-          theme_bw() +
-          scale_color_manual(values=unique.col$simp.inv_palette) +
-          theme(text=element_text(size=20,family=input$font_type),
-                axis.title = element_text(colour="black", size=20,family=input$font_type),
-                axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
-                axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
-                legend.title  =element_blank(),
-                legend.position = "none",
-                legend.text = element_text(colour="black", size=8,family=input$font_type)) +
-          labs(x="number of clones",
-               y="Inverse SDI")
-        
-        vals12$Simp2
-      }}
+    both <- inv.simpson.index()
     
+    both <- as.data.frame(both)
+    
+    cols <- unlist(colors_inv.simp())
+    
+    selected.col <- both[names(both) %in% input$group2.index]
+    names(selected.col) <- "V1"
+    both[names(both) %in% input$group2.index] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
+    
+    unique.col <- as.data.frame(unique(both[names(both) %in% input$group2.index]))
+    names(unique.col) <- "V1"
+    unique.col$simp.inv_palette <- cols
+    #    df3 <- as.data.frame(merge(both,unique.col,by.x="V1",by.y = "V1"))
+    
+    vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=get(input$index.type),color=get(input$group2.index)))+
+      geom_point(size =3, alpha =1, show.legend =T)+
+      theme_bw() +
+      scale_color_manual(values=unique.col$simp.inv_palette) +
+      theme(text=element_text(size=20,family=input$font_type),
+            axis.title = element_text(colour="black", size=20,family=input$font_type),
+            axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+            axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+            legend.title  =element_blank(),
+            legend.position = "none",
+            legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+      # scale_alpha(guide = 'none') +
+      scale_x_continuous(labels = function(x) format(x, scientific = input$scale_x_continuous_x))+
+      labs(x=input$x.axis.index,
+           y=input$index.type)
+    
+    vals12$Simp2
     
   }
+  
+  # group.diversity2 <- function() {
+  #   both <- inv.simpson.index()
+  #   cols <- unlist(colors_inv.simp())
+  #   validate(
+  #     need(nrow(both)>0,
+  #          "select correct chain")
+  #   )
+  #   
+  #   both <- as.data.frame(both)
+  #   
+  #   selected.col <- both[names(both) %in% input$group2.index]
+  #   names(selected.col) <- "V1"
+  #   both[names(both) %in% input$group2.index] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
+  #   
+  #   unique.col <- as.data.frame(unique(both[names(both) %in% input$group2.index]))
+  #   names(unique.col) <- "V1"
+  #   unique.col$simp.inv_palette <- cols
+  #   if (input$index.type == "Sample size corrected Inverse SDI") {
+  #     if (input$scale_x_continuous_x=="scientific") {
+  #       vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=get(input$index.type),color=get(input$group2.index)))+
+  #         geom_point(size =3, alpha =1, show.legend =T)+
+  #         theme_bw() +
+  #         scale_color_manual(values=unique.col$simp.inv_palette) +
+  #         theme(text=element_text(size=20,family=input$font_type),
+  #               axis.title = element_text(colour="black", size=20,family=input$font_type),
+  #               axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+  #               axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               legend.title  =element_blank(),
+  #               legend.position = "none",
+  #               legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+  #         # scale_alpha(guide = 'none') +
+  #         scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
+  #         labs(x="number of clones",
+  #              y="Inverse SDI (corrected)")
+  #       
+  #       vals12$Simp2
+  #     }
+  #     else {
+  #       vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=get(input$index.type),color=get(input$group2.index)))+
+  #         geom_point(size =3, alpha =1, show.legend =T)+
+  #         theme_bw() +
+  #         scale_color_manual(values=unique.col$simp.inv_palette) +
+  #         theme(text=element_text(size=20,family=input$font_type),
+  #               axis.title = element_text(colour="black", size=20,family=input$font_type),
+  #               axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+  #               axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               legend.title  =element_blank(),
+  #               legend.position = "none",
+  #               legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+  #         labs(x="number of clones",
+  #              y="Inverse SDI (corrected)")
+  #       
+  #       vals12$Simp2
+  #     }}
+  #   else {
+  #     if (input$scale_x_continuous_x=="scientific") {
+  #       vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+  #         geom_point(size =3, alpha =1, show.legend =T)+
+  #         theme_bw() +
+  #         scale_color_manual(values=unique.col$simp.inv_palette) +
+  #         theme(text=element_text(size=20,family=input$font_type),
+  #               axis.title = element_text(colour="black", size=20,family=input$font_type),
+  #               axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+  #               axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               legend.title  =element_blank(),
+  #               legend.position = "none",
+  #               legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+  #         # scale_alpha(guide = 'none') +
+  #         scale_x_continuous(labels = function(x) format(x, scientific = TRUE))+
+  #         labs(x="number of clones",
+  #              y="Inverse SDI")
+  #       
+  #       vals12$Simp2
+  #     }
+  #     else {
+  #       vals12$Simp2 <- ggplot(both,aes(x=get(input$x.axis.index), y=inv.simpson.index,color=get(input$group2.index)))+
+  #         geom_point(size =3, alpha =1, show.legend =T)+
+  #         theme_bw() +
+  #         scale_color_manual(values=unique.col$simp.inv_palette) +
+  #         theme(text=element_text(size=20,family=input$font_type),
+  #               axis.title = element_text(colour="black", size=20,family=input$font_type),
+  #               axis.text.x = element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.text.y = element_text(colour="black",size=20,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type),
+  #               axis.title.x=element_text(colour="black",size=20,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type),
+  #               legend.title  =element_blank(),
+  #               legend.position = "none",
+  #               legend.text = element_text(colour="black", size=8,family=input$font_type)) +
+  #         labs(x="number of clones",
+  #              y="Inverse SDI")
+  #       
+  #       vals12$Simp2
+  #     }}
+  #   
+  #   
+  # }
   
   output$simpson.index1 <- renderPlot({
     withProgress(message = 'Figure is being generated...',
@@ -6121,7 +6636,6 @@ server  <- function(input, output, session) {
     
   }) # group
   observe({
-    
     df <- as.list(c(input$group_column_simp,input$group_column_simp3,"both"))
     
     updateSelectInput(
@@ -6141,34 +6655,47 @@ server  <- function(input, output, session) {
     group1 <- subset(dat, get(input$group1_column)==input$group1_selected) # group 1
     group2 <- subset(dat, get(input$group1_column)==input$group2_selected) # group 2
     
-    if (input$index.type == "Sample size corrected Inverse SDI") {
-      t.test(group1$inv.simpson.index_div_unique.samp, group2$inv.simpson.index_div_unique.samp, paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
-    }
-    
-    else {
+if (input$test_ttest == "parametric") {
+  t.test(group1[,names(group1) %in% input$index.type],group2[,names(group2) %in% input$index.type], 
+         paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
+}
       
-      t.test(group1$inv.simpson.index, group2$inv.simpson.index, paired = pair_samp, var.equal = ve, alternative = input$tail,conf.level = conf)
-    }
+      else {
+        wilcox.test(group1[,names(group1) %in% input$index.type],group2[,names(group2) %in% input$index.type], 
+               paired = pair_samp)
+      }
     
+  })
+  
+  AOVtestout <- reactive({
+    dat <-  table.inv.simpson()
+    dat2 <- dat[names(dat) %in% c(input$index.type,input$group1_column)]
     
+    aov(get(input$index.type) ~ get(input$group1_column),data = dat2)
+  })
+  
+  postAOVtestout <- reactive({
+    dat <-  table.inv.simpson()
+    dat2 <- dat[names(dat) %in% c(input$index.type,input$group1_column)]
+    
+    TukeyHSD(aov(get(input$index.type) ~ get(input$group1_column),data = dat2))
   })
   
   output$tvalue <- renderPrint({
     vals <- ttestout()
     if (is.null(vals)){return(NULL)}
-    vals$statistic
+    vals
   })
   
-  # Output of p value
-  output$pvalue <- renderPrint({
-    vals <- ttestout()
+  output$aov_test <- renderPrint({
+    vals <- AOVtestout()
     if (is.null(vals)){return(NULL)}
-    vals$p.value
+    summary(vals)
   })
-  output$confidence.int <- renderPrint({
-    vals <- ttestout()
+  output$postaov_test <- renderPrint({
+    vals <- postAOVtestout()
     if (is.null(vals)){return(NULL)}
-    vals$conf.int
+    vals
   })
 
   output$downloadTABLE_simpson.inv <- downloadHandler(
@@ -6186,6 +6713,7 @@ server  <- function(input, output, session) {
     }, content = function(file) {
       pdf(file, width=input$width_simpson.inv,height=input$height_simpson.inv, onefile = FALSE) # open the pdf device
       grid.arrange(print(group.diversity1()),print(group.diversity2()),ncol=2)
+      # group.diversity1()
       dev.off()},
     contentType = "application/pdf" )
   
@@ -6198,6 +6726,7 @@ server  <- function(input, output, session) {
       
       png(file, width = input$width_png_simpson.inv, height = input$height_png_simpson.inv, res = input$resolution_PNG_simpson.inv)
       grid.arrange(print(group.diversity1()),print(group.diversity2()),ncol=2)
+      # group.diversity1()
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
   
@@ -6543,24 +7072,90 @@ server  <- function(input, output, session) {
     a2
   })
   
-  output$downloadTABLE_cleaning <- downloadHandler(
-    filename = function(){
-      paste(input$name.colour,"colouring column",gsub("-", ".", Sys.Date()),".csv", sep = "")
-    },
-    content = function(file){
-      write.csv(index.cleaning1(),file, row.names = FALSE)
-    })
   output$table.index.1 <- DT::renderDataTable(escape = FALSE,options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
     df <- index.cleaning1()
     df
     
   })
   
+  observe({
+    updateSelectInput(
+      session,
+      "string.data_UMAP",
+      choices=names(input.data_CSV1()),
+      selected = c("dump.fitc","CD8.pb","LD.aqua","CD4.buv395","tcr.beta.APC.Cy7",	"Tetramer.1.APC","Tetramer.2.PE","CD62L.bv605")) 
+  }) 
+  
+  index.cleaning.UMAP <- reactive({
+    UMAP <- index.cleaning1()
+    df2 <- UMAP[,c(input$string.data_UMAP)] 
+    mydata <- na.omit(df2) # listwise deletion of missing
+    mydata <- log10(mydata) # standardize variables
+    
+    umap.data <- umap(mydata)
+    fit <- pamk(mydata, krange= input$lower_range:input$upper_range, ns=input$upper_range)
+    # append cluster assignment
+    mydata <- data.frame(UMAP, fit$pamobject$clustering,umap.data$layout)
+    aggregate(df2,by=list(fit$pamobject$clustering),FUN=mean)
+    
+    y = dim(mydata)[2]
+    x = y-2
+    names(mydata)[x:y] <- c("cluster","umap.1","umap.2")
+    names(mydata) <- ifelse(grepl("umap",names(mydata)),toupper(names(mydata)),names(mydata))
+    mydata
+  }) 
+  
+  index.cleaning.UMAP2 <- reactive({
+    UMAP <- index.cleaning1()
+    df2 <- UMAP[,c(input$string.data_UMAP)] 
+    mydata <- na.omit(df2) # listwise deletion of missing
+    mydata <- log10(mydata) # standardize variables
+    
+    umap.data <- umap(mydata)
+    fit <- pamk(mydata, krange= input$lower_range:input$upper_range, ns=input$upper_range)
+    # append cluster assignment
+    mydata <- data.frame(UMAP, fit$pamobject$clustering,umap.data$layout)
+    names(mydata) <- ifelse(grepl("umap",names(mydata)),toupper(names(mydata)),names(mydata))
+    
+    aggregate(df2,by=list(fit$pamobject$clustering),FUN=mean)
+  }) 
+  
+  output$table.index.UMAP <- DT::renderDataTable(escape = FALSE,options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE),{
+    df <- index.cleaning.UMAP()
+    df
+    
+  })
+  
+  output$table.index.UMAP2 <- DT::renderDataTable( {
+    df <- log10(index.cleaning.UMAP2())
+    df$Group.1 <- index.cleaning.UMAP2()$Group.1
+    
+    datatable(as.data.frame(df), extensions = "Buttons", options = list(searching = TRUE,
+                                                                            ordering = TRUE,
+                                                                            buttons = c('copy','csv', 'excel'),
+                                                                            dom = 'Bfrtip',
+                                                                            pageLength=20, 
+                                                                            lengthMenu=c(2,5,10,20,50,100), 
+                                                                            scrollX = TRUE
+    ))
+  }, server = FALSE)
+    
+    
+
+  
+  output$downloadTABLE_cleaning <- downloadHandler(
+    filename = function(){
+      paste(input$name.colour,"colouring column",gsub("-", ".", Sys.Date()),".csv", sep = "")
+    },
+    content = function(file){
+      write.csv(index.cleaning.UMAP(),file, row.names = FALSE)
+    })
+  
   
   # creating the dot plot ----
   input.data_CSV2 <-  reactive({switch(input$dataset_index.2,"test-csv"=test.data_csv2(),"own_csv_file" = own.data_CSV2())})
   test.data_csv2<- reactive({
-    dataframe = read.csv("test-data/Index/colouring column2021.11.19.csv",header = T)
+    dataframe = read.csv("test-data/Index/ID.780_colouring column2022.12.29.csv",header = T)
   })
   own.data_CSV2 <- reactive({
     inFile_CSV2 <- input$file_FACS.csv2
@@ -6573,37 +7168,54 @@ server  <- function(input, output, session) {
   
   observe({
     dat <- input.data_CSV2()
-    
     validate(
       need(nrow(dat)>0,
            "Upload file for dotplot")
-    )
-    
-    
+            )
     names(dat) <- gsub("\\.", " ", names(dat))
     
-    updateSelectInput(
-      session,
-      "x.axis2",
-      choices=names(dat),
-      selected = "tetramer 2 PE")
+    if (input$plot_type_umap == "overlaid dot plot") {
+      updateSelectInput(
+        session,
+        "x.axis2",
+        choices=names(dat),
+        selected = "Tetramer 2 PE")
+    }
+    
+    else {
+      updateSelectInput(
+        session,
+        "x.axis2",
+        choices=names(dat),
+        selected = "umap 1")
+    
+    }
+
   })
   
   observe({
     dat <- input.data_CSV2()
-    
     validate(
       need(nrow(dat)>0,
            "Upload file for dotplot")
     )
     names(dat) <- gsub("\\.", " ", names(dat))
     
+    if (input$plot_type_umap == "overlaid dot plot") {
+      updateSelectInput(
+        session,
+        "y.axis2",
+        choices=names(dat),
+        selected = "Tetramer 1 APC")
+    }
     
-    updateSelectInput(
-      session,
-      "y.axis2",
-      choices=names(dat),
-      selected = "tetramer 1 APC")
+    else {
+      updateSelectInput(
+        session,
+        "y.axis2",
+        choices=names(dat),
+        selected = "umap 2")
+    }
   })
   
   observe({
@@ -6661,7 +7273,6 @@ server  <- function(input, output, session) {
     }
     
   })
-  
   shape.FACS.index <- reactive({
     dat <- input.data_CSV2()
     validate(
@@ -6805,13 +7416,19 @@ server  <- function(input, output, session) {
     shape.ggplot <- unlist(shape.FACS.index2())
     size.ggplot <- unlist(size.FACS.index2())
     
-    vals15$complex_dot <- ggplot(index, aes(x=get(input$x.axis2), y=get(input$y.axis2),
+    names_unique <- as.data.frame(unique(selected.col))
+    names_unique_size <- cbind(names_unique,as.data.frame(size.ggplot))
+    
+    names(names_unique_size)[1] <- input$group_complex_dot
+    
+    index2 <- merge(index,names_unique_size,by=input$group_complex_dot)
+    
+    vals15$complex_dot <- ggplot(index2, aes(x=get(input$x.axis2), y=get(input$y.axis2),
                                             colour = get(input$group_complex_dot),
+                                            fill = get(input$group_complex_dot),
                                             shape = get(input$group_complex_dot), 
-                                            size  = get(input$group_complex_dot),
-    )
-    )+
-      geom_point() +
+                                            ))+
+      geom_point(aes(size = index2$size.ggplot)) + 
       scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                     limits = c(input$min.x,10^input$max.x),
                     labels = trans_format("log10", math_format(10^.x))) +
@@ -6821,7 +7438,8 @@ server  <- function(input, output, session) {
       theme_bw() +
       scale_color_manual(values=palette.complex) + 
       scale_shape_manual(values=shape.ggplot)+
-      scale_size_manual(values=size.ggplot)+
+      # scale_size_manual(values=size.ggplot)+
+      scale_fill_manual(values=palette.complex) +
       geom_hline(yintercept = input$yintercept,colour=input$intercept.col,linetype=input$int.type)+
       geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
       annotation_logticks()  +
@@ -6840,29 +7458,256 @@ server  <- function(input, output, session) {
     
     vals15$complex_dot
   })
+  
+  dot_plot.complex_UMAP <- reactive({
+    set.seed(123)
+    index <- input.data_CSV2();
+    validate(
+      need(nrow(index)>0,
+           "Upload file")
+    )
+    names(index) <- gsub("\\.", " ", names(index))
+    
+    
+    index <- as.data.frame(index)
+    y_lable1 <- bquote(.(input$y.axis2))
+    x_lable1 <-  bquote(.(input$x.axis2))
+    
+    index[is.na(index)] <- "not_clonal"
+    selected.col <- index[names(index) %in% input$group_complex_dot]
+    names(selected.col) <- "V1"
+    index[names(index) %in% input$group_complex_dot] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
+    palette.complex <- unlist(colors.FACS.index())
+    shape.ggplot <- unlist(shape.FACS.index2())
+    size.ggplot <- unlist(size.FACS.index2())
+    
+    names_unique <- as.data.frame(unique(selected.col))
+    names_unique_size <- cbind(names_unique,as.data.frame(size.ggplot))
+    
+    names(names_unique_size)[1] <- input$group_complex_dot
+    
+    index2 <- merge(index,names_unique_size,by=input$group_complex_dot)
+    
+    vals15$complex_dot <- ggplot(index2, aes(x=get(input$x.axis2), y=get(input$y.axis2),
+                                             colour = get(input$group_complex_dot),
+                                             fill = get(input$group_complex_dot),
+                                             shape = get(input$group_complex_dot), 
+    ))+
+      geom_point(aes(size = index2$size.ggplot)) + 
+      # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+      #               limits = c(input$min.x,10^input$max.x),
+      #               labels = trans_format("log10", math_format(10^.x))) +
+      # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+      #               limits = c(input$min.y,10^input$max.y),
+      #               labels = trans_format("log10", math_format(10^.x))) +
+      theme_bw() +
+      scale_color_manual(values=palette.complex) + 
+      scale_shape_manual(values=shape.ggplot)+
+      # scale_size_manual(values=size.ggplot)+
+      scale_fill_manual(values=palette.complex) +
+      # geom_hline(yintercept = input$yintercept,colour=input$intercept.col,linetype=input$int.type)+
+      # geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
+      # annotation_logticks()  +
+      theme(text=element_text(size=20,family=input$font_type2),
+            axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+            axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
+            axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+            axis.title.y = element_text(colour="black",size=input$axis.title.size,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+            legend.title  =element_blank(),
+            legend.position = input$legend.dot,
+            legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family=input$font_type2)) +
+      scale_alpha(guide = 'none') +
+      guides(size=FALSE, col = guide_legend(ncol=input$legend.column,override.aes = list(size=input$leg.dot.size)))+
+      labs(x=x_lable1,
+           y=y_lable1)
+    
+    vals15$complex_dot
+    
+    
+  })
+  
+  dot_plot_umap  <- reactive({
+    set.seed(123)
+    index <- input.data_CSV2();
+    validate(
+      need(nrow(index)>0,
+           "Upload file")
+    )
+    names(index) <- gsub("\\.", " ", names(index))
+    
+    
+    index <- as.data.frame(index)
+    y_lable1 <- bquote(.(input$y.axis2))
+    x_lable1 <-  bquote(.(input$x.axis2))
+    
+    index[is.na(index)] <- "not_clonal"
+    selected.col <- index[names(index) %in% input$group_complex_dot]
+    names(selected.col) <- "V1"
+    index[names(index) %in% input$group_complex_dot] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
+    palette.complex <- unlist(colors.FACS.index())
+    shape.ggplot <- unlist(shape.FACS.index2())
+    size.ggplot <- unlist(size.FACS.index2())
+    
+    names_unique <- as.data.frame(unique(selected.col))
+    names_unique_size <- cbind(names_unique,as.data.frame(size.ggplot))
+    
+    names(names_unique_size)[1] <- input$group_complex_dot
+    
+    index2 <- merge(index,names_unique_size,by=input$group_complex_dot)
+    
+    vals15$complex_dot <- ggplot(index2,aes(x=get(input$x.axis2),
+                                           y=get(input$y.axis2),
+                                           colour = as.character(get(input$group_complex_dot)),
+                                           fill = as.character(get(input$group_complex_dot)),
+                                           shape = as.character(get(input$group_complex_dot)),
+                                           
+                                           ))+
+                          geom_point(aes(size = index2$size.ggplot)) + 
+                          scale_color_manual(values=palette.complex)+
+                          scale_fill_manual(values=palette.complex) +
+      
+                          theme_bw() +
+                          scale_shape_manual(values=shape.ggplot)+
+                          # scale_size_manual(values=size.ggplot)+
+                          annotation_logticks()  +
+                          theme(text=element_text(size=20,family=input$font_type2),
+                                axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+                                axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
+                                axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+                                axis.title.y = element_text(colour="black",size=input$axis.title.size,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+                                legend.title  =element_blank(),
+                                legend.position = input$legend.dot,
+                                legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family=input$font_type2)) +
+                          scale_alpha(guide = 'none') +
+                          guides(size=FALSE, col = guide_legend(ncol=input$legend.column,override.aes = list(size=input$leg.dot.size)))+
+                          labs(x=x_lable1,
+                               y=y_lable1)
+    
+    vals15$complex_dot
+  })
+  
+  output$Add_size <- DT::renderDataTable( {
+      
+    set.seed(123)
+    index <- input.data_CSV2();
+    validate(
+      need(nrow(index)>0,
+           "Upload file")
+    )
+    names(index) <- gsub("\\.", " ", names(index))
+    
+    
+    index <- as.data.frame(index)
+    y_lable1 <- bquote(.(input$y.axis2))
+    x_lable1 <-  bquote(.(input$x.axis2))
+    
+    index[is.na(index)] <- "not_clonal"
+    selected.col <- index[names(index) %in% input$group_complex_dot]
+    names(selected.col) <- "V1"
+    index[names(index) %in% input$group_complex_dot] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
+    palette.complex <- unlist(colors.FACS.index())
+    shape.ggplot <- unlist(shape.FACS.index2())
+    size.ggplot <- unlist(size.FACS.index2())
+    
+    names_unique <- as.data.frame(unique(selected.col))
+    names_unique_size <- cbind(names_unique,as.data.frame(size.ggplot))
+    
+    names(names_unique_size)[1] <- input$group_complex_dot
+    
+    index2 <- merge(index,names_unique_size,by=input$group_complex_dot)
+    
+    # rownames(size.ggplot) <- unique(selected.col$V1)
+
+    datatable(as.data.frame(index2), extensions = "Buttons", options = list(searching = TRUE,
+                                                                           ordering = TRUE,
+                                                                           buttons = c('copy','csv', 'excel'),
+                                                                           dom = 'Bfrtip',
+                                                                           pageLength=2, 
+                                                                           lengthMenu=c(2,5,10,20,50,100), 
+                                                                           scrollX = TRUE
+      ))
+    }, server = FALSE)
+  
   dot_plot.complex1 <- function () {
     
+    if(input$plot_type_umap == "overlaid dot plot") {
+      if (input$density_dotplot =="no" & input$grid.lines.dot =='no') {
+        
+        if (input$Add_ellipse =="no") {
+          dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+        }
+       else {
+         dot_plot.complex() +
+           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+           stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+       }
+      }
+      else if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
+        if (input$Add_ellipse =="no") {
+          dot_plot.complex() 
+        }
+        else {
+          dot_plot.complex() +
+            stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+          
+        }
+        
+        
+      }
+      else if (input$density_dotplot =="yes" & input$grid.lines.dot =='no') {
+        
+        if (input$Add_ellipse =="no") {
+          dot_plot <- dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+          ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
+        }
+        else {
+          dot_plot <- dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+          ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
+
+        }
+      }
+      else {
+        if (input$Add_ellipse =="no") {
+          ggExtra::ggMarginal(dot_plot.complex(),groupColour = TRUE, groupFill = TRUE)
+        }
+        else {
+          dot_plot <- dot_plot.complex() +
+            stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+          
+          ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
+          
+        }
+        
+        
+        
+      }
+    }
     
-    if (input$density_dotplot =="no" & input$grid.lines.dot =='no') {
+    else{
       
-      dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-    }
-    else if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
+      if (input$Add_ellipse =="no" & input$grid.lines.dot =='no') {
+        
+        dot_plot.complex_UMAP() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+      }
+      else if (input$Add_ellipse =="no" & input$grid.lines.dot =='yes') {
+        
+        dot_plot.complex_UMAP() 
+      }
+      else if (input$Add_ellipse =="yes" & input$grid.lines.dot =='no') {
+        dot_plot.complex_UMAP() +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+          stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+        
+      }
+      else {
+        dot_plot.complex_UMAP() +
+          stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+      }
       
-      dot_plot.complex() 
+      
     }
     
-    else if (input$density_dotplot =="yes" & input$grid.lines.dot =='no') {
-      
-      dot_plot <- dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-      ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
-      
-    }
     
-    else {
-      ggExtra::ggMarginal(dot_plot.complex(),groupColour = TRUE, groupFill = TRUE)
-      
-    }
     
   }
   output$dot_plot.complex2 <- renderPlot({
@@ -6872,8 +7717,6 @@ server  <- function(input, output, session) {
                  })
     
     dot_plot.complex1()
-    
-    
   })
   
   output$downloadPlot_complex.dotplot <- downloadHandler(
@@ -6920,7 +7763,6 @@ server  <- function(input, output, session) {
       selected = "group")
     
   })
-  
   observe({
     updateSelectInput(
       session,
@@ -6950,18 +7792,67 @@ server  <- function(input, output, session) {
     #   a$V1 <- distinctColorPalette(dim(a)[1])
     
     df.x <- make_comb_mat(mat)
-    ht = draw(UpSet(df.x,
-                    row_names_gp =  gpar(fontfamily = input$font_type, fontsize = input$upset.text.size),
-                    column_names_gp = gpar(fontfamily = input$font_type),
-                    top_annotation = upset_top_annotation(df.x,
-                                                          annotation_name_gp = gpar(fontfamily = input$font_type)
-                    ),
-                    right_annotation = upset_right_annotation(df.x,
-                                                              annotation_name_gp = gpar(fontfamily = input$font_type)),
-                    
-                    set_order  = c(input$order.of.group)
-                    
-    ), padding = unit(c(20, 20, 20, 20), "mm"))
+    
+    
+    if (input$upset_anno == "Colour by degree") {
+      
+      your_list <- c(input$upset_colours_list1)
+      your_list_df <- as.data.frame((unlist(strsplit(your_list, ','))))
+      names(your_list_df) <- "ID"
+      
+      ht = draw(UpSet(df.x,
+                      pt_size = unit(input$upset.point.size, "mm"),
+                      lwd = input$upset.lwd,
+                      row_names_gp =  gpar(fontfamily = input$font_type,fontsize = input$upset.text.size),#changes font size of "set size" labels
+                      column_names_gp = gpar(fontfamily = input$font_type),
+                      comb_col = c(your_list_df$ID)[comb_degree(df.x)],
+                      top_annotation = upset_top_annotation(df.x,
+                                                            numbers_gp = gpar(fontfamily = input$font_type,fontsize = input$font.size.anno.upset),
+                                                            annotation_name_gp = gpar(fontfamily = input$font_type,fontsize=input$font.size.anno.upset),
+                                                            gp = gpar(fill = input$top_annotation_colour),
+                                                            
+                      ),
+                      right_annotation = upset_right_annotation(df.x,
+                                                                add_numbers = T,
+                                                                numbers_gp = gpar(fontfamily = input$font_type,fontsize = input$font.size.anno.upset),
+                                                                annotation_name_gp = gpar(fontfamily = input$font_type,fontsize=input$font.size.anno.upset),
+                                                                gp = gpar(fill = input$right_annotation_colour),
+                      ),
+                      
+                      
+                      set_order  = c(input$order.of.group)
+      ), padding = unit(c(20, 20, 20, 20), "mm"))
+      
+      
+    }
+    
+    else {
+      
+      ht = draw(UpSet(df.x,
+                      pt_size = unit(input$upset.point.size, "mm"),
+                      lwd = input$upset.lwd,
+                      row_names_gp =  gpar(fontfamily = input$font_type, fontsize = input$upset.text.size),
+                      column_names_gp = gpar(fontfamily = input$font_type),
+                      top_annotation = upset_top_annotation(df.x,
+                                                            annotation_name_gp = gpar(fontfamily = input$font_type),
+                                                            gp = gpar(fill = input$top_annotation_colour),
+                      ),
+                      
+                      
+                      right_annotation = upset_right_annotation(df.x,
+                                                                add_numbers = T,
+                                                                numbers_gp = gpar(fontfamily = input$font_type,fontsize = input$font.size.anno.upset),
+                                                                annotation_name_gp = gpar(fontfamily = input$font_type,fontsize=input$font.size.anno.upset),
+                                                                gp = gpar(fill = input$right_annotation_colour),
+                      ),
+                      
+                      
+                      set_order  = c(input$order.of.group)
+                      
+      ), padding = unit(c(20, 20, 20, 20), "mm"))
+    }
+    
+
     od = column_order(ht)
     cs = comb_size(df.x)
     decorate_annotation("intersection_size", {

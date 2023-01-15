@@ -33,6 +33,7 @@ library("sangerseqR")
 library("shinydashboard")
 require('shinyDirectoryInput')
 library("shinymanager")
+require("umap")
 
   credentials <- data.frame(
     user = c("shiny"),
