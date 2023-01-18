@@ -37,6 +37,7 @@ require("fpc")
 require("fossil")
 
 library(shinybusy)
+library(ggridges)
 
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
@@ -1286,8 +1287,8 @@ tabPanel("Paired TCR with Index data",
                                                    accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
                                          selectInput("font_type2","Type of font",choices = font,selected = "Times"),
                                          fluidRow(
-                                           column(4,selectInput("x.axis2",label = h5("Select x-axis"),"")),
-                                           column(4,selectInput("y.axis2",label = h5("Select y-axis"),"")),
+                                           column(6,selectInput("x.axis2",label = h5("Select x-axis"),"")),
+                                           column(6,selectInput("y.axis2",label = h5("Select y-axis"),"")),
                                            
                                          ),
                                          fluidRow(
@@ -1363,7 +1364,7 @@ tabPanel("Paired TCR with Index data",
 # UI complex dotplot -----
                                  tabPanel("TCR with Index data plot",value = 3,
                                           fluidRow(
-                                            column(4,selectInput( "plot_type_umap","type of plot",choices = c("overlaid dot plot","Normal"))),
+                                            column(4,selectInput( "plot_type_umap","type of plot",choices = c("overlaid dot plot","Normal","Ridge plot"))),
                                             
                                             conditionalPanel(
                                               condition = "input.plot_type_umap == 'overlaid dot plot'",
@@ -1401,8 +1402,19 @@ tabPanel("Paired TCR with Index data",
                                                    
                                                    
                                           ),
-                                          fluidRow(column(12, plotOutput("dot_plot.complex2",height = "600px"))),
+                                          conditionalPanel(
+                                            condition = "input.plot_type_umap == 'overlaid dot plot' || input.plot_type_umap == 'Normal'",
+                                            fluidRow(column(12, plotOutput("dot_plot.complex2",height = "600px"))),
+                                            
+                                          ),
                                           
+                                          conditionalPanel(
+                                            condition = "input.plot_type_umap == 'Ridge plot'", 
+                                            fluidRow(column(12, plotOutput("dot_plot_ridge",height = "400px")),
+                                                     column(12, div(DT::dataTableOutput("dot_plot_ridge_tab")))),
+                                            
+                                          ),
+
                                           textInput("name.colour3","Prefix of file name","ID.780_"),
                                           
                                           fluidRow(
@@ -1417,7 +1429,9 @@ tabPanel("Paired TCR with Index data",
                                             column(3,numericInput("resolution_PNG_complex.dotplot","Resolution of PNG", value = 144)),
                                             column(3,style = "margin-top: 25px;",downloadButton('downloadPlotPNG_complex.dotplot','Download PNG'))
                                           ),
-                                 )
+                                 ),
+
+
            )
            )
          )
@@ -4258,7 +4272,7 @@ server  <- function(input, output, session) {
   }
   
   
-  # CHAIN LENGTH HISTOGRAM- ---
+  # CHAIN LENGTH HISTOGRAM ----
   Chain1_length <- function () {
     df <- input.data2(); 
     validate(
@@ -5014,7 +5028,7 @@ server  <- function(input, output, session) {
       need(nrow(df)>0,
            error_message_val1)
     )
-    
+    df
     df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt2)),numcolwise(sum)))
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt2])
     df_unique$Unique_clones <- 1
@@ -6730,8 +6744,6 @@ if (input$test_ttest == "parametric") {
       dev.off()}, contentType = "application/png" # MIME type of the image
   )
   
-  
-  
   # FACS index data -----
   input.data_FACS <- reactive({switch(input$dataset3,"test-FACS" = test.data_FACS(), "own_FACS" = own.data_FACS())})
   test.data_FACS <- reactive({
@@ -6934,6 +6946,7 @@ if (input$test_ttest == "parametric") {
   })
   
   vals15 <- reactiveValues(complex_dot=NULL)
+  vals16 <- reactiveValues(complex_dot2=NULL)
   
   output$names.in.file <- renderPrint( {
     df <- input.data_CSV1();
@@ -7140,8 +7153,6 @@ if (input$test_ttest == "parametric") {
     ))
   }, server = FALSE)
     
-    
-
   
   output$downloadTABLE_cleaning <- downloadHandler(
     filename = function(){
@@ -7182,12 +7193,21 @@ if (input$test_ttest == "parametric") {
         selected = "Tetramer 2 PE")
     }
     
+   
+    else if (input$plot_type_umap == "Ridge plot") {
+      updateSelectInput(
+        session,
+        "x.axis2",
+        choices=names(dat),
+        selected = "Tetramer 2 PE")
+    }
+    
     else {
       updateSelectInput(
         session,
         "x.axis2",
         choices=names(dat),
-        selected = "umap 1")
+        selected = "UMAP 1")
     
     }
 
@@ -7209,12 +7229,20 @@ if (input$test_ttest == "parametric") {
         selected = "Tetramer 1 APC")
     }
     
+    else if (input$plot_type_umap == "Ridge plot") {
+      updateSelectInput(
+        session,
+        "y.axis2",
+        choices=names(dat),
+        selected = "Tetramer 1 APC")
+    }
+    
     else {
       updateSelectInput(
         session,
         "y.axis2",
         choices=names(dat),
-        selected = "umap 2")
+        selected = "UMAP 2")
     }
   })
   
@@ -7235,6 +7263,7 @@ if (input$test_ttest == "parametric") {
   })
   
   cols.FACS.index <- reactive({
+    set.seed(123)
     dat <- input.data_CSV2()
     validate(
       need(nrow(dat)>0,
@@ -7291,9 +7320,6 @@ if (input$test_ttest == "parametric") {
     lapply(1:dim(num)[1], function(i) {
       numericInput(paste("shape.FACS.index", i, sep="_"), paste(num[i,]), 19)        
     })
-    
-    
-    
   })
   size.FACS.index <- reactive({
     dat <- input.data_CSV2()
@@ -7313,8 +7339,6 @@ if (input$test_ttest == "parametric") {
     lapply(1:dim(num)[1], function(i) {
       numericInput(paste("size.FACS.index", i, sep="_"), paste(num[i,]), 3)        
     })
-    
-    
     
   })
   alpha.FACS.index <- reactive({
@@ -7337,6 +7361,7 @@ if (input$test_ttest == "parametric") {
   output$myPanel.FACS.index.size <- renderUI({size.FACS.index()})
   
   colors.FACS.index <- reactive({
+    set.seed(123)
     dat <- input.data_CSV2()
     validate(
       need(nrow(dat)>0,
@@ -7427,8 +7452,9 @@ if (input$test_ttest == "parametric") {
                                             colour = get(input$group_complex_dot),
                                             fill = get(input$group_complex_dot),
                                             shape = get(input$group_complex_dot), 
+                                            size = get(input$group_complex_dot), 
                                             ))+
-      geom_point(aes(size = index2$size.ggplot)) + 
+      geom_point() + 
       scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                     limits = c(input$min.x,10^input$max.x),
                     labels = trans_format("log10", math_format(10^.x))) +
@@ -7438,7 +7464,7 @@ if (input$test_ttest == "parametric") {
       theme_bw() +
       scale_color_manual(values=palette.complex) + 
       scale_shape_manual(values=shape.ggplot)+
-      # scale_size_manual(values=size.ggplot)+
+      scale_size_manual(values=size.ggplot)+
       scale_fill_manual(values=palette.complex) +
       geom_hline(yintercept = input$yintercept,colour=input$intercept.col,linetype=input$int.type)+
       geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
@@ -7492,22 +7518,14 @@ if (input$test_ttest == "parametric") {
                                              colour = get(input$group_complex_dot),
                                              fill = get(input$group_complex_dot),
                                              shape = get(input$group_complex_dot), 
+                                             size = get(input$group_complex_dot), 
     ))+
-      geom_point(aes(size = index2$size.ggplot)) + 
-      # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-      #               limits = c(input$min.x,10^input$max.x),
-      #               labels = trans_format("log10", math_format(10^.x))) +
-      # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-      #               limits = c(input$min.y,10^input$max.y),
-      #               labels = trans_format("log10", math_format(10^.x))) +
+      geom_point() + 
       theme_bw() +
       scale_color_manual(values=palette.complex) + 
       scale_shape_manual(values=shape.ggplot)+
-      # scale_size_manual(values=size.ggplot)+
+      scale_size_manual(values=size.ggplot)+
       scale_fill_manual(values=palette.complex) +
-      # geom_hline(yintercept = input$yintercept,colour=input$intercept.col,linetype=input$int.type)+
-      # geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
-      # annotation_logticks()  +
       theme(text=element_text(size=20,family=input$font_type2),
             axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
             axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
@@ -7524,66 +7542,6 @@ if (input$test_ttest == "parametric") {
     vals15$complex_dot
     
     
-  })
-  
-  dot_plot_umap  <- reactive({
-    set.seed(123)
-    index <- input.data_CSV2();
-    validate(
-      need(nrow(index)>0,
-           "Upload file")
-    )
-    names(index) <- gsub("\\.", " ", names(index))
-    
-    
-    index <- as.data.frame(index)
-    y_lable1 <- bquote(.(input$y.axis2))
-    x_lable1 <-  bquote(.(input$x.axis2))
-    
-    index[is.na(index)] <- "not_clonal"
-    selected.col <- index[names(index) %in% input$group_complex_dot]
-    names(selected.col) <- "V1"
-    index[names(index) %in% input$group_complex_dot] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
-    palette.complex <- unlist(colors.FACS.index())
-    shape.ggplot <- unlist(shape.FACS.index2())
-    size.ggplot <- unlist(size.FACS.index2())
-    
-    names_unique <- as.data.frame(unique(selected.col))
-    names_unique_size <- cbind(names_unique,as.data.frame(size.ggplot))
-    
-    names(names_unique_size)[1] <- input$group_complex_dot
-    
-    index2 <- merge(index,names_unique_size,by=input$group_complex_dot)
-    
-    vals15$complex_dot <- ggplot(index2,aes(x=get(input$x.axis2),
-                                           y=get(input$y.axis2),
-                                           colour = as.character(get(input$group_complex_dot)),
-                                           fill = as.character(get(input$group_complex_dot)),
-                                           shape = as.character(get(input$group_complex_dot)),
-                                           
-                                           ))+
-                          geom_point(aes(size = index2$size.ggplot)) + 
-                          scale_color_manual(values=palette.complex)+
-                          scale_fill_manual(values=palette.complex) +
-      
-                          theme_bw() +
-                          scale_shape_manual(values=shape.ggplot)+
-                          # scale_size_manual(values=size.ggplot)+
-                          annotation_logticks()  +
-                          theme(text=element_text(size=20,family=input$font_type2),
-                                axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
-                                axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
-                                axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
-                                axis.title.y = element_text(colour="black",size=input$axis.title.size,angle=90,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
-                                legend.title  =element_blank(),
-                                legend.position = input$legend.dot,
-                                legend.text = element_text(colour="black",size=input$legend.size.cd,hjust=.5,vjust=.5,face="plain",family=input$font_type2)) +
-                          scale_alpha(guide = 'none') +
-                          guides(size=FALSE, col = guide_legend(ncol=input$legend.column,override.aes = list(size=input$leg.dot.size)))+
-                          labs(x=x_lable1,
-                               y=y_lable1)
-    
-    vals15$complex_dot
   })
   
   output$Add_size <- DT::renderDataTable( {
@@ -7639,7 +7597,7 @@ if (input$test_ttest == "parametric") {
        else {
          dot_plot.complex() +
            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-           stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+           stat_ellipse(geom="polygon",level=0.8,alpha=0.2,lwd = 0.8)
        }
       }
       else if (input$density_dotplot =="no" & input$grid.lines.dot =='yes') {
@@ -7648,7 +7606,7 @@ if (input$test_ttest == "parametric") {
         }
         else {
           dot_plot.complex() +
-            stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+            stat_ellipse(geom="polygon",level=0.8,alpha=0.2,lwd = 0.8)
           
         }
         
@@ -7661,7 +7619,7 @@ if (input$test_ttest == "parametric") {
           ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
         }
         else {
-          dot_plot <- dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+          dot_plot <- dot_plot.complex() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + stat_ellipse(geom="polygon",level=0.8,alpha=0.2,lwd = 0.8)
           ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
 
         }
@@ -7672,7 +7630,7 @@ if (input$test_ttest == "parametric") {
         }
         else {
           dot_plot <- dot_plot.complex() +
-            stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+            stat_ellipse(geom="polygon",level=0.8,alpha=0.2,lwd = 0.8)
           
           ggExtra::ggMarginal(dot_plot,groupColour = TRUE, groupFill = TRUE)
           
@@ -7682,7 +7640,10 @@ if (input$test_ttest == "parametric") {
         
       }
     }
-    
+    else if (input$plot_type_umap == "Ridge plot") {
+      dot_plot_ridge_df()
+      
+    }
     else{
       
       if (input$Add_ellipse =="no" & input$grid.lines.dot =='no') {
@@ -7696,12 +7657,12 @@ if (input$test_ttest == "parametric") {
       else if (input$Add_ellipse =="yes" & input$grid.lines.dot =='no') {
         dot_plot.complex_UMAP() +
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-          stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+          stat_ellipse(geom="polygon",level=0.8,alpha=0.2,lwd = 0.8)
         
       }
       else {
         dot_plot.complex_UMAP() +
-          stat_ellipse(geom="polygon",level=0.8,alpha=0.2)
+          stat_ellipse(geom="polygon",level=0.8,alpha=0.2,lwd = 0.8)
       }
       
       
@@ -7717,6 +7678,100 @@ if (input$test_ttest == "parametric") {
                  })
     
     dot_plot.complex1()
+  })
+  
+  
+  dot_plot_ridge_df  <- reactive({
+    set.seed(123)
+    index <- input.data_CSV2();
+    validate(
+      need(nrow(index)>0,
+           "Upload file")
+    )
+    names(index) <- gsub("\\.", " ", names(index))
+    
+    title_axis <- bquote(.(input$x.axis2))
+    index <- as.data.frame(index)
+    index[is.na(index)] <- "not_clonal"
+    selected.col <- index[names(index) %in% input$group_complex_dot]
+    names(selected.col) <- "V1"
+    index[names(index) %in% input$group_complex_dot] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
+    palette.complex <- unlist(colors.FACS.index())
+    index$selected <- index[,names(index) %in% input$x.axis2]
+    index_clone <- index[,names(index) %in% c("cloneCount",input$group_complex_dot)]
+    index_clone <- index_clone %>%
+      select(cloneCount, everything())
+    df3 <- as.data.frame(ddply(index_clone,names(index_clone[-c(1)]),numcolwise(sum)))
+    names(df3)[2] <- "Sum_count"
+    df4 <- merge(index,df3,by=input$group_complex_dot)
+    index2 <- subset(df4,df4$Sum_count>2)
+    num <- unique(index[names(index) %in% input$group_complex_dot])
+    num$palette.complex <- palette.complex
+    
+    df <- as.data.frame(unique(index2[,names(index2) %in% c("cloneCount",input$group_complex_dot)]))
+    # names(df) <- input$group_complex_dot
+    df.col1 <- merge(df,num,by=input$group_complex_dot)
+    
+    
+   ggplot(index, aes(x = log10(selected), y = as.character(get(input$group_complex_dot)), fill = as.character(get(input$group_complex_dot)))) +
+      geom_density_ridges() +
+      theme_ridges() + 
+      scale_fill_manual(values=df.col1$palette.complex)+
+      theme(legend.position = "none") +
+      labs(title=title_axis) +
+     theme(text=element_text(size=20,family=input$font_type2),
+           axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
+           axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
+           axis.title.x = element_blank(),
+           axis.title.y = element_blank(),
+           # panel.grid.major.x = element_blank() ,
+           
+           )
+           # legend.title  =element_blank(),
+           
+    
+  })
+
+  output$dot_plot_ridge_tab <- DT::renderDataTable( {
+    index <- input.data_CSV2();
+    validate(
+      need(nrow(index)>0,
+           "Upload file")
+    )
+    names(index) <- gsub("\\.", " ", names(index))
+    
+    index <- as.data.frame(index)
+    index[is.na(index)] <- "not_clonal"
+    index$selected <- log10(index[,names(index) %in% input$x.axis2])
+    
+    tab <-as.data.frame(TukeyHSD( aov(selected ~ as.character(get(input$group_complex_dot)),data = index))[1])
+    names(tab) <- c("diff" ,"lwr","upr","p.adj")
+
+    tab$stat <- ifelse(tab$p.adj<0.0001,"****",
+                       ifelse(tab$p.adj<0.001,"***",
+                              ifelse(tab$p.adj<0.01,"**",
+                                     ifelse(tab$p.adj<0.05,"*","NS"
+                                     ))))
+    
+
+    
+    datatable(tab, extensions = "Buttons", options = list(searching = TRUE,
+                                                                     ordering = TRUE,
+                                                                     buttons = c('copy','csv', 'excel'),
+                                                                     dom = 'Bfrtip',
+                                                                     pageLength=10, 
+                                                                     lengthMenu=c(2,5,10,20,50,100), 
+                                                                     scrollX = TRUE
+    ))
+  }, server = FALSE)
+  
+  output$dot_plot_ridge <- renderPlot({
+    withProgress(message = 'Figure is being generated...',
+                 detail = '', value = 0, {
+                   test_fun()
+                 })
+    
+    dot_plot_ridge_df()
   })
   
   output$downloadPlot_complex.dotplot <- downloadHandler(
@@ -7886,6 +7941,7 @@ if (input$test_ttest == "parametric") {
     mat <- as.data.frame(mat)
     mat
   })
+  
   output$upset.datatable <- DT::renderDataTable( {
     datatable(upset.datatable1(), extensions = "Buttons", options = list(searching = TRUE,
                                                                          ordering = TRUE,
