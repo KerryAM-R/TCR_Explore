@@ -521,11 +521,11 @@ tabPanel("Convert to TCR_Explore file format",
                         column(3, selectInput("J.GENE.clean","Junction gene column",choices = "")),
                         column(3, selectInput("CDR3.gene.clean","CDR3 amino acid column",choices = "")),
                         
-                        conditionalPanel(condition = "input.datasource == '10x_scSeq'",
-                                         column(3,selectInput("V.GENE.clean2","Variable gene column (2)",choices = "")),
-                                         column(3,selectInput("J.GENE.clean2","Junction gene column (2)",choices = "")),
-                                         column(3, selectInput("CDR3.gene.clean2","CDR3 amino acid column",choices = ""))
-                                         )
+                        # conditionalPanel(condition = "input.datasource == '10x_scSeq'",
+                        #                  column(3,selectInput("V.GENE.clean2","Variable gene column (2)",choices = "")),
+                        #                  column(3,selectInput("J.GENE.clean2","Junction gene column (2)",choices = "")),
+                        #                  column(3, selectInput("CDR3.gene.clean2","CDR3 amino acid column",choices = ""))
+                        #                  )
                         
                         ),
                fluidRow(column(12, selectInput("col.to.remove","Columns to remove","",multiple = T, width = "1200px") )),
@@ -3007,107 +3007,185 @@ server  <- function(input, output, session) {
     # paired 10x scSeq
     
     else if (input$datasource == "10x_scSeq") {
-      x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
-      names(x2)[1] <- "cloneCount"
+
+      x2$cloneCount <- 1
+      contigs <- x2
+      contigs <- subset(contigs,contigs$productive==T)
+      contigs_lim <- contigs[!names(contigs) %in% c("is_cell","contig_id","high_confidence","raw_consensus_id","exact_subclonotype_id","umis","reads","length","cdr3_nt",names(contigs[grep("fwr",names(contigs))]),names(contigs[grep("cdr1",names(contigs))]),names(contigs[grep("cdr2",names(contigs))])
+      )]
+      contigs_lim
+      contig_AG <- subset(contigs_lim,contigs_lim$chain=="TRA" | contigs_lim$chain=="TRG")
+      name.list <- names(contig_AG[c(names(contig_AG[grep("gene",names(contig_AG))]),
+                                     names(contig_AG[grep("cdr3",names(contig_AG))]),
+                                     "chain")])
+      contig_AG <- contig_AG %>%
+        select(all_of(name.list), everything())
+      names(contig_AG)[1:summary(name.list)[1]] <-paste(names(contig_AG[names(contig_AG) %in% name.list]),"_AG",sep="")
+      contig_AG
       
-      for (i in 1:dim(x2)[2]) {
-        x2[,i]   <- gsub(";",",",x2[,i])
-      }
-      
-      x2$group <- input$group.imm
-      x2$indiv <- input$indiv.imm
-      x2$group.indiv <- paste(x2$group,x2$indiv,sep=".")
-      names(x2)[1] <- "cloneCount"
-      
-      x3 <- x2
-      
-      df_name <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean2]), ",")))
-      df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean2]), ",")))
-      
-      x3$AV <- df_name[,1]
-      x3$AJ <- df_name2[,1]
-      x3$AJ <- gsub("[*]0.","",x3$AJ)
-      x3$AJ <- gsub(",, AJ..","",x3$AJ)
-      x3$AJ <- gsub(",, AJ.","",x3$AJ)
-      
-      x3$AVJ <- paste(x3$AV,".",x3$AJ,sep="")
-      x3$AV <- gsub("[*]0.","",x3$AV)
-      x3$AVJ <- gsub("[*]0.","",x3$AVJ)
-      
-      df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean]), ",")))
-      df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean]), ",")))
-      df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$D.GENE.clean]), ",")))
-      
-      x3$BV <- df_name3[,1]
-      x3$BJ <- df_name4[,1]
-      x3$BD <- df_name5[,1]
+      contig_BD <- subset(contigs_lim,contigs_lim$chain=="TRB" | contigs_lim$chain=="TRD")
+      name.list <- names(contig_BD[c(names(contig_BD[grep("gene",names(contig_BD))]),
+                                     names(contig_BD[grep("cdr3",names(contig_BD))]),
+                                     "chain")])
+      contig_BD <- contig_BD %>%
+        select(all_of(name.list), everything())
       
       
-      x3$BVJ <- paste(x3$BV,".",x3$BJ,sep="")
-      x3$BVDJ <- paste(x3$BV,".",x3$BD,".",x3$BJ,sep="")
+      names(contig_BD)[1:summary(name.list)[1]] <-paste(names(contig_BD[names(contig_BD) %in% name.list]),"_BD",sep="")
+      contig_BD
+      # contig_paired <- merge(contig_AG,contig_BD, by=c("barcode", "full_length" ,"productive" ,"raw_clonotype_id"),all = T)
+      # contig_paired <- merge(contig_AG,contig_BD, by=c("barcode", "full_length" ,"productive" ,"raw_clonotype_id"),all = T)
+      contig_paired <- merge(contig_AG,contig_BD, by=c("barcode", "full_length" ,"productive" ,"raw_clonotype_id"),all = T)
       
-      x3$BV <- gsub("[*]0.","",x3$BV)
-      x3$BJ <- gsub("[*]0.","",x3$BJ)
-      x3$BD <- gsub("[*]0.","",x3$BD)
-      x3$BD <- gsub(" ","",x3$BD)
-      x3$BVJ <- gsub("[*]0.","",x3$BVJ)
-      x3$BVDJ <- gsub("[*]0.","",x3$BVDJ)
-      x3$BVDJ <- gsub(".NA.",".",x3$BVDJ)
+      contig_paired$pairing <- ifelse(contig_paired$chain_BD=="TRB" & contig_paired$chain_AG=="TRA","abTCR Paired",
+                                      ifelse(contig_paired$chain_BD=="TRD" & contig_paired$chain_AG=="TRG","gdTCR Paired"
+                                      ))
+      contig_paired
+      contig_paired$pairing[is.na(contig_paired$pairing)] <- "unpaired"
+      contig_paired <- contig_paired[!names(contig_paired) %in% c("d_gene_AG")]
+      contig_paired_only <- contig_paired
+      contig_paired_only$d_gene_BD <- sub("^$","NA", contig_paired_only$d_gene_BD)
+      # 
+      contig_paired_only$vj_gene_AG <- paste(contig_paired_only$v_gene_AG,contig_paired_only$j_gene_AG,sep = ".")
+      contig_paired_only$vj_gene_AG <- gsub("NA.NA","",contig_paired_only$vj_gene_AG)
+      # 
+      contig_paired_only$vj_gene_BD <- paste(contig_paired_only$v_gene_BD,contig_paired_only$j_gene_BD,sep = ".")
+      contig_paired_only$vj_gene_BD <- gsub(".NA.",".",contig_paired_only$vj_gene_BD)
+      contig_paired_only$vj_gene_BD <- gsub("NA.NA","",contig_paired_only$vj_gene_BD)
+      # 
+      contig_paired_only$vdj_gene_BD <- paste(contig_paired_only$v_gene_BD,contig_paired_only$d_gene_BD,contig_paired_only$j_gene_BD,sep = ".")
+      contig_paired_only$vdj_gene_BD <- gsub(".NA.",".",contig_paired_only$vdj_gene_BD)
+      contig_paired_only$vdj_gene_BD <- gsub("NA.NA","",contig_paired_only$vdj_gene_BD)
+      # 
+      contig_paired_only$vj_gene_cdr3_AG <- paste(contig_paired_only$vj_gene_AG,contig_paired_only$cdr3_AG,sep = "_")
+      contig_paired_only$vj_gene_cdr3_AG <- gsub("_NA","",contig_paired_only$vj_gene_cdr3_AG)
+      # 
+      contig_paired_only$vj_gene_cdr3_BD <- paste(contig_paired_only$vj_gene_BD,contig_paired_only$cdr3_BD,sep = "_")
+      contig_paired_only$vj_gene_cdr3_BD <- gsub("_NA","",contig_paired_only$vj_gene_cdr3_BD)
+      # 
+      contig_paired_only$vdj_gene_cdr3_BD <- paste(contig_paired_only$vdj_gene_BD,contig_paired_only$cdr3_BD,sep = "_")
+      contig_paired_only$vdj_gene_cdr3_BD <- gsub("_NA","",contig_paired_only$vdj_gene_cdr3_BD)
+      # 
+      contig_paired_only$vj_gene_AG_BD <- paste(contig_paired_only$vj_gene_AG,contig_paired_only$vj_gene_BD,sep = " & ")
+      contig_paired_only$vdj_gene_AG_BD <- paste(contig_paired_only$vj_gene_AG,contig_paired_only$vdj_gene_BD,sep = " & ")
+      contig_paired_only$vdj_gene_AG_BD <- gsub("^ & ","",contig_paired_only$vdj_gene_AG_BD)
+      contig_paired_only$vdj_gene_AG_BD <- gsub(" & $","",contig_paired_only$vdj_gene_AG_BD)
+      # 
+      # #updating names to be consistant.... 
+      contig_paired_only$vj_gene_cdr3_AG_BD <- paste(contig_paired_only$vj_gene_cdr3_AG,contig_paired_only$vj_gene_cdr3_BD,sep = " & ")
+      contig_paired_only$vj_gene_cdr3_AG_BD <- gsub("^ & ","",contig_paired_only$vj_gene_cdr3_AG_BD)
+      contig_paired_only$vj_gene_cdr3_AG_BD <- gsub(" & $","",contig_paired_only$vj_gene_cdr3_AG_BD)
       
-      x3$AJ <- gsub("TR","",x3$AJ)
-      x3$AVJ <- gsub("TR","",x3$AVJ)
-      x3$AVJ <- gsub("AJ","J",x3$AVJ)
-      x3$AVJ.BVJ <- paste(x3$AVJ,"_",x3$BVJ,sep="")
-      x3$AVJ.BVDJ <- paste(x3$AVJ,"_",x3$BVDJ,sep="")
-  
-      x3$AVJ_aCDR3 <- paste(x3$AVJ,x3[,names(x3) %in% input$CDR3.gene.clean2],sep="_")
-      x3$BVJ_bCDR3 <- paste(x3$BVJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-      x3$BVDJ_bCDR3 <- paste(x3$BVDJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      contig_paired_only$vdj_gene_cdr3_AG_BD <- paste(contig_paired_only$vj_gene_cdr3_AG,contig_paired_only$vdj_gene_cdr3_BD,sep = " & ")
+      contig_paired_only$vdj_gene_cdr3_AG_BD <- gsub("^ & ","",contig_paired_only$vdj_gene_cdr3_AG_BD)
+      contig_paired_only$vdj_gene_cdr3_AG_BD <- gsub(" & $","",contig_paired_only$vdj_gene_cdr3_AG_BD)
+      # contig_paired_only$vdj_gene_cdr3_AG_BD <- paste(contig_paired_only$vj_gene_cdr3_AG,contig_paired_only$vdj_gene_cdr3_BD,sep = " & ")
+      names(contig_paired_only)[names(contig_paired_only) %in% "barcode"] <- "Cell_Index"
+      contig_paired_only <- contig_paired_only[!duplicated(contig_paired_only$Cell_Index),] # remove duplicates
+      # contig_paired_only <- contig_paired_only %>%
+      #   select(all_of(c("Cell_Index","group.indiv")), everything())
       
-      x3$AVJ_aCDR3_BVJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVJ_bCDR3,sep=" & ")
-      x3$AVJ_aCDR3_BVDJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVDJ_bCDR3,sep=" & ")
-      x3$BD <- gsub("NA","-",x3$BD)
-      
+      x3 <- contig_paired_only
       x3 <- x3[!names(x3) %in% input$col.to.remove]
-      x3[is.na(x3)] <- "Missing"
-      
-      x3 <- subset(x3, !x3$AJ=="Missing")
-      x3 <- subset(x3, !x3$BJ=="Missing")
-      x3[is.na(x3)] <- " "
+      x3$group <- input$group.imm
+      x3$indiv <- input$indiv.imm
+      x3$group.indiv <- paste(x3$group,x3$indiv,sep=".")
+      # x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
+      # names(x2)[1] <- "cloneCount"
+      # 
+      # for (i in 1:dim(x2)[2]) {
+      #   x2[,i]   <- gsub(";",",",x2[,i])
+      # }
+      # 
+      # x2$group <- input$group.imm
+      # x2$indiv <- input$indiv.imm
+      # x2$group.indiv <- paste(x2$group,x2$indiv,sep=".")
+      # names(x2)[1] <- "cloneCount"
+      # 
+      # x3 <- x2
+      # 
+      # df_name <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean2]), ",")))
+      # df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean2]), ",")))
+      # 
+      # x3$AV <- df_name[,1]
+      # x3$AJ <- df_name2[,1]
+      # x3$AJ <- gsub("[*]0.","",x3$AJ)
+      # x3$AJ <- gsub(",, AJ..","",x3$AJ)
+      # x3$AJ <- gsub(",, AJ.","",x3$AJ)
+      # 
+      # x3$AVJ <- paste(x3$AV,".",x3$AJ,sep="")
+      # x3$AV <- gsub("[*]0.","",x3$AV)
+      # x3$AVJ <- gsub("[*]0.","",x3$AVJ)
+      # 
+      # df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean]), ",")))
+      # df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean]), ",")))
+      # df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$D.GENE.clean]), ",")))
+      # 
+      # x3$BV <- df_name3[,1]
+      # x3$BJ <- df_name4[,1]
+      # x3$BD <- df_name5[,1]
+      # 
+      # 
+      # x3$BVJ <- paste(x3$BV,".",x3$BJ,sep="")
+      # x3$BVDJ <- paste(x3$BV,".",x3$BD,".",x3$BJ,sep="")
+      # 
+      # x3$BV <- gsub("[*]0.","",x3$BV)
+      # x3$BJ <- gsub("[*]0.","",x3$BJ)
+      # x3$BD <- gsub("[*]0.","",x3$BD)
+      # x3$BD <- gsub(" ","",x3$BD)
+      # x3$BVJ <- gsub("[*]0.","",x3$BVJ)
+      # x3$BVDJ <- gsub("[*]0.","",x3$BVDJ)
+      # x3$BVDJ <- gsub(".NA.",".",x3$BVDJ)
+      # 
+      # x3$AJ <- gsub("TR","",x3$AJ)
+      # x3$AVJ <- gsub("TR","",x3$AVJ)
+      # x3$AVJ <- gsub("AJ","J",x3$AVJ)
+      # x3$AVJ.BVJ <- paste(x3$AVJ,"_",x3$BVJ,sep="")
+      # x3$AVJ.BVDJ <- paste(x3$AVJ,"_",x3$BVDJ,sep="")
+      # 
+      # x3$AVJ_aCDR3 <- paste(x3$AVJ,x3[,names(x3) %in% input$CDR3.gene.clean2],sep="_")
+      # x3$BVJ_bCDR3 <- paste(x3$BVJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      # x3$BVDJ_bCDR3 <- paste(x3$BVDJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      # 
+      # x3$AVJ_aCDR3_BVJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVJ_bCDR3,sep=" & ")
+      # x3$AVJ_aCDR3_BVDJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVDJ_bCDR3,sep=" & ")
+      # x3$BD <- gsub("NA","-",x3$BD)
+      # 
+      # x3 <- x3[!names(x3) %in% input$col.to.remove]
+      # x3[is.na(x3)] <- "Missing"
+      # 
+      # x3 <- subset(x3, !x3$AJ=="Missing")
+      # x3 <- subset(x3, !x3$BJ=="Missing")
+      # x3[is.na(x3)] <- " "
       
     }
     
     # other data 
     else {
-      x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
+      # x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
       
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       names(x2)[1] <- "cloneCount"
-      
-     
-      
+
       x3 <- x2
-      
-      x3 <- x3[!is.na(x3[names(x2) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
-      
-      x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
-      x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
-      
+      x3
+      x3 <- x3[!names(x3) %in% input$col.to.remove]
+      # x3 <- x3[!is.na(x3[names(x3) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
       x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
-      
       x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
-      
       x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
-      
       x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
       x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
       x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
       x3$TRD <- gsub("NA","-",x3$TRD)
-      
+
       x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
       x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-      
+
       x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
+      x3 <- subset(x3,x3$TRV!="None")
+      # x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
+      # x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
     }
 
   x3
@@ -6006,7 +6084,6 @@ server  <- function(input, output, session) {
     df.1[is.na(df.1)] <- 0
     dim(df.1)
     
-    
     # ha = HeatmapAnnotation(text = anno_text(df.1), which = "row", gp = gpar(fontfamily = input$font_type, fontface = "bold"))
     ht <- Heatmap(df.1,
                   heatmap_legend_param = list(title = "count",
@@ -7470,6 +7547,7 @@ if (input$test_ttest == "parametric") {
       geom_vline(xintercept = input$xintercept,colour=input$intercept.col, linetype=input$int.type)+
       annotation_logticks()  +
       theme(text=element_text(size=20,family=input$font_type2),
+            plot.margin = margin(20, 20, 20, 20),
             axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
             axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
             axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
@@ -7481,6 +7559,7 @@ if (input$test_ttest == "parametric") {
       guides(size=FALSE, col = guide_legend(ncol=input$legend.column,override.aes = list(size=input$leg.dot.size)))+
       labs(x=x_lable1,
            y=y_lable1)
+      
     
     vals15$complex_dot
   })
@@ -7527,6 +7606,7 @@ if (input$test_ttest == "parametric") {
       scale_size_manual(values=size.ggplot)+
       scale_fill_manual(values=palette.complex) +
       theme(text=element_text(size=20,family=input$font_type2),
+            plot.margin = margin(20, 20, 20, 20),
             axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
             axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
             axis.title.x=element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
@@ -7711,18 +7791,20 @@ if (input$test_ttest == "parametric") {
     df <- as.data.frame(unique(index2[,names(index2) %in% c("cloneCount",input$group_complex_dot)]))
     # names(df) <- input$group_complex_dot
     df.col1 <- merge(df,num,by=input$group_complex_dot)
-    
+    x_lable1 <- bquote(Log[10]~(.(input$x.axis2)))
+    x_lable1
     
    ggplot(index, aes(x = log10(selected), y = as.character(get(input$group_complex_dot)), fill = as.character(get(input$group_complex_dot)))) +
       geom_density_ridges() +
       theme_ridges() + 
       scale_fill_manual(values=df.col1$palette.complex)+
       theme(legend.position = "none") +
-      labs(title=title_axis) +
+      labs(x=x_lable1) +
      theme(text=element_text(size=20,family=input$font_type2),
+           plot.margin = margin(20, 20, 20, 20),
            axis.text.x = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
            axis.text.y = element_text(colour="black",size=input$axis.numeric.size,angle=0,hjust=1,vjust=0,face="plain",family=input$font_type2),
-           axis.title.x = element_blank(),
+           axis.title.x = element_text(colour="black",size=input$axis.title.size,angle=0,hjust=.5,vjust=.5,face="plain",family=input$font_type2),
            axis.title.y = element_blank(),
            # panel.grid.major.x = element_blank() ,
            
@@ -7742,6 +7824,7 @@ if (input$test_ttest == "parametric") {
     
     index <- as.data.frame(index)
     index[is.na(index)] <- "not_clonal"
+    
     index$selected <- log10(index[,names(index) %in% input$x.axis2])
     
     tab <-as.data.frame(TukeyHSD( aov(selected ~ as.character(get(input$group_complex_dot)),data = index))[1])
