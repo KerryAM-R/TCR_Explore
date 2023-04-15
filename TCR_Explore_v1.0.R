@@ -1557,7 +1557,7 @@ server  <- function(input, output, session) {
     })
   
   # .ab1 files for checking heitogenity ----
-  input.data_IMGT.ab1 <- reactive({switch(input$dataset_.ab1,".ab1-test-data" = test.data_ab.ab1(), ".ab1-own_data" = own.data.ab1())})
+  input.data_ab1 <- reactive({switch(input$dataset_.ab1,".ab1-test-data" = test.data_ab.ab1(), ".ab1-own_data" = own.data.ab1())})
   test.data_ab.ab1 <- reactive({
     hetsangerseq <- readsangerseq("test-data/QC/SJS.TEN/E10630/Micromon/IFNg/IFNA-A10_C07.ab1") 
   })
@@ -1575,7 +1575,7 @@ server  <- function(input, output, session) {
   
   output$hetsangerseq <- renderPrint({
     
-    hetsangerseq <- input.data_IMGT.ab1()
+    hetsangerseq <- input.data_ab1()
     hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
     
     print(hetcalls)
@@ -1583,7 +1583,7 @@ server  <- function(input, output, session) {
   
   chromatogram.seq1 <- reactive({
     
-    hetsangerseq <- input.data_IMGT.ab1()
+    hetsangerseq <- input.data_ab1()
     hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
     
     chromatogram(hetcalls, width = input$Number.seq.line, height = 4, cex.mtext = 1, cex.base = 10, showcalls = "both", trim5 =input$trim5.seq, trim3 = input$trim3.seq)
@@ -1603,7 +1603,7 @@ server  <- function(input, output, session) {
       paste("TCR_Explore_chromatogram_",Sys.Date(), ".pdf", sep = "")
     }, content = function(file) {
       pdf(file, width=input$width_chromatogram.seq,height=input$height_chromatogram.seq, onefile = FALSE) # open the pdf device
-      hetsangerseq <- input.data_IMGT.ab1()
+      hetsangerseq <- input.data_ab1()
       
       validate(
         need(nrow(hetsangerseq@traceMatrix)>0,
@@ -1625,7 +1625,7 @@ server  <- function(input, output, session) {
       png(file, width = input$width_png_chromatogram.seq, height = input$height_png_chromatogram.seq, res = input$resolution_PNG_chromatogram.seq)
       
       
-      hetsangerseq <- input.data_IMGT.ab1()
+      hetsangerseq <- input.data_ab1()
       hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
       chromatogram(hetcalls, width = input$Number.seq.line, height = 4, cex.mtext = 1, cex.base = 3, showcalls = "both", trim5 =input$trim5.seq, trim3 = input$trim3.seq)
       
@@ -1634,7 +1634,7 @@ server  <- function(input, output, session) {
   
   output$alignment <- renderPrint({
     
-    hetsangerseq <- input.data_IMGT.ab1()
+    hetsangerseq <- input.data_ab1()
     hetcalls <- makeBaseCalls(hetsangerseq, ratio = 0.33)
     hetcalls
     chromatogram(hetcalls, width = 100, height = 2, showcalls = "both", trim5 =20, trim3 = 20)
