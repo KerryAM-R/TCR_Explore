@@ -145,10 +145,9 @@ tags$head(
 tabPanel("Tutorials",
          navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                       tabPanel("Overview",
-                               
                                includeMarkdown("README.md"),
                                # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
-                      ),     
+                      ),
                       tabPanel("Quality control information (includes video tutorial)",
                                h3("Tutorial video of Quality control processes"),
                                uiOutput("video"),
@@ -1558,11 +1557,11 @@ server  <- function(input, output, session) {
     })
   
   # .ab1 files for checking heitogenity ----
-  input.data_ab1 <- reactive({switch(input$dataset_.ab1,".ab1-test-data" = test.data_ab.ab1(), ".ab1-own_data" = own.data.ab1())})
+  input.data_ab1 <- reactive({switch(input$dataset_.ab1,".ab1-test-data" = test.data_ab.ab1(), ".ab1-own_data" = own.data.ab1_2())})
   test.data_ab.ab1 <- reactive({
     hetsangerseq <- readsangerseq("test-data/QC/SJS.TEN/E10630/Micromon/IFNg/IFNA-A10_C07.ab1") 
   })
-  own.data.ab1 <- reactive({
+  own.data.ab1_2 <- reactive({
     inFile_.ab1 <- input$file_.ab1
     if (is.null(inFile_.ab1)) return(NULL)
     
