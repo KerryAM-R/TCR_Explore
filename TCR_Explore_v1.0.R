@@ -145,6 +145,7 @@ tags$head(
 tabPanel("Tutorials",
          navlistPanel(id = "Markdown_panel",widths = c(2, 10),
                       tabPanel("Overview",
+                               
                                includeMarkdown("README.md"),
                                # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                       ),     
