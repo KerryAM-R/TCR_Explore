@@ -31,8 +31,8 @@ Biomedicine Discovery Institute and Department of Biochemistry and Molecular Bio
 ##### Citation:
 
 1. Mullan KA, Zhang JB, Jones CM, Goh SJR, Revote J, Illing PT, Purcell AW, La Gruta NL, Li C, Mifsud NA. TCR_Explore: A novel webtool for T cell receptor repertoire analysis. Comput Struct Biotechnol J. 2023 Feb 3;21:1272-1282. doi: 10.1016/j.csbj.2023.01.046. PMID: 36814721; PMCID: PMC9939424.
-[paper](https://www.sciencedirect.com/science/article/pii/S2001037023000466)
 
+[paper](https://www.sciencedirect.com/science/article/pii/S2001037023000466)
 
 ##### References:
 1.	Lefranc MP, Giudicelli V, Duroux P, Jabado-Michaloud J, Folch G, Aouinti S, et al. IMGT(R), the international ImMunoGeneTics information system(R) 25 years on. Nucleic Acids Res. 2015;43(Database issue):D413-22.
