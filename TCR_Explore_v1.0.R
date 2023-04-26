@@ -341,8 +341,6 @@ tabPanel("Automated .ab1 QC",
                                                     h5("option for paired and TCRdist outputs"),
                                                     selectInput("IMGT_chain2","Alpha-beta or gamma-delta",choices = c("ab","gd")),
                                                     selectInput("sheet2","Information included", choices = c("Summary+JUNCTION","Summary"))),
-                                   
-                                   
                                    conditionalPanel(condition="input.QC_panel==2",
                                                     downloadButton('downloadTABLE.QC1','Download paired chain file')
                                    ),
@@ -354,8 +352,11 @@ tabPanel("Automated .ab1 QC",
                                    conditionalPanel(condition = "input.QC_panel==4",
                                                     downloadButton('downloadTABLE.QC1.single.chain','Download single chain file')
                                                     ),
+                                   
                                    textInput("IMGT_name_df","File name",""),
                       ),
+                      
+# main Panel TCR QC -----
                       mainPanel(
                         tabsetPanel(id = "QC_panel",
                                     tabPanel("IMGT create QC file",value = 1,
@@ -385,10 +386,7 @@ tabPanel("Automated .ab1 QC",
                                             
                                              
                                     ),
-# multiple .ab1 files -----
-                       
-                                                  
-                                                  
+# pairing the file -----
                                                   tabPanel("Paired chain file",value = 2,
                                                            tags$head(tags$style("#chain_table_IMGT.QC1  {white-space: nowrap;  }")),
                                                            div(DT::dataTableOutput("Pass.Fail.NA_table")),
@@ -400,12 +398,16 @@ tabPanel("Automated .ab1 QC",
                                                   tabPanel("Single chain file", value = 4,
                                                            div(DT::dataTableOutput("single.chain_table_IMGT.QC1"))
                                                   ),
+
+ 
                                                   
                                                   tabPanel("TCRdist output file",value = 3,
                                                            tags$head(tags$style("#chain_table_IMGT.tcrdist  {white-space: nowrap;  }")),
                                                            div(DT::dataTableOutput("chain_table_IMGT.tcrdist")),
                                                            
                                                   ),
+
+# merging the file -----
               
                                                   
                                       )
@@ -545,7 +547,28 @@ tabPanel("Convert to TCR_Explore file format",
            
            
 ),
-
+#### TCRex merge files ----
+tabPanel("TCR_Explore merge",
+         sidebarLayout(
+           sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
+                        # selectInput("dataset2", "Choose a dataset:", choices = c("test_data_clusTCR2","own_data_clusTCR2")),
+                        fileInput('file2_TCRexMerge', 'Select files to merge',
+                                  multiple = TRUE,
+                                  accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                        downloadButton('downloaddf_TCRexFiltered','Download table')
+           ),
+           mainPanel(
+             tabsetPanel(id = "TCRex_tabs",
+                         tabPanel("Merge Multiple Files",value = "merge",
+                                  div(DT::dataTableOutput("DEx_TCRexFiltered")),
+                                  # downloadButton('downloaddf_multiple_ClusTCR2','Download table')
+                         ),
+                         
+                         
+             )
+           )
+         )
+),
 
 # UI TCR plots ----
 tabPanel("TCR analysis",
@@ -1490,8 +1513,6 @@ server  <- function(input, output, session) {
   
   
   # read in multiple .ab1 fles -----
-  
-  
   getData_ab1 <- eventReactive(input$go_ab1, {
     inFile.ab1 <- input$file1_ab1.file
     if (is.null(inFile.ab1)){
@@ -3402,6 +3423,53 @@ server  <- function(input, output, session) {
       
       
     })
+  
+  
+  # merging Multiple TCR_Explore files
+  # TCRex Merge  ------
+  input.data_TCRexMerge <- reactive({
+    inFile2_TCRexMerge <- input$file2_TCRexMerge
+    num <- dim(inFile2_TCRexMerge)[1]
+    samples_list <- vector("list", length = num)
+    samples_list
+    for (i in 1:num) {
+      sc <- read.csv(input$file2_TCRexMerge[[i, 'datapath']],header = T)
+      samples_list[[i]] <- sc
+    }
+    samples_list
+  })
+  
+  merged_TCRexFiltered <- reactive({
+    inFile2_TCRexMerge <- input$file2_TCRexMerge
+    validate(
+      need(nrow(inFile2_TCRexMerge)>0,
+           "Upload 2 or more files")
+    )
+    
+    myfiles <- input.data_TCRexMerge()
+    df <- rbind(myfiles[[1]])
+    for (i in 2:length(myfiles)) {
+      df <- rbind(df,myfiles[[i]])
+    }
+    
+    df
+  })
+  
+  output$DEx_TCRexFiltered <-  DT::renderDataTable(escape = FALSE, filter = list(position = 'top', clear = FALSE), options = list(autoWidth = FALSE, lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+    df <- merged_TCRexFiltered()
+    df
+  })
+  
+  
+  output$downloaddf_TCRexFiltered <- downloadHandler(
+    filename = function(){
+      paste("TCR_Explore_merged",gsub("-", ".", Sys.Date()),".csv", sep = "")
+    },
+    content = function(file){
+      df <- merged_TCRexFiltered()
+      write.csv(df,file, row.names = F)
+    })
+  
   
   # file for analytical plots -----
   input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2_TCR.Explore(), "ImmunoSEQ-test-data" = test.data2_ImmunoSEQ(),"own_data2" = own.data2())})

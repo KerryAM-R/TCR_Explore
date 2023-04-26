@@ -45,17 +45,8 @@ library(ggridges)
 font_add_google("Gochi Hand", "gochi")
 font_add_google("Schoolbell", "bell")
 font_add_google("Press Start 2P", "Game")
-
 showtext_auto() 
-
-credentials <- data.frame(
-  user = c("shiny"),
-  password = c("shiny"),
-  stringsAsFactors = FALSE
-)
-
 font <- as.data.frame(font_families())
-font
 names(font) <- "Fonts"
 test_fun <- function() {
   for (i in 1:15) {
@@ -95,12 +86,6 @@ Nucleotide <- function (Nucleotide, seqlength) {
 
 options(shiny.maxRequestSize=200*1024^2)
 
-credentials <- data.frame(
-  user = c("shiny", "shinymanager"),
-  password = c("azerty", "12345"),
-  stringsAsFactors = FALSE
-)
-
 # 95% confidence interval
 quantiles_95 <- function(x) {
   r <- quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95))
@@ -127,7 +112,7 @@ error_message_val4 <- "no own list found\n \nSuggest uploading file\nheaders=ID"
 
 simp.index.names <- c("total # clones","unique # clones")
 # user interface  ----
-ui <- navbarPage(title = tags$img(src = "Logo.png",window_title="TCR_Explore", height = 90, width = 140,
+ui <- navbarPage(title = tags$img(src = "www/Logo.png",window_title="TCR_Explore", height = 90, width = 140,
                                   
                                   style = "margin:-35px 10px"
                                   
@@ -215,7 +200,7 @@ navbarMenu("QC",
              )
            ),
            
-           # seq to fasta file merger -----
+# seq to fasta file merger -----
            tabPanel("SEQ to FASTA file merger",
                     fluidPage(
                       sidebarPanel(
@@ -267,7 +252,7 @@ navbarMenu("QC",
                     
                     
            ),
-           # automating the .ab1 QC procecss -----
+# automating the .ab1 QC procecss -----
            tabPanel("Automated .ab1 QC", 
                     fluidPage(
                       sidebarPanel(
@@ -314,7 +299,7 @@ navbarMenu("QC",
                     )
                     
            ),
-           # UI IMGT only ----
+# UI IMGT only ----
            tabPanel("IMGT (Sanger Sequencing)",
                     sidebarLayout(
                       sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
@@ -388,7 +373,7 @@ navbarMenu("QC",
                                              
                                              
                                     ),
-                                    # multiple .ab1 files -----
+# multiple .ab1 files -----
                                     
                                     
                                     
@@ -417,7 +402,7 @@ navbarMenu("QC",
                     )
            ),
            
-           # .ab1 chromatogram file -----
+# .ab1 chromatogram file -----
            tabPanel("Check .ab1 files",
                     sidebarLayout(
                       sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
@@ -477,7 +462,7 @@ navbarMenu("QC",
                     ),
                     
            ),
-           # ImmunoSEQ ====
+# ImmunoSEQ ====
            
            tabPanel("Convert to TCR_Explore file format",
                     sidebarLayout(
@@ -550,6 +535,28 @@ navbarMenu("QC",
 ),
 
 
+#### TCRex merge files ----
+tabPanel("TCR_Explore merge",
+         sidebarLayout(
+           sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
+                        # selectInput("dataset2", "Choose a dataset:", choices = c("test_data_clusTCR2","own_data_clusTCR2")),
+                        fileInput('file2_TCRexMerge', 'Select files to merge',
+                                  multiple = TRUE,
+                                  accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+                        downloadButton('downloaddf_TCRexFiltered','Download table')
+           ),
+           mainPanel(
+             tabsetPanel(id = "TCRex_tabs",
+                         tabPanel("Merge Multiple Files",value = "merge",
+                                  div(DT::dataTableOutput("DEx_TCRexFiltered")),
+                                  # downloadButton('downloaddf_multiple_ClusTCR2','Download table')
+                         ),
+                         
+                         
+             )
+           )
+         )
+),
 # UI TCR plots ----
 tabPanel("TCR analysis",
          
@@ -3404,6 +3411,51 @@ server  <- function(input, output, session) {
       }
       
       
+    })
+  
+  
+  # TCRex Merge  ------
+  input.data_TCRexMerge <- reactive({
+    inFile2_TCRexMerge <- input$file2_TCRexMerge
+    num <- dim(inFile2_TCRexMerge)[1]
+    samples_list <- vector("list", length = num)
+    samples_list
+    for (i in 1:num) {
+      sc <- read.csv(input$file2_TCRexMerge[[i, 'datapath']],header = T)
+      samples_list[[i]] <- sc
+    }
+    samples_list
+  })
+  
+  merged_TCRexFiltered <- reactive({
+    inFile2_TCRexMerge <- input$file2_TCRexMerge
+    validate(
+      need(nrow(inFile2_TCRexMerge)>0,
+           "Upload 2 or more files")
+    )
+    
+    myfiles <- input.data_TCRexMerge()
+    df <- rbind(myfiles[[1]])
+    for (i in 2:length(myfiles)) {
+      df <- rbind(df,myfiles[[i]])
+    }
+    
+    df
+  })
+  
+  output$DEx_TCRexFiltered <-  DT::renderDataTable(escape = FALSE, filter = list(position = 'top', clear = FALSE), options = list(autoWidth = FALSE, lengthMenu = c(2,5,10,20,50,100), pageLength = 5, scrollX = TRUE),{
+    df <- merged_TCRexFiltered()
+    df
+  })
+  
+  
+  output$downloaddf_TCRexFiltered <- downloadHandler(
+    filename = function(){
+      paste("TCR_Explore_merged",gsub("-", ".", Sys.Date()),".csv", sep = "")
+    },
+    content = function(file){
+      df <- merged_TCRexFiltered()
+      write.csv(df,file, row.names = F)
     })
   
   # file for analytical plots -----
@@ -8064,5 +8116,3 @@ server  <- function(input, output, session) {
 shinyApp(ui, server)
 
 }
-
-runApp_TCR_EXPLORE_V1()
