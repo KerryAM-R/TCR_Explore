@@ -1,4 +1,0 @@
-      48 alignments.vdjca.file
-      48 clones.clna.file
-      46 sorted.clones.txt
-      34 CD8_functional.clones.sorted.txt
