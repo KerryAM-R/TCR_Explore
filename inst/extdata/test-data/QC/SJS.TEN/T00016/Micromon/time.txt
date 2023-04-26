@@ -1,4 +1,0 @@
-Time of alignment
-start time:  14:45:21
-end time:  15:45:49
-total time: 1h: 00m: 28s

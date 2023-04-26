@@ -1,2 +1,0 @@
-IFNA-A7_C07.seq_clones.txt	cloneCount	bestVHit	bestDHit	bestJHit	bestCHit	nSeqCDR3	aaSeqCDR3	aaSeqImputedCDR2	aaSeqImputedCDR1
-IFNA-A7_C07.seq_clones.txt	1.0	TRAV4*00		TRAJ13*00	TRAC*00	TGCCTCGTGGCTATGAATTCTGGGGGTTACCAGAAAGTTACCTTT	CLVAMNSGGYQKVTF	gyktk	niatndy
