@@ -177,7 +177,6 @@ tabPanel("Tutorials",
                                tabPanel("Session info", 
                                         div(style="width:800px",
                                             verbatimTextOutput("sessionInfo")),
-                                        tags$head(includeHTML(("google-analytics.html")))
                                )
                       )
          )
