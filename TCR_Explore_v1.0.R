@@ -644,7 +644,7 @@ tabPanel("TCR analysis",
                         downloadButton('downloadTABLE.QC3','Download table')
                         
                ),
-tabPanel("Test_table",
+tabPanel("Filtered table",
          div(DT::dataTableOutput("Test_table")),
          ),
 # UI Treemap -----
@@ -3311,7 +3311,7 @@ server  <- function(input, output, session) {
   }) 
   
   chain_table_summary <- reactive({
-    df <- input.data2()
+    df <- input.data_old2()
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -3324,7 +3324,7 @@ server  <- function(input, output, session) {
   })
   
   chain_table_summary.TCRdist3.ab <- reactive({
-    df <- input.data2()
+    df <- input.data_old2()
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -3364,7 +3364,7 @@ server  <- function(input, output, session) {
   })
   
   chain_table_summary.TCRdist3.gd <- reactive({
-    df <- input.data2()
+    df <- input.data.IMGT_afterQC()
     validate(
       need(nrow(df)>0,
            error_message_val1)
