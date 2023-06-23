@@ -139,7 +139,7 @@ tabPanel("Tutorials",
                       tabPanel("Quality control information (includes video tutorial)",
                                h3("Tutorial video of Quality control processes"),
                                uiOutput("video"),
-                               fluidRow(includeMarkdown("READMEQC.md")),
+                               fluidRow(includeMarkdown(system.file("READMEQC.md"))),
                                
                                # tags$video(id="video2", type = "video/mp4",src = "test.mp4", controls = "controls", height="720px")
                       ),     

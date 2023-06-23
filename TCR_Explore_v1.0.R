@@ -514,14 +514,20 @@ tabPanel("Convert to TCR_Explore file format",
                
                fluidRow(
                  column(3, selectInput("datasource","Input type",choices = c("ImmunoSEQ","MiXCR","10x_scSeq","Other"))),
-                        column(3, selectInput("countcolumn","Count column",choices = "")),
+                        
                ),
                
                fluidRow(
-                        column(3, selectInput("V.GENE.clean","Variable gene column",choices = "")),
-                        column(3, selectInput("D.GENE.clean","Diversity gene column",choices = "")),
-                        column(3, selectInput("J.GENE.clean","Junction gene column",choices = "")),
-                        column(3, selectInput("CDR3.gene.clean","CDR3 amino acid column",choices = "")),
+                 column(4, selectInput("countcolumn","Count column",choices = "")),
+                 column(4, selectInput("inframe_immseq","In-frame column (e.g. sequenceStatus)","")),
+                 column(4, selectInput("CDR3.gene.clean","CDR3 amino acid column",choices = "")),
+               ),
+               
+               fluidRow(
+                        column(4, selectInput("V.GENE.clean","Variable gene column",choices = "")),
+                        column(4, selectInput("D.GENE.clean","Diversity gene column",choices = "")),
+                        column(4, selectInput("J.GENE.clean","Junction gene column",choices = "")),
+                        
                         
                         # conditionalPanel(condition = "input.datasource == '10x_scSeq'",
                         #                  column(3,selectInput("V.GENE.clean2","Variable gene column (2)",choices = "")),
@@ -594,9 +600,27 @@ tabPanel("TCR analysis",
                           column(6,radioButtons('sep', 'Separator', c( Tab='\t', Comma=','), ',')),
                           column(6,radioButtons('quote', 'Quote', c(None='', 'Double Quote'='"', 'Single Quote'="'"), '"'))
                         ),
+                        selectInput("group_column",label = h4("Column of group"), ""),
+                        selectInput("Filter_NGS","Filtering",choices = c("no","yes")),
+                        fluidRow(
+                         
+                          column(6, selectInput("clonotypes_column","Clonotypes (e.g. vdj_CDR3_AG_BD)","")),
+                          column(6, selectInput("group_column_first","Summarise by (e.g. Indiv)","")),
+                          
+                        ),
+                        fluidRow(
+                          column(6, selectInput("filter_by_cumsum_or_order","Filter by either:",c("cummulative_freq","Top_clontypes"))),
+                          conditionalPanel("input.filter_by_cumsum_or_order == 'cummulative_freq'",
+                                           column(6,numericInput("filter_below_cumsum","Display clonotypes below frequency:",value = 0.5, min = 0.1,max=1,step = 0.01)),
+                                           ),
+                          conditionalPanel("input.filter_by_cumsum_or_order == 'Top_clontypes'",
+                                           column(6,numericInput("top_clones_to_include","Display clonotypes below frequency:",value = 100, min = 1)),
+                          ),
+                          
+                        ),
                         
                         colourInput("one.colour.default","One colour","grey"),
-                        selectInput("group_column",label = h4("Column of group"), ""),
+                        
                         selectInput("type.tree",label = h4("Type of input"), choices =  c("raw data","Summarised data")),
                         
                         selectInput("font_type",label = h4("Type of font"),choices = font,selected = "serif"),
@@ -611,7 +635,7 @@ tabPanel("TCR analysis",
                tabPanel("Summary table",
                         # verbatimTextOutput("names.in.file3"),
                         fluidRow(
-                          column(3,selectInput("type.chain","Alpha-beta or gamma-delta",choices = c("ab","gd"))),
+                          column(3,selectInput("type.chain","Alpha-beta or gamma-delta",choices = c("ab","gd","NGS_immunoseq"))),
                           column(3,selectInput("type.of.graph", "Summary table output",choices = c("general summary","TCRdist3")))
                         ),
                         fluidRow(column(12, selectInput("string.data3","column names for summary","",multiple = T, width = "1200px") )),
@@ -620,6 +644,9 @@ tabPanel("TCR analysis",
                         downloadButton('downloadTABLE.QC3','Download table')
                         
                ),
+tabPanel("Test_table",
+         div(DT::dataTableOutput("Test_table")),
+         ),
 # UI Treemap -----
                tabPanel("Treemap",
                         fluidRow(
@@ -838,7 +865,7 @@ tabPanel("TCR analysis",
 # UI motif -----
                         tabPanel("Motif (amino acid)",
                                  p(" "),
-                                 h6("The amino acid CDR3  columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
+                                 h6("The amino acid CDR3 columns are callled: AA.JUNCTION, JUNCTION..AA. or CDR3_IMGT."),
                                  h6("The _A (alpha), _B (beta), _G (gamma), _D (delta)"),
                                  h5("Select amino acid column and CDR3 length"),
                                  verbatimTextOutput("length"),
@@ -2679,14 +2706,14 @@ server  <- function(input, output, session) {
       x2
     })
     
- # count column 
+ # count column ----
     observe({
       if (input$datasource == "ImmunoSEQ") {
         updateSelectInput(
           session,
           "countcolumn",
           choices=names(TSV.col.names()),
-          selected = c("templates"))
+          selected = c("count..templates.reads."))
         
       }
       else if (input$datasource == "MiXCR") {
@@ -2727,7 +2754,7 @@ server  <- function(input, output, session) {
           session,
           "J.GENE.clean",
           choices=names(TSV.col.names()),
-          selected = c("j_gene"))
+          selected = c("jFamilyName"))
         
       }
       else if (input$datasource == "MiXCR") {
@@ -2767,7 +2794,7 @@ server  <- function(input, output, session) {
           session,
           "V.GENE.clean",
           choices=names(TSV.col.names()),
-          selected = c("v_gene"))
+          selected = c("vFamilyName"))
         
       }
       else if (input$datasource == "MiXCR") {
@@ -2806,7 +2833,7 @@ server  <- function(input, output, session) {
           session,
           "D.GENE.clean",
           choices=names(TSV.col.names()),
-          selected = c("d_gene"))
+          selected = c("dFamilyName"))
         
       }
       else if (input$datasource == "MiXCR") {
@@ -2846,7 +2873,7 @@ server  <- function(input, output, session) {
         "CDR3.gene.clean",
         choices=names(TSV.col.names()),
         
-        selected = c("amino_acid"))
+        selected = c("aminoAcid"))
         
         }
         else if (input$datasource == "MiXCR") {
@@ -2865,7 +2892,6 @@ server  <- function(input, output, session) {
           choices=names(TSV.col.names()),
           selected = c("cdr3_amino_acid_B"))
       }
-      
       else {
         updateSelectInput(
           session,
@@ -2873,9 +2899,8 @@ server  <- function(input, output, session) {
           choices=names(TSV.col.names()),
           selected = c("JUNCTION"))
       }
-        
-      
     })
+    # columns to remove
     observe({
       
       if (input$datasource == "ImmunoSEQ") {
@@ -2886,20 +2911,22 @@ server  <- function(input, output, session) {
         choices=names(TSV.col.names()),
         
         
-          selected = c("product_subtype","frame_type","total_dj_reads",
-                       "productive_entropy","rearrangement_type",
-                       "order_name","release_date",
-                       "upload_date","primer_set","cdr3_length","frequency",
-                       "total_outofframe_reads","sample_catalog_tags","sample_rich_tags_json",
-                       "fraction_productive","sample_tags","sku","total_templates",
-                       "sequence_result_status","productive_clonality","stop_rearrangements",
-                       "outofframe_rearrangements","total_rearrangements","total_reads","sample_cells","fraction_productive_of_cells_mass_estimate", "sample_cells_mass_estimate","sample_amount_ng",
-                       "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties","antibody",
-                       "sample_clonality", "max_productive_frequency","sample_entropy","sample_simpson_clonality",
-                       "max_frequency","productive_simpson_clonality","total_stop_reads","total_productive_reads",
-                       "v_deletions",	"d5_deletions",	"d3_deletions",	"j_deletions",	"n2_insertions",
-                       "n1_insertions",	"v_index",	"n1_index",	"n2_index",	"d_index",	"j_index",	"v_family_ties",	"d_family_ties",	"d_gene_ties",	"d_allele_ties",	"j_gene_ties"
-          ))
+          selected = c("count..templates.reads.","frequencyCount...."
+          # c("product_subtype","frame_type","total_dj_reads",
+          #              "productive_entropy","rearrangement_type",
+          #              "order_name","release_date",
+          #              "upload_date","primer_set","cdr3_length","frequency",
+          #              "total_outofframe_reads","sample_catalog_tags","sample_rich_tags_json",
+          #              "fraction_productive","sample_tags","sku","total_templates",
+          #              "sequence_result_status","productive_clonality","stop_rearrangements",
+          #              "outofframe_rearrangements","total_rearrangements","total_reads","sample_cells","fraction_productive_of_cells_mass_estimate", "sample_cells_mass_estimate","sample_amount_ng",
+          #              "productive_rearrangements","counting_method","v_allele_ties","v_gene_ties","antibody",
+          #              "sample_clonality", "max_productive_frequency","sample_entropy","sample_simpson_clonality",
+          #              "max_frequency","productive_simpson_clonality","total_stop_reads","total_productive_reads",
+          #              "v_deletions",	"d5_deletions",	"d3_deletions",	"j_deletions",	"n2_insertions",
+          #              "n1_insertions",	"v_index",	"n1_index",	"n2_index",	"d_index",	"j_index",	"v_family_ties",	"d_family_ties",	"d_gene_ties",	"d_allele_ties",	"j_gene_ties"
+          )
+        )
         }
 
       else {
@@ -2942,27 +2969,35 @@ server  <- function(input, output, session) {
         choices=names(TSV.col.names()),
         selected = c("cdr3_amino_acid_A")
       )
+    # in frame for immunoseq  
+    })
+    observe({
+      updateSelectInput(
+        session,
+        "inframe_immseq",
+        choices=names(TSV.col.names()),
+        selected = c("sequenceStatus")
+      )
       
     })
 
   TSV.file.Immunoseq <- reactive({
     x <- as.data.frame(input.data.Immunoseq())
-    
+    validate(
+      need(nrow(x)>0,
+           "upload file")
+    )
     x2 <- x %>%
       select_if(~ !any(is.na(.)))
-    
-    x2 <- x2 %>% mutate_all(na_if,"")
-    
     #ImmunoSEQ 
     if (input$datasource == "ImmunoSEQ") {
-      x2 <- subset(x2, x2$frame_type=="In")
-      
+      x2 <- subset(x2, x2[names(x2) %in% input$inframe_immseq]=="In")
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       x2$group <- input$group.imm
-      x2$indiv <- input$indiv.imm
-      x2$group.indiv <- paste(x2$group,x2$indiv,sep=".")
+      x2$Indiv <- input$indiv.imm
+      x2$Indiv.group <- paste(x2$group,x2$Indiv,sep=".")
       names(x2)[1] <- "cloneCount"
-      
+      head(x2)
       x3 <- x2
 
       # x3 <- x3[!is.na(x3[names(x3) %in% c("v_gene","j_gene",input$V.GENE.clean,input$J.GENE.clean)]),]
@@ -2970,27 +3005,34 @@ server  <- function(input, output, session) {
       x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
       x3$TRV <- gsub("^TCR","",x3$TRV)
       
+      x3$TRV[x3$TRV == ''] <- "TRV"
+      
+      # x3$TRV <- gsub("","TRA",x3$TRV)
+      
       x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
       x3$TRJ <- gsub("^TCR","",x3$TRJ)
-
+      x3$TRJ[x3$TRJ == ''] <- "TRJ"
+      # x3$TRJ <- gsub("","TRJ",x3$TRJ)
+      
       x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
       # x3[is.na(x3$TRD)] <- "-"
       x3$TRD <- gsub("^TCR","",x3$TRD)
+      x3$TRD[x3$TRD == ''] <- "-"
       
       x3 <- x3[!is.na(x3[names(x3) %in% c("TRV")]),]
       x3 <- x3[!is.na(x3[names(x3) %in% c("TRJ")]),]
       
       x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
       x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
-      x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
-      
-
+      # x3$TRVDJ <- gsub(".-.",".",x3$TRVDJ)
+    
       x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
       x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
       
       x3 <- x3[!names(x3) %in% input$col.to.remove]
-      x3[is.na(x3)] <- "Missing"
-
+      x3[x3 == ''] <- "Missing"
+      # x3[is.na(x3)] <- "Missing"
+      x3
     }
     
     # mixcr 
@@ -3023,6 +3065,7 @@ server  <- function(input, output, session) {
       x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
       
       x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
+      x3
 
     }
     # paired 10x scSeq
@@ -3104,13 +3147,14 @@ server  <- function(input, output, session) {
       names(contig_paired_only)[names(contig_paired_only) %in% "barcode"] <- "Cell_Index"
       contig_paired_only <- contig_paired_only[!duplicated(contig_paired_only$Cell_Index),] # remove duplicates
       # contig_paired_only <- contig_paired_only %>%
-      #   select(all_of(c("Cell_Index","group.indiv")), everything())
+      #   select(all_of(c("Cell_Index","Indiv.group")), everything())
       
       x3 <- contig_paired_only
       x3 <- x3[!names(x3) %in% input$col.to.remove]
       x3$group <- input$group.imm
       x3$indiv <- input$indiv.imm
-      x3$group.indiv <- paste(x3$group,x3$indiv,sep=".")
+      x3$Indiv.group <- paste(x3$group,x3$indiv,sep=".")
+      x3
       # x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       # names(x2)[1] <- "cloneCount"
       # 
@@ -3120,7 +3164,7 @@ server  <- function(input, output, session) {
       # 
       # x2$group <- input$group.imm
       # x2$indiv <- input$indiv.imm
-      # x2$group.indiv <- paste(x2$group,x2$indiv,sep=".")
+      # x2$Indiv.group <- paste(x2$group,x2$indiv,sep=".")
       # names(x2)[1] <- "cloneCount"
       # 
       # x3 <- x2
@@ -3214,9 +3258,7 @@ server  <- function(input, output, session) {
   })
 
   output$ImmunoSeq.table <- DT::renderDataTable(escape = FALSE, filter = "top", options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE),{
-      df <- TSV.file.Immunoseq()
-      df <- as.data.frame(df)
-      df
+    TSV.file.Immunoseq()
   })
   
   output$downloadTABLE.Immunoseq <- downloadHandler(
@@ -3247,14 +3289,23 @@ server  <- function(input, output, session) {
       updateSelectInput(
         session,
         "string.data3",
-        choices=names(input.data2()),
+        choices=names(input.data_old2()),
         selected = c("group","JUNCTION_A"))
     }
+    
+    else if (input$type.chain == 'NGS_immunoseq') {
+      updateSelectInput(
+        session,
+        "string.data3",
+        choices=names(input.data_old2()),
+        selected = c("group","aminoAcid"))
+    }
+    
     else {
       updateSelectInput(
         session,
         "string.data3",
-        choices=names(input.data2()),
+        choices=names(input.data_old2()),
         selected = c("group","JUNCTION_G")) 
     }
   }) 
@@ -3270,8 +3321,6 @@ server  <- function(input, output, session) {
     df2
     df3 <- as.data.frame(ddply(df2,input$string.data3,numcolwise(sum)))
     df3
-    
-    
   })
   
   chain_table_summary.TCRdist3.ab <- reactive({
@@ -3472,7 +3521,7 @@ server  <- function(input, output, session) {
   
   
   # file for analytical plots -----
-  input.data2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2_TCR.Explore(), "ImmunoSEQ-test-data" = test.data2_ImmunoSEQ(),"own_data2" = own.data2())})
+  input.data_old2 <- reactive({switch(input$dataset,"ab-test-data2" = test.data2_TCR.Explore(), "ImmunoSEQ-test-data" = test.data2_ImmunoSEQ(),"own_data2" = own.data2())})
   test.data2_TCR.Explore <- reactive({
     # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
     dataframe = read.csv("test-data/Group/paired_TCR_file2022.05.24.csv",header=T) 
@@ -3482,8 +3531,6 @@ server  <- function(input, output, session) {
     # dataframe = read.csv("test-data/Group/paired_unsummarised2021.09.22.csv",header=T) 
     dataframe = read.csv("test-data/Group/ImmunoSEQ.test.TCR_Explore.analysis.file-2022.08.04.csv",header=T) 
   })
-  
-  
   own.data2 <- reactive({
     inFile2 <- input$file2 
     if (is.null(inFile2)) return(NULL)
@@ -3496,6 +3543,100 @@ server  <- function(input, output, session) {
         quote=input$quote)}
     
   })
+  # filtering out sequences 
+  observe({
+    
+    
+    
+    updateSelectInput(
+      session,
+      "clonotypes_column",
+      choices=names(input.data_old2()),
+      selected = names(input.data_old2())[dim(input.data_old2())[2]] 
+      # selected = "vdj_gene_AG_BD"
+      )
+  })
+  observe({
+    updateSelectInput(
+      session,
+      "group_column_first",
+      choices=names(input.data_old2()),
+      selected = "Indiv" )
+  })
+  
+  filtering <- reactive({
+    
+    dataframe1 <- input.data_old2()
+    validate(
+      need(nrow(dataframe1)>0,
+           "Upload file")
+    )
+    
+    totals <- dataframe1[,names(dataframe1) %in% c("cloneCount",input$clonotypes_column,input$group_column_first)]
+    total.condition <- as.data.frame(ddply(totals,c(input$clonotypes_column,input$group_column_first),numcolwise(sum)))
+    totals <- dataframe1[,names(dataframe1) %in% c("cloneCount",input$group_column_first)]
+    indiv.sum <-  as.data.frame(ddply(totals,c(input$group_column_first),numcolwise(sum)))
+    names(indiv.sum)[names(indiv.sum) %in% input$group_column_first] <- "Var1"
+    names(total.condition)[names(total.condition) %in% input$group_column_first] <- "Var1"
+    emtpy <- matrix(nrow =dim(total.condition)[1],ncol=dim(indiv.sum)[1])
+    for (j in 1:dim(total.condition)[1]){
+      for (i in 1:dim(indiv.sum)[1]){
+        emtpy[j,i] <- ifelse(indiv.sum$Var1[i]==total.condition$Var1[j],indiv.sum$cloneCount[i],F)
+      }
+    }
+    total.condition$n <- total.condition$cloneCount/rowSums(emtpy)
+    total.condition <- total.condition[order(total.condition$n, decreasing = T),]
+    total.condition <- total.condition[order(total.condition$Var1, decreasing = T),]
+    p <- list()
+    kl <- list()
+    indiv_uniq <- unique(total.condition$Var1)
+    indiv_sub <- subset(total.condition,total.condition$Var1==indiv_uniq[3])
+    for (i in 1:dim(indiv.sum)[1]) {
+      indiv_sub <- subset(total.condition,total.condition$Var1==indiv_uniq[i])
+      indiv_sub <- indiv_sub[order(indiv_sub$n, decreasing = T),]
+      p[[i]]  <- cumsum(indiv_sub$n)
+      kl[[i]] <- 1:dim(indiv_sub)[1]
+    }
+    total.condition$cumsum <- unlist(p)
+    total.condition$order <- unlist(kl)
+    if (input$filter_by_cumsum_or_order =="cummulative_freq") {
+      total.condition_sub <- subset(total.condition,total.condition$cumsum<input$filter_below_cumsum)
+    }
+    else {
+      total.condition_sub <- subset(total.condition,total.condition$order <= input$top_clones_to_include)
+    }
+    total.condition_sub
+   
+    
+    
+  })
+  
+  input.data2 <- reactive({
+    dataframe1 <- input.data_old2()
+    validate(
+      need(nrow(dataframe1)>0,
+           "Upload file")
+    )
+    if(input$Filter_NGS == "yes") {
+      total.condition_sub <- filtering()
+      
+      names(total.condition_sub)[names(total.condition_sub) %in% "cloneCount"] <- "total_count"
+      names(total.condition_sub)[names(total.condition_sub) %in% "Var1"] <- input$group_column_first
+      total.condition_sub <- total.condition_sub[,names(total.condition_sub) %in% c(input$clonotypes_column,input$group_column_first)]
+      subsetted_file <- merge(dataframe1,total.condition_sub,by = c(input$clonotypes_column,input$group_column_first))
+      subsetted_file
+    }
+    
+    else {
+      dataframe1
+    }
+    
+    
+  })
+  
+  output$Test_table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
+    filtering()
+  })
   
   # Treemap ------
   
@@ -3504,23 +3645,22 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "count2",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "cloneCount")
-    
   })
+  
   observe({
     updateSelectInput(
       session,
       "fill2",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AVJ" )
-    
   })
   observe({
     updateSelectInput(
       session,
       "sub_group2",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AVJ.BVJ")
     
   })
@@ -3529,13 +3669,12 @@ server  <- function(input, output, session) {
       session,
       "string.data.tree.order",
       choices=select_group(),
-      selected = c("IFN","CD8")) 
+      selected = select_group()) 
   }) 
   
   cols <- reactive({
-    dat <- input.data2();
+    dat <- input.data2()
     dat <- as.data.frame(dat)
-    
     num <- unique(dat[names(dat) %in% input$fill2])
     col.gg <- gg_fill_hue(dim(num)[1])
     unique.col <- as.data.frame(unique(dat[grep(input$fill2,names(dat))]))
@@ -3726,12 +3865,12 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group_column",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "group")
     
   }) # group 
-  select_group <- function () {
-    df <- input.data2();
+  select_group <- reactive({
+    df <- input.data_old2();
     
     validate(
       need(nrow(df)>0,
@@ -3741,11 +3880,11 @@ server  <- function(input, output, session) {
     df2 <- as.data.frame(unique(df[names(df) %in% input$group_column]))
     df2 <- as.data.frame(df2)
     #names(df2) <- "V1"
-    df2
-  }
+    as.list(df2)
+  })
   
   selected_chain_1 <- function () {
-    df <- input.data2();
+    df <- input.data_old2();
     
     validate(
       need(nrow(df)>0,
@@ -3763,14 +3902,16 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group_selected2",
-      choices=select_group())
+      choices= select_group(),
+      selected = select_group()[1]
+      )
     
   }) # group 
   observe({
     updateSelectInput(
       session,
       "chain1",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AV")
     
   }) # chain 1
@@ -3778,7 +3919,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "chain2",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AJ")
     
   }) # chain 2
@@ -3791,11 +3932,14 @@ server  <- function(input, output, session) {
     dat <- as.data.frame(dat)
     dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    head(hierarchy, n=2)
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
+    
+    head(hierarchy, n=6)
   })
   cols_circ <- reactive({
     set.seed(input$seed.numb.chord)
-    dat <- input.data2();
+    dat <- input.data2()
     validate(
       need(nrow(dat)>0,
            error_message_val1)
@@ -3804,20 +3948,15 @@ server  <- function(input, output, session) {
     # dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
     names(df.col.j) <- "V1"
     df.col.2 <- rbind(df.col1,df.col.j)
-    df.col.2
-    
-    
-    
     palette_rainbow <- rev(rainbow(length(t(df.col.2))))
-    
-    
-    
     if (input$colour_cir == "rainbow") {
       lapply(1:dim(df.col.2)[1], function(i) {
         colourInput(paste("col.cir", i, sep="_"), paste(df.col.2[i,]), palette_rainbow[i])        
@@ -3866,6 +4005,8 @@ server  <- function(input, output, session) {
     # dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     
@@ -3886,6 +4027,8 @@ server  <- function(input, output, session) {
     )
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
@@ -3926,14 +4069,16 @@ server  <- function(input, output, session) {
   
   
   output$colour.trans.test <- renderPlot({
-    
-    dat <- input.data2();
+    dat <- input.data2()
     validate(
       need(nrow(dat)>0,
            error_message_val1)
     )
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
+    
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
@@ -3960,20 +4105,17 @@ server  <- function(input, output, session) {
     show_col(col2)
     }
   })
-    
-   
-    
-  
-  
-  
+
   output$out.col.table1 <- renderTable({
-    dat <- input.data2();
+    dat <- input.data2()
     validate(
       need(nrow(dat)>0,
            error_message_val1)
     )
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
@@ -3988,6 +4130,9 @@ server  <- function(input, output, session) {
     grid.col
     dat2 <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy2 <- dat2[names(dat2) %in% c(input$chain1,input$chain2)]
+    hierarchy2 <- hierarchy2 %>%
+      select(input$chain1, everything())
+    
     df.col1 <- as.data.frame(unique(hierarchy2[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy2[,2]))
@@ -4017,6 +4162,8 @@ server  <- function(input, output, session) {
     dat <- subset(dat, get(input$group_column)==input$group_selected2)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
     hierarchy$cloneCount <- 1
     chain1 <- as.data.frame(ddply(hierarchy,names(hierarchy)[-c(2,3)],numcolwise(sum)))
     chain1 <- chain1[order(chain1$cloneCount, decreasing = T),]
@@ -4038,6 +4185,8 @@ server  <- function(input, output, session) {
     
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
+    hierarchy <- hierarchy %>%
+      select(input$chain1, everything())
     hierarchy <- as.matrix(table(hierarchy[,1], hierarchy[,2]))
     
     par(mar = rep(0, 4), cex=input$CHORD.cex, family = input$font_type)
@@ -4225,7 +4374,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "aa.or.nt",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "JUNCTION..AA._A") 
   }) # amino acid or nucleotides column
   observe({
@@ -4237,13 +4386,12 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "chain.hist.col",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AVJ")
-    
   })
   
   cols.hist <- reactive({
-    df <- input.data2(); 
+    df <- input.data_old2(); 
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -4292,9 +4440,8 @@ server  <- function(input, output, session) {
     
   })
   output$myPanel.hist <- renderUI({cols.hist()})
-  
   colors.hist <- reactive({
-    df <- input.data2(); 
+    df <- input.data_old2(); 
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -4315,9 +4462,8 @@ server  <- function(input, output, session) {
     })
   })
   
-  
   cols.hist2 <- reactive({
-    df <- input.data2(); 
+    df <- input.data_old2(); 
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -4358,9 +4504,8 @@ server  <- function(input, output, session) {
     
   })
   output$myPanel.hist2 <- renderUI({cols.hist2()})
-  
   colors.hist2 <- reactive({
-    df <- input.data2(); 
+    df <- input.data_old2(); 
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -4375,7 +4520,7 @@ server  <- function(input, output, session) {
   })
   
   output$hist.table <- DT::renderDataTable( {
-    df <- input.data2(); 
+    df <- input.data_old2(); 
     df <- as.data.frame(df)
     df <- df[names(df) %in% c("cloneCount",input$group_column,input$aa.or.nt,input$chain.hist.col)]
     df.names <-  df[ , -which(names(df) %in% c("cloneCount"))]
@@ -4396,7 +4541,7 @@ server  <- function(input, output, session) {
   }, server = FALSE) 
   
   hist.col.table <- function () {
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -4420,7 +4565,7 @@ server  <- function(input, output, session) {
   
   # CHAIN LENGTH HISTOGRAM ----
   Chain1_length <- function () {
-    df <- input.data2(); 
+    df <- input.data_old2(); 
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -4716,7 +4861,7 @@ server  <- function(input, output, session) {
   )
   # download summary table
   table.len.download <- reactive( {
-    df <- input.data2()
+    df <- input.data_old2()
     df <- as.data.frame(df)
 
     if (input$type.tree == "raw data") {
@@ -4776,7 +4921,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "variable_chain",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AVJ")
     
   })
@@ -5112,7 +5257,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "aa.or.nt2",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "JUNCTION..AA._A")})
   observe({
     updateSelectInput(
@@ -5128,7 +5273,7 @@ server  <- function(input, output, session) {
       selected = "CD8") })
   
   output$Motif <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5155,8 +5300,8 @@ server  <- function(input, output, session) {
     
   })
   
-  output$length <- renderPrint( {
-    df <- input.data2();
+  output$length <- renderPrint({
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5169,7 +5314,7 @@ server  <- function(input, output, session) {
   })
   
   output$length.table <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5188,11 +5333,10 @@ server  <- function(input, output, session) {
                                                             lengthMenu=c(2,5,10,20,50,100), 
                                                             scrollX = TRUE
     ))
-    
   })
   
   Motif_plot2 <- reactive({
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5228,7 +5372,7 @@ server  <- function(input, output, session) {
   })
   
   Motif_compare_aa_group1 <- reactive({
-    df <- input.data2();
+    df <- input.data_old2()
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5247,7 +5391,7 @@ server  <- function(input, output, session) {
   })
   
   Motif_compare_aa_group2 <- reactive({
-    df <- input.data2();
+    df <- input.data_old2()
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5394,7 +5538,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "aa.or.nt3",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "JUNCTION_A")
   })
   
@@ -5407,7 +5551,7 @@ server  <- function(input, output, session) {
   })
   
   output$Motif_nt <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 5), {
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5422,7 +5566,7 @@ server  <- function(input, output, session) {
     motif
   })
   output$length_nt <- renderPrint( {
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5435,16 +5579,14 @@ server  <- function(input, output, session) {
     cat("The dataset contains nucleotide CDR3 lengths of:",  df_len)
   })
   output$length.table_nt <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 10, scrollX = TRUE), {
-    df <- input.data2();
+    df <- input.data_old2();
     df <- as.data.frame(df)
     df_unique <- as.data.frame(ddply(df,(c(input$group_column,input$aa.or.nt3)),numcolwise(sum)))
     df_unique$len1 <- nchar(df_unique[,names(df_unique) %in% input$aa.or.nt3])
     df_unique
-    
-    
   })
   Motif_plot2_nt <- reactive( {
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5457,9 +5599,6 @@ server  <- function(input, output, session) {
     motif <- as.data.frame(t(as.data.frame(strsplit(df_subset[,grep(input$aa.or.nt3,names(df_subset))], ""))))
     motif
   })
-  
-  
-  
   output$Motif_plot_nt <- renderPlot( {
     motif <- Motif_plot2_nt()
     withProgress(message = 'Figure is being generated...',
@@ -5482,9 +5621,7 @@ server  <- function(input, output, session) {
       motif<-new("pcm", mat=motif_count, name="")
       plot(motif)
       dev.off()},
-    
     contentType = "application/pdf"
-    
   )
   
   output$downloadPlotPNG_motif_nt <- downloadHandler(
@@ -5512,20 +5649,16 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "aa.or.nt4",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "JUNCTION..AA._A")
-    
   })
-  
   observe({
     updateSelectInput(
       session,
       "group_selected_one",
       choices=select_group(),
       selected = "IFN")
-    
   })
-  
   observe({
     updateSelectInput(
       session,
@@ -5536,7 +5669,7 @@ server  <- function(input, output, session) {
   })
   
   select_group_muscle <- function () {
-    df <- input.data2();
+    df <- input.data_old2();
     df <- as.data.frame(df)
     names(df)
     df_unique2 <- as.data.frame(unique (nchar(df[,names(df) %in% input$aa.or.nt4])))
@@ -5556,7 +5689,7 @@ server  <- function(input, output, session) {
   })
   
   chain_muscle <- reactive({
-    df <- input.data2();
+    df <- input.data_old2();
     validate(
       need(nrow(df)>0,
            error_message_val1)
@@ -5630,7 +5763,6 @@ server  <- function(input, output, session) {
     motif_count1<-pcm2pfm(motif_count1)
     as.data.frame(motif_count1)
   })
-  
   chain2_align_aa <- reactive({
     df_unique <- chain_muscle()
     validate(
@@ -5647,7 +5779,6 @@ server  <- function(input, output, session) {
     as.data.frame(motif_count1)
     
   })
-  
   chain1_align_nt <- reactive({
     df_unique <- chain_muscle()
     validate(
@@ -5663,7 +5794,6 @@ server  <- function(input, output, session) {
     motif_count1<-pcm2pfm(motif_count1)
     as.data.frame(motif_count1)
   })
-  
   chain2_align_nt <- reactive({
     df_unique <- chain_muscle()
     validate(
@@ -5862,8 +5992,6 @@ server  <- function(input, output, session) {
     
     
   })
-  
-  
   output$Motif_plot_align <- renderPlot( {
     Motif_plot_align1()
     
@@ -5903,7 +6031,6 @@ server  <- function(input, output, session) {
       plot(Motif_plot_align1())
       dev.off()
     },
-    
     contentType = "application/pdf"
     
   )
@@ -5931,7 +6058,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "pie_chain",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AV")
     
   })
@@ -6106,7 +6233,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group.heatmap",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AVJ")
     
   })
@@ -6115,7 +6242,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "heatmap_2",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "BVJ")
     
   })
@@ -6270,7 +6397,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group_column_simp",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "Indiv")
     
   })
@@ -6278,7 +6405,7 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group_column_simp3",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "group")
     
   })
@@ -6286,13 +6413,16 @@ server  <- function(input, output, session) {
     updateSelectInput(
       session,
       "group_column_simp2",
-      choices=names(input.data2()),
-      selected = "AVJ_aCDR3_BVJ_bCDR3")
-    
+      choices=names(input.data_old2()),
+      
+      selected = "AVJ_aCDR3_BVJ_bCDR3"
+      
+      # selected = "AVJ_aCDR3_BVJ_bCDR3"
+      )
   })
   
   inv.simpson.index <- function() {
-    dataframe = input.data2();
+    dataframe = input.data_old2()
     
     test <- as.data.frame(dataframe)
     validate(
@@ -7957,7 +8087,7 @@ if (input$test_ttest == "parametric") {
     updateSelectInput(
       session,
       "upset.select",
-      choices=names(input.data2()),
+      choices=names(input.data_old2()),
       selected = "AVJ_aCDR3_BVJ_bCDR3")
     
   })
