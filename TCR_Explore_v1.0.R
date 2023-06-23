@@ -5117,6 +5117,7 @@ server  <- function(input, output, session) {
     names(df) <- c("group","chain","cloneCount")
     
     df <-df[order(df$chain),]
+    df <-df[df$group %in% input$string.data2,]
     df$group <- factor(df$group, levels = input$string.data2)
     cols <- unlist(colors_bar.stacked())
     palette <- cols
@@ -6414,10 +6415,7 @@ server  <- function(input, output, session) {
       session,
       "group_column_simp2",
       choices=names(input.data_old2()),
-      
-      selected = "AVJ_aCDR3_BVJ_bCDR3"
-      
-      # selected = "AVJ_aCDR3_BVJ_bCDR3"
+      selected = names(input.data_old2())[dim(input.data_old2())[2]] 
       )
   })
   
@@ -8088,7 +8086,8 @@ if (input$test_ttest == "parametric") {
       session,
       "upset.select",
       choices=names(input.data_old2()),
-      selected = "AVJ_aCDR3_BVJ_bCDR3")
+      selected = names(input.data_old2())[dim(input.data_old2())[2]] 
+      )
     
   })
   observe({
@@ -8096,7 +8095,8 @@ if (input$test_ttest == "parametric") {
       session,
       "upset.group.select",
       choices=names(select_group()),
-      selected = "group")
+      selected = names(select_group())
+      )
     
   })
   observe({
@@ -8106,9 +8106,9 @@ if (input$test_ttest == "parametric") {
       choices=select_group(),
       selected = c("CD8","IFN"))
   })
-  
+  # df <-df[df$group %in% input$string.data2,]
   upset.parameters <- function () {
-    df <- input.data2();
+    df <- input.data_old2();
     
     validate(
       need(nrow(df)>0,
@@ -8118,8 +8118,14 @@ if (input$test_ttest == "parametric") {
     
     df <- as.data.frame(df)
     head(df)
+    
+    
+    
     unique.df <- unique(df[c(input$upset.select,input$upset.group.select)])
     names(unique.df) <- c("chain","group")
+    unique.df <-unique.df[unique.df$group %in% input$order.of.group,]
+    
+    
     unique.df$cloneCount <- 1
     mat <- acast(unique.df, chain~group, value.var="cloneCount")
     mat[is.na(mat)] <- 0
