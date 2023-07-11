@@ -523,10 +523,15 @@ tabPanel("Convert to TCR_Explore file format",
                  column(4, selectInput("CDR3.gene.clean","CDR3 amino acid column",choices = "")),
                ),
                
+
+               
                fluidRow(
-                        column(4, selectInput("V.GENE.clean","Variable gene column",choices = "")),
-                        column(4, selectInput("D.GENE.clean","Diversity gene column",choices = "")),
-                        column(4, selectInput("J.GENE.clean","Junction gene column",choices = "")),
+                    column(3, selectInput("D_chain_present","D chain present?",choices = c("yes","no"))),
+                    column(3, selectInput("V.GENE.clean","Variable gene column",choices = "")),
+                    conditionalPanel("input.D_chain_present == 'yes'",
+                                     column(3, selectInput("D.GENE.clean","Diversity gene column",choices = ""))
+                        ),
+                    column(3, selectInput("J.GENE.clean","Junction gene column",choices = "")),
                         
                         
                         # conditionalPanel(condition = "input.datasource == '10x_scSeq'",
@@ -3013,22 +3018,27 @@ server  <- function(input, output, session) {
       x3$TRJ <- gsub("^TCR","",x3$TRJ)
       x3$TRJ[x3$TRJ == ''] <- "TRJ"
       # x3$TRJ <- gsub("","TRJ",x3$TRJ)
-      
-      x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
-      # x3[is.na(x3$TRD)] <- "-"
-      x3$TRD <- gsub("^TCR","",x3$TRD)
-      x3$TRD[x3$TRD == ''] <- "-"
+      if (input$D_chain_present == "yes") {
+        x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
+        # x3[is.na(x3$TRD)] <- "-"
+        x3$TRD <- gsub("^TCR","",x3$TRD)
+        x3$TRD[x3$TRD == ''] <- "-"
+      }
+     
       
       x3 <- x3[!is.na(x3[names(x3) %in% c("TRV")]),]
       x3 <- x3[!is.na(x3[names(x3) %in% c("TRJ")]),]
       
       x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
+      if (input$D_chain_present == "yes") {
       x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
+      }
       # x3$TRVDJ <- gsub(".-.",".",x3$TRVDJ)
     
       x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      if (input$D_chain_present == "yes") {
       x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-      
+      }
       x3 <- x3[!names(x3) %in% input$col.to.remove]
       x3[x3 == ''] <- "Missing"
       # x3[is.na(x3)] <- "Missing"
@@ -3047,8 +3057,12 @@ server  <- function(input, output, session) {
       x3$TRV <- str_remove(x3[,names(x3) %in% input$V.GENE.clean], "\\*00")
       x3$TRV <- gsub("^TR","",x3$TRV)
       
-      x3$TRD <- str_remove(x3[,names(x3) %in% input$D.GENE.clean], "\\*00")
-      x3$TRD <- gsub("^TR","",x3$TRD)
+      if (input$D_chain_present == "yes") {
+        x3$TRD <- str_remove(x3[,names(x3) %in% input$D.GENE.clean], "\\*00")
+        x3$TRD <- gsub("^TR","",x3$TRD)
+      }
+      
+    
       
       x3$TRJ <- str_remove(x3[,names(x3) %in% input$J.GENE.clean], "\\*00")
       x3$TRJ <- gsub("^TR","",x3$TRJ)
@@ -3058,11 +3072,16 @@ server  <- function(input, output, session) {
       x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
       
       x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
+      if (input$D_chain_present == "yes") {
       x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
       x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
       x3$TRD <- gsub("NA","-",x3$TRD)
+      }
+      
       x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      if (input$D_chain_present == "yes") {
       x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      }
       
       x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
       x3
@@ -3227,7 +3246,21 @@ server  <- function(input, output, session) {
     
     # other data 
     else {
-      # x2 <- x2 %>% drop_na(input$V.GENE.clean,input$J.GENE.clean)
+      
+      x2$InFrame <- tolower(x2[,names(x2) %in% input$inframe_immseq])
+      # x2 <- subset(x2, x2[names(x2) %in% input$inframe_immseq]==TRUE)
+      
+      if (nrow(x2[-c(grep("false",x2$InFrame)),]>0)) {
+        x2 <- x2[-c(grep("false",x2$InFrame)),]
+      }
+      
+      if (nrow(x2[-c(grep("[*]",x2$junction_aa)),]>0)) {
+        x2 <- x2[-c(grep("[*]",x2$junction_aa)),]
+      }
+      
+      if (nrow(x2[-c(grep("",x2$junction_aa)),]>0)) {
+        x2 <- x2[-c(grep("",x2$junction_aa)),]
+      }
       
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
       names(x2)[1] <- "cloneCount"
@@ -3238,15 +3271,22 @@ server  <- function(input, output, session) {
       # x3 <- x3[!is.na(x3[names(x3) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
       x3$TRJ <- x3[,names(x3) %in% input$J.GENE.clean]
       x3$TRV <- x3[,names(x3) %in% input$V.GENE.clean]
-      x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
+      
+      if (input$D_chain_present == "yes") {
+        x3$TRD <- x3[,names(x3) %in% input$D.GENE.clean]
+      }
+
       x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
+      
+      if (input$D_chain_present == "yes") {
       x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
       x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
       x3$TRD <- gsub("NA","-",x3$TRD)
-
+}
       x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      if (input$D_chain_present == "yes") {
       x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-
+}
       x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
       x3 <- subset(x3,x3$TRV!="None")
       # x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
