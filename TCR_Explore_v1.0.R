@@ -3258,8 +3258,10 @@ server  <- function(input, output, session) {
         x2 <- x2[-c(grep("[*]",x2$junction_aa)),]
       }
       
-      if (nrow(x2[-c(grep("",x2$junction_aa)),]>0)) {
-        x2 <- x2[-c(grep("",x2$junction_aa)),]
+      x2 <- x2[grep(".",x2$junction_aa),]
+      
+      if (nrow(x2[is.na(x2$junction_aa),]>0)) {
+        x2 <- x2[is.na(x2$junction_aa),]
       }
       
       x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
