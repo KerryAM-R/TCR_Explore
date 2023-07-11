@@ -37,3 +37,56 @@ Biomedicine Discovery Institute and Department of Biochemistry and Molecular Bio
 ##### References:
 1.	Lefranc MP, Giudicelli V, Duroux P, Jabado-Michaloud J, Folch G, Aouinti S, et al. IMGT(R), the international ImMunoGeneTics information system(R) 25 years on. Nucleic Acids Res. 2015;43(Database issue):D413-22.
 
+### Local installation
+
+ - Download this github repository 
+
+To use TCR_Explore, first install R, RStudio and other required programs
+------------------------------------------------------------------
+#### MAC:
+* Install [R](https://cran.r-project.org/bin/macosx/)
+* Install RStudio [Version 2022.07.2-576](https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/RStudio-2022.07.2-576.dmg), as later version have an issue with opening RShiny in the window.
+* Install [XQuatz](https://www.xquartz.org)
+
+#### Windows:
+* Install [R](https://cran.r-project.org)
+* Install [RStudio](https://posit.co/download/rstudio-desktop/)
+* Install [Rtools](https://cran.r-project.org/bin/windows/Rtools/)
+
+
+### installing the packages.
+
+**Step 1.** open the TCR_Explore.Rproj file
+
+**Step 2.** open the install.packages.TCR_Explore.R file
+
+**Step 3.** Run each line (top right)
+
+- short-cut key
+  + Mac: Command-shift-n
+  + Windows: ctrl-shift-n
+
+**Possible installing prompts**
+
+When you see this line: "These packages have more recent versions available. It is recommended to update all of them. Which would you like to update? Enter one or more numbers, or an empty line to skip updates:", answer with  **1** and hit **Enter**.
+
+On a **Mac** if you see "Do you want to install from sources the package which needs compilation? (Yes/no/cancel)", answer with  **no** and hit **Enter**. *This same message will appear as an popup on Windows.*
+
+Once all packages are installed, this will be the final section of the installation process. 
+```
+* installing *source* package ‘TCR_explore.R’ ...
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (TCR_explore.R)
+```
+
+**Step 4.** open the TCR_Explore_v1.0.R and hit RunApp (top-right corner)
