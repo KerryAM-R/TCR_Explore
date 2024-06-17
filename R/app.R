@@ -461,7 +461,7 @@ navbarMenu("QC",
                     ),
                     
            ),
-# ImmunoSEQ ====
+# Converting to TCR_Explore ====
            
            tabPanel("Convert to TCR_Explore file format",
                     sidebarLayout(
@@ -2667,14 +2667,13 @@ server  <- function(input, output, session) {
     x2
   })
   
-  # count column 
   observe({
     if (input$datasource == "ImmunoSEQ") {
       updateSelectInput(
         session,
         "countcolumn",
         choices=names(TSV.col.names()),
-        selected = c("templates"))
+        selected = c("count..templates.reads."))
       
     }
     else if (input$datasource == "MiXCR") {
@@ -2715,7 +2714,7 @@ server  <- function(input, output, session) {
         session,
         "J.GENE.clean",
         choices=names(TSV.col.names()),
-        selected = c("j_gene"))
+        selected = c("jFamilyName"))
       
     }
     else if (input$datasource == "MiXCR") {
@@ -2724,7 +2723,7 @@ server  <- function(input, output, session) {
         session,
         "J.GENE.clean",
         choices=names(TSV.col.names()),
-        selected = c("bestJHit"))
+        selected = c("allJHitsWithScore"))
       
     }
     
@@ -2755,7 +2754,7 @@ server  <- function(input, output, session) {
         session,
         "V.GENE.clean",
         choices=names(TSV.col.names()),
-        selected = c("v_gene"))
+        selected = c("vFamilyName"))
       
     }
     else if (input$datasource == "MiXCR") {
@@ -2764,7 +2763,7 @@ server  <- function(input, output, session) {
         session,
         "V.GENE.clean",
         choices=names(TSV.col.names()),
-        selected = c("bestVHit"))
+        selected = c("allVHitsWithScore"))
       
     }
     
@@ -2794,7 +2793,7 @@ server  <- function(input, output, session) {
         session,
         "D.GENE.clean",
         choices=names(TSV.col.names()),
-        selected = c("d_gene"))
+        selected = c("dFamilyName"))
       
     }
     else if (input$datasource == "MiXCR") {
@@ -2803,7 +2802,7 @@ server  <- function(input, output, session) {
         session,
         "D.GENE.clean",
         choices=names(TSV.col.names()),
-        selected = c("bestDHit"))
+        selected = c("allDHitsWithScore"))
       
     }
     
@@ -2834,7 +2833,7 @@ server  <- function(input, output, session) {
         "CDR3.gene.clean",
         choices=names(TSV.col.names()),
         
-        selected = c("amino_acid"))
+        selected = c("aminoAcid"))
       
     }
     else if (input$datasource == "MiXCR") {
@@ -2853,7 +2852,6 @@ server  <- function(input, output, session) {
         choices=names(TSV.col.names()),
         selected = c("cdr3_amino_acid_B"))
     }
-    
     else {
       updateSelectInput(
         session,
@@ -2861,8 +2859,6 @@ server  <- function(input, output, session) {
         choices=names(TSV.col.names()),
         selected = c("JUNCTION"))
     }
-    
-    
   })
   observe({
     
@@ -2983,34 +2979,66 @@ server  <- function(input, output, session) {
     
     # mixcr 
     else if (input$datasource == "MiXCR") {
-      x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
-      names(x2)[1] <- "cloneCount"
+      x2$group <- input$group.imm
+      x2$Indiv <- input$indiv.imm
+      x2$group.indiv <- paste(x2$group,x2$Indiv,sep = ".")
       
+      x2 <- x2 %>%
+        select(all_of(c(input$countcolumn,"group","Indiv","group.indiv")), everything())
+      
+      names(x2)[1] <- "cloneCount"
       x3 <- x2
       
-      x3 <- x3[!is.na(x3[names(x2) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
+      df_v_gene <- as.data.frame(t(as.data.frame(strsplit(x3[,names(x3) %in% input$V.GENE.clean],"[*]"))))
+      print(df_v_gene)
+      x3$v_gene <- df_v_gene$V1
+      message("Addeed v_gene")
       
-      x3$TRV <- str_remove(x3[,names(x3) %in% input$V.GENE.clean], "\\*00")
-      x3$TRV <- gsub("^TR","",x3$TRV)
-      
-      x3$TRD <- str_remove(x3[,names(x3) %in% input$D.GENE.clean], "\\*00")
-      x3$TRD <- gsub("^TR","",x3$TRD)
-      
-      x3$TRJ <- str_remove(x3[,names(x3) %in% input$J.GENE.clean], "\\*00")
-      x3$TRJ <- gsub("^TR","",x3$TRJ)
+      if (input$D_chain_present == "yes") {
+        df_d_gene <- as.data.frame(t(as.data.frame(strsplit(x3[,names(x3) %in% input$D.GENE.clean],"[*]"))))
+        x3$d_gene <- df_d_gene$V1
+      }
       
       
-      x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
-      x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
+      df_j_gene <- as.data.frame(t(as.data.frame(strsplit(x3[,names(x3) %in% input$J.GENE.clean],"[*]"))))
+      print(df_j_gene)
+      x3$j_gene <- df_j_gene$V1
+      message("Addeed j_gene")
+      print(x3)
       
-      x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
-      x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
-      x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
-      x3$TRD <- gsub("NA","-",x3$TRD)
-      x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-      x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      if(TRUE %in% grepl("[_]",x3[,names(x3) %in% input$CDR3.gene.clean])) {
+        x3 <- x3[!grepl("[_]",x3[,names(x3) %in% input$CDR3.gene.clean]),]
+      }
       
-      x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
+      if(TRUE %in% grepl("[*]",x3[,names(x3) %in% input$CDR3.gene.clean])) {
+        x3 <- x3[!grepl("[*]",x3[,names(x3) %in% input$CDR3.gene.clean]),]
+      }
+      
+      
+      x3$vj_gene <- paste(x3$v_gene,x3$j_gene,sep=".")
+      if (D_chain_present == "yes") {
+        x3$vdj_gene <- paste(x3$v_gene,x3$d_gene,x3$j_gene,sep=".")
+        x3$vdj_gene <- gsub("[.]NA[.]",".",x3$vdj_gene)
+        x3$d_gene <- gsub("NA","-",x3$d_gene)
+      }
+      
+      x3$vj_gene_cdr3 <- paste(x3$vj_gene, x3[,names(x3) %in% "aaSeqCDR3"],sep="_")
+      
+      if (D_chain_present == "yes") {
+        x3$vdj_gene_cdr3 <- paste(x3$vdj_gene, x3[,names(x3) %in% CDR3.gene.clean],sep="_")
+      }
+      
+      if(TRUE %in% is.na(x3$v_gene)) {
+        x3 <- x3[!is.na(x3$v_gene),]
+      }
+      
+      if(TRUE %in% is.na(x3$j_gene)) {
+        x3 <- x3[!is.na(x3$j_gene),]
+      }
+      
+      x3 <- x3[!names(x3) %in% c(input$col.to.remove)]
+      print(x3)
+      x3
       
     }
     # paired 10x scSeq
