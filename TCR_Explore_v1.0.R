@@ -381,10 +381,7 @@ tabPanel("Automated .ab1 QC",
                                                         div(DT::dataTableOutput("IMGT2_out2")),
                                                         )
                                              ),
-                                             
                                             
-                                            
-                                             
                                     ),
 # pairing the file -----
                                                   tabPanel("Paired chain file",value = 2,
@@ -476,7 +473,7 @@ tabPanel("Automated .ab1 QC",
                     ),
                     
            ),
-# ImmunoSEQ ====
+# Converting to TCR_Explore format ====
 
 tabPanel("Convert to TCR_Explore file format",
          sidebarLayout(
@@ -504,6 +501,7 @@ tabPanel("Convert to TCR_Explore file format",
                         
                         
            ),
+          
            mainPanel(
              tabsetPanel(
                tabPanel("Converting to TCR_Explore",
@@ -523,10 +521,8 @@ tabPanel("Convert to TCR_Explore file format",
                  column(4, selectInput("CDR3.gene.clean","CDR3 amino acid column",choices = "")),
                ),
                
-
-               
                fluidRow(
-                    column(3, selectInput("D_chain_present","D chain present?",choices = c("yes","no"))),
+                    column(3, selectInput("D_chain_present","D chain present?",choices = c("yes","no"),selected = "no")),
                     column(3, selectInput("V.GENE.clean","Variable gene column",choices = "")),
                     conditionalPanel("input.D_chain_present == 'yes'",
                                      column(3, selectInput("D.GENE.clean","Diversity gene column",choices = ""))
@@ -558,7 +554,7 @@ tabPanel("Convert to TCR_Explore file format",
            
            
 ),
-#### TCRex merge files ----
+#### TCR merge files ----
 tabPanel("TCR_Explore merge",
          sidebarLayout(
            sidebarPanel(id = "tPanel4",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
@@ -2768,7 +2764,7 @@ server  <- function(input, output, session) {
           session,
           "J.GENE.clean",
           choices=names(TSV.col.names()),
-          selected = c("bestJHit"))
+          selected = c("allJHitsWithScore"))
         
       }
       
@@ -2808,7 +2804,7 @@ server  <- function(input, output, session) {
           session,
           "V.GENE.clean",
           choices=names(TSV.col.names()),
-          selected = c("bestVHit"))
+          selected = c("allVHitsWithScore"))
         
       }
       
@@ -2847,7 +2843,7 @@ server  <- function(input, output, session) {
           session,
           "D.GENE.clean",
           choices=names(TSV.col.names()),
-          selected = c("bestDHit"))
+          selected = c("allDHitsWithScore"))
         
       }
       
@@ -3047,43 +3043,70 @@ server  <- function(input, output, session) {
     
     # mixcr 
     else if (input$datasource == "MiXCR") {
-      x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
-      names(x2)[1] <- "cloneCount"
+      x2$group <- input$group.imm
+      x2$Indiv <- input$indiv.imm
+      x2$group.indiv <- paste(x2$group,x2$Indiv,sep = ".")
       
+      x2 <- x2 %>%
+        select(all_of(c(input$countcolumn,"group","Indiv","group.indiv")), everything())
+      
+      names(x2)[1] <- "cloneCount"
       x3 <- x2
       
-      x3 <- x3[!is.na(x3[names(x2) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
-      
-      x3$TRV <- str_remove(x3[,names(x3) %in% input$V.GENE.clean], "\\*00")
-      x3$TRV <- gsub("^TR","",x3$TRV)
-      
-      if (input$D_chain_present == "yes") {
-        x3$TRD <- str_remove(x3[,names(x3) %in% input$D.GENE.clean], "\\*00")
-        x3$TRD <- gsub("^TR","",x3$TRD)
+      if (FALSE %in% is.na(x3[,names(x3) %in% c(input$V.GENE.clean,input$J.GENE.clean)])) {
+          
+        # x3 <- x3[!is.na(x3[names(x2) %in% c(input$V.GENE.clean,input$J.GENE.clean)]),]
       }
       
-    
-      
-      x3$TRJ <- str_remove(x3[,names(x3) %in% input$J.GENE.clean], "\\*00")
-      x3$TRJ <- gsub("^TR","",x3$TRJ)
-      
-      
-      x3 <- x3[-c(grep("\\_",x3[,names(x3) %in% input$CDR3.gene.clean])),]
-      x3 <- x3[-c(grep("\\*",x3[,names(x3) %in% input$CDR3.gene.clean])),]
-      
-      x3$TRVJ <- paste(x3$TRV,x3$TRJ,sep=".")
+      df_v_gene <- as.data.frame(t(as.data.frame(strsplit(x3[,names(x3) %in% input$V.GENE.clean],"[*]"))))
+      print(df_v_gene)
+      x3$v_gene <- df_v_gene$V1
+      message("Addeed v_gene")
+
       if (input$D_chain_present == "yes") {
-      x3$TRVDJ <- paste(x3$TRV,x3$TRD,x3$TRJ,sep=".")
-      x3$TRVDJ <- gsub(".NA.",".",x3$TRVDJ)
-      x3$TRD <- gsub("NA","-",x3$TRD)
+        df_d_gene <- as.data.frame(t(as.data.frame(strsplit(x3[,names(x3) %in% input$D.GENE.clean],"[*]"))))
+        x3$d_gene <- df_d_gene$V1
+      }
+
+
+      df_j_gene <- as.data.frame(t(as.data.frame(strsplit(x3[,names(x3) %in% input$J.GENE.clean],"[*]"))))
+      print(df_j_gene)
+      x3$j_gene <- df_j_gene$V1
+      message("Addeed j_gene")
+      print(x3)
+
+      if(TRUE %in% grepl("[_]",x3[,names(x3) %in% input$CDR3.gene.clean])) {
+        x3 <- x3[!grepl("[_]",x3[,names(x3) %in% input$CDR3.gene.clean]),]
+      }
+
+      if(TRUE %in% grepl("[*]",x3[,names(x3) %in% input$CDR3.gene.clean])) {
+        x3 <- x3[!grepl("[*]",x3[,names(x3) %in% input$CDR3.gene.clean]),]
+      }
+
+
+      x3$vj_gene <- paste(x3$v_gene,x3$j_gene,sep=".")
+      if (D_chain_present == "yes") {
+        x3$vdj_gene <- paste(x3$v_gene,x3$d_gene,x3$j_gene,sep=".")
+        x3$vdj_gene <- gsub("[.]NA[.]",".",x3$vdj_gene)
+        x3$d_gene <- gsub("NA","-",x3$d_gene)
+      }
+
+      x3$vj_gene_cdr3 <- paste(x3$vj_gene, x3[,names(x3) %in% "aaSeqCDR3"],sep="_")
+
+      if (D_chain_present == "yes") {
+        x3$vdj_gene_cdr3 <- paste(x3$vdj_gene, x3[,names(x3) %in% CDR3.gene.clean],sep="_")
       }
       
-      x3$TRVJ_CDR3 <- paste(x3$TRVJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-      if (input$D_chain_present == "yes") {
-      x3$TRVDJ_CDR3 <- paste(x3$TRVDJ, x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
+      if(TRUE %in% is.na(x3$v_gene)) {
+        x3 <- x3[!is.na(x3$v_gene),]
       }
       
-      x3 <- x3[!names(x3) %in% c(input$col.to.remove,"cloneCount.1")]
+      if(TRUE %in% is.na(x3$j_gene)) {
+        x3 <- x3[!is.na(x3$j_gene),]
+      }
+      
+      x3 <- x3[!names(x3) %in% c(input$col.to.remove)]
+      print(x3)
       x3
 
     }
@@ -3587,9 +3610,6 @@ server  <- function(input, output, session) {
   })
   # filtering out sequences 
   observe({
-    
-    
-    
     updateSelectInput(
       session,
       "clonotypes_column",
