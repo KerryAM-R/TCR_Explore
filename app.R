@@ -21,7 +21,6 @@ ui <- navbarPage(
     ),
     tags$head(
       tags$style(HTML(
-        ".centered-spinner { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }"
       ))
     ),
     
@@ -6727,10 +6726,12 @@ server  <- function(input, output, session) {
     
     split_names <- strsplit(results$sample, " ")
     
+    
+    
     results[[variable_one_diversity_stat]]  <- sapply(split_names, `[`, 1)
     results[[variable_two_diversity_stat]] <- sapply(split_names, `[`, 2)
     
-    results
+    results[order(results$sample,decreasing = F),]
     
   })
   
@@ -6990,7 +6991,6 @@ server  <- function(input, output, session) {
     
   })
   
-  
   ttest_dt <- reactive({
     dat <- table.inv.simpson()
     req(dat)
@@ -7071,7 +7071,7 @@ server  <- function(input, output, session) {
   output$downloadPlot_simpson.inv <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
-      paste("inv.simpson.index.",gsub("/", "-", x), ".pdf", sep = "")
+      paste(input$index_type,"_diversity.pdf", sep = "")
     }, content = function(file) {
       pdf(file, width=input$width_simpson.inv,height=input$height_simpson.inv, onefile = FALSE) # open the pdf device
       print(group.diversity1())
@@ -7081,7 +7081,7 @@ server  <- function(input, output, session) {
   output$downloadPlotPNG_simpson.inv <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
-      paste("inv.simpson.index.", gsub("/", "-", x), ".png", sep = "")
+      paste(input$index_type,"_diversity.png", sep = "")
     },
     content = function(file) {
       
