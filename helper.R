@@ -9,7 +9,7 @@ test_fun <- function() {
   }
 }
 
-index <- c("shannon","hill_q1", "simpson","inv_simpson","inv_simpson_corrected","pielou","clonality","chao1","gini","D50","top1_freq","top10_freq")
+
 
 ASN$cols <- colorset(alphabet="AA",
                      colorScheme="chemistry")

@@ -854,15 +854,16 @@ tabPanel("TCR analysis",
                                                             fluidRow(
                                                               column(6,selectInput("variable_one_diversity_stat",label = h5("First ID column"),"")),
                                                               column(6,selectInput("variable_two_diversity_stat",label = h5("Second ID column"),"")),
-                                                              column(12,selectInput("clonotype_index",label = h5("Unique clone column"),"")),                            
+                                                              column(12,selectInput("clonotype_index",label = h5("Unique clone column"),"")),    
+                                                              column(12,numericInput("d_threshold","D1 to D50 threshold",value = 0.1,min = 0.01,max = 0.5,step = 0.01))
                                                                  ),
                                                             ),
                                            conditionalPanel(
                                              condition = "input.QC_panel_Simp == 2 || input.QC_panel_Simp == 3",
                                              div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
-                                                       fluidRow(column(12,selectInput("index_type",label = h5("Type of Diversity"),
-                                                                                     choices =  index, selected = "simpson"),)
-                                                                
+                                                       fluidRow(
+                                                         column(12,selectInput("index_type",label = h5("Type of Diversity"),
+                                                                                     choices =  ""))
                                                                 )
                                            ),
                                            conditionalPanel(
@@ -870,8 +871,6 @@ tabPanel("TCR analysis",
                                                        fluidRow(
                                                          column(6,selectInput("group.index",label = h5("x-axis group"),"")),
                                                          column(6,selectInput("group2.index",label = h5("Colour by this group"),"")),
-                                                         # column(6,selectInput("x.axis.index",label = h5("Select x-axis (total or unique clones"),
-                                                         #                      choices = simp.index.names,selected = "total # clones")),
                                                          column(6,checkboxInput("scale_x_continuous_x","Change to scientific values",value = F)),
                                                        ),
                                           ),
@@ -3286,73 +3285,6 @@ server  <- function(input, output, session) {
       x3$indiv <- input$indiv.imm
       x3$Indiv.group <- paste(x3$group,x3$indiv,sep=".")
       x3
-      # x2 <- data.frame(cloneCount = x2[,names(x2) %in% input$countcolumn], x2)
-      # names(x2)[1] <- "cloneCount"
-      # 
-      # for (i in 1:dim(x2)[2]) {
-      #   x2[,i]   <- gsub(";",",",x2[,i])
-      # }
-      # 
-      # x2$group <- input$group.imm
-      # x2$indiv <- input$indiv.imm
-      # x2$Indiv.group <- paste(x2$group,x2$indiv,sep=".")
-      # names(x2)[1] <- "cloneCount"
-      # 
-      # x3 <- x2
-      # 
-      # df_name <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean2]), ",")))
-      # df_name2 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean2]), ",")))
-      # 
-      # x3$AV <- df_name[,1]
-      # x3$AJ <- df_name2[,1]
-      # x3$AJ <- gsub("[*]0.","",x3$AJ)
-      # x3$AJ <- gsub(",, AJ..","",x3$AJ)
-      # x3$AJ <- gsub(",, AJ.","",x3$AJ)
-      # 
-      # x3$AVJ <- paste(x3$AV,".",x3$AJ,sep="")
-      # x3$AV <- gsub("[*]0.","",x3$AV)
-      # x3$AVJ <- gsub("[*]0.","",x3$AVJ)
-      # 
-      # df_name3 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$V.GENE.clean]), ",")))
-      # df_name4 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$J.GENE.clean]), ",")))
-      # df_name5 <- as.data.frame(do.call(rbind, strsplit(as.character(x3[,names(x3) %in% input$D.GENE.clean]), ",")))
-      # 
-      # x3$BV <- df_name3[,1]
-      # x3$BJ <- df_name4[,1]
-      # x3$BD <- df_name5[,1]
-      # 
-      # 
-      # x3$BVJ <- paste(x3$BV,".",x3$BJ,sep="")
-      # x3$BVDJ <- paste(x3$BV,".",x3$BD,".",x3$BJ,sep="")
-      # 
-      # x3$BV <- gsub("[*]0.","",x3$BV)
-      # x3$BJ <- gsub("[*]0.","",x3$BJ)
-      # x3$BD <- gsub("[*]0.","",x3$BD)
-      # x3$BD <- gsub(" ","",x3$BD)
-      # x3$BVJ <- gsub("[*]0.","",x3$BVJ)
-      # x3$BVDJ <- gsub("[*]0.","",x3$BVDJ)
-      # x3$BVDJ <- gsub(".NA.",".",x3$BVDJ)
-      # 
-      # x3$AJ <- gsub("TR","",x3$AJ)
-      # x3$AVJ <- gsub("TR","",x3$AVJ)
-      # x3$AVJ <- gsub("AJ","J",x3$AVJ)
-      # x3$AVJ.BVJ <- paste(x3$AVJ,"_",x3$BVJ,sep="")
-      # x3$AVJ.BVDJ <- paste(x3$AVJ,"_",x3$BVDJ,sep="")
-      # 
-      # x3$AVJ_aCDR3 <- paste(x3$AVJ,x3[,names(x3) %in% input$CDR3.gene.clean2],sep="_")
-      # x3$BVJ_bCDR3 <- paste(x3$BVJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-      # x3$BVDJ_bCDR3 <- paste(x3$BVDJ,x3[,names(x3) %in% input$CDR3.gene.clean],sep="_")
-      # 
-      # x3$AVJ_aCDR3_BVJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVJ_bCDR3,sep=" & ")
-      # x3$AVJ_aCDR3_BVDJ_bCDR3 <- paste(x3$AVJ_aCDR3,x3$BVDJ_bCDR3,sep=" & ")
-      # x3$BD <- gsub("NA","-",x3$BD)
-      # 
-      # x3 <- x3[!names(x3) %in% input$col.to.remove]
-      # x3[is.na(x3)] <- "Missing"
-      # 
-      # x3 <- subset(x3, !x3$AJ=="Missing")
-      # x3 <- subset(x3, !x3$BJ=="Missing")
-      # x3[is.na(x3)] <- " "
       
     }
     
@@ -3721,11 +3653,13 @@ server  <- function(input, output, session) {
       )
   })
   observe({
-    
-    if(input$datatype_input == "TCR_Explore") {
+    req(analysis_data())
+    if( "Indiv" %in% names(analysis_data())) {
       ID_of_file <- "Indiv"
-    } else {
+    } else if ("Sample_Name" %in% names(analysis_data())) {
       ID_of_file <- "Sample_Name"
+    } else {
+      ID_of_file <- names(analysis_data())[2]
     }
     
     updateSelectInput(
@@ -4043,10 +3977,13 @@ server  <- function(input, output, session) {
   
   # chord plot =====
   observe({
-    if(input$datatype_input == "TCR_Explore") {
+    req(analysis_data())
+    if( "group" %in% names(analysis_data())) {
       VDJ_name <- "group"
-    } else {
+    } else if ("orig.ident" %in% names(analysis_data())) {
       VDJ_name <- "orig.ident"
+    } else {
+      ID_of_file <- names(analysis_data())[3]
     }
     
     
@@ -4057,6 +3994,8 @@ server  <- function(input, output, session) {
       selected = VDJ_name)
     
   }) # group 
+  
+  
   select_group <- reactive({
     df <- analysis_data();
     
@@ -4090,7 +4029,6 @@ server  <- function(input, output, session) {
     req(select_group())
     list_of_groups <- as.data.frame(select_group())
 
-    print(list_of_groups)
     updateSelectInput(
       session,
       "selected_for_chord",
@@ -4541,30 +4479,52 @@ server  <- function(input, output, session) {
   
   # CDR3 distribution =====
   observe({
+    req(analysis_data())
+    if( "JUNCTION..AA._A" %in% names(analysis_data())) {
+      cdr_seq <- "JUNCTION..AA._A"
+    } else if ("cdr3_AG" %in% names(analysis_data())) {
+      cdr_seq <- "cdr3_AG"
+    } else {
+      cdr_seq <- ""
+    }
+
     updateSelectInput(
       session,
       "aa_or_nt",
       choices=names(analysis_data()),
-      selected = "JUNCTION..AA._A") 
+      selected = cdr_seq) 
   }) # amino acid or nucleotides column
   
+  
+  
   observe({
+    
+    req(analysis_data(),select_group())
+    
     updateSelectInput( 
       session,
       "selected_group_len",
       choices=select_group()) }) # group
   
   observe({
-    df <- analysis_data(); 
+    df <- analysis_data()
     validate(
       need(nrow(df)>0,
            error_message_val1)
     )
+    req(analysis_data())
+    if( "AVJ" %in% names(analysis_data())) {
+      chain_selected <- "AVJ"
+    } else if ("vj_gene_AG" %in% names(analysis_data())) {
+      chain_selected <- "vj_gene_AG"
+    } 
+    print(chain_selected)
+    
     updateSelectInput(
       session,
       "chain_hist_col",
       choices=names(df),
-      selected = "AVJ")
+      selected = chain_selected)
   })
   
   cols.hist <- reactive({
@@ -4574,12 +4534,15 @@ server  <- function(input, output, session) {
            error_message_val1)
     )
     df <- as.data.frame(df)
+    
     req(input$aa_or_nt,input$chain_hist_col, input$colour_panels_available)
-    
     df1 <- df
-    df1$len1 <- nchar(df1[,grep(input$aa_or_nt,names(df1))])
     
-    df1$chain <- df1[,names(df1) %in% input$chain_hist_col]
+    req(input$aa_or_nt %in% names(df1))
+    df1$len1 <- nchar(df1[,names(df1) %in% input$aa_or_nt])
+    
+    
+    df1$chain <- df1[,names(df1) == input$chain_hist_col]
     df1 <- df1[order(df1$chain, decreasing = F),]
     df1$chain <- factor(df1$chain,levels = unique(df1$chain))
     
@@ -4628,7 +4591,8 @@ server  <- function(input, output, session) {
     df <- as.data.frame(df)
     df.names <-  df[ , -which(names(df) %in% c("cloneCount","well"))]
     df1 <- ddply(df,names(df.names) ,numcolwise(sum))
-    df1$len1 <- nchar(df1[,grep(input$aa_or_nt,names(df1))])
+    req(input$aa_or_nt %in% names(df1))
+    df1$len1 <- nchar(df1[,names(df1) %in% input$aa_or_nt])
     
     df1$chain <- df1[,names(df1) %in% input$chain_hist_col]
     df1 <- df1[order(df1$chain,decreasing = F),]
@@ -4677,8 +4641,6 @@ server  <- function(input, output, session) {
       lapply(1:dim(num)[1], function(i) {
        colourpicker::colourInput(paste("col.hist2", i, sep="_"), paste(num[i,]), input$one.colour.default)        
       })
-      
-      
     }
     
   })
@@ -6596,16 +6558,30 @@ server  <- function(input, output, session) {
       selected = VDJ_name
       )
   })
+
+  
+  observe({
+    req(input$d_threshold)
+    index <- c("shannon","hill_q1", "simpson","inv_simpson","inv_simpson_corrected","pielou","clonality","chao1","gini",paste0("D",as.integer(input$d_threshold * 100)),"D50","top1_freq","top10_freq")
+    
+    updateSelectInput(
+      session,
+      "index_type",
+      choices=index,
+      selected = "simpson"
+    )
+    
+  })
   
   inv.simpson.index <- reactive( {
-
+    set.seed(123)
     df <- as.data.frame(analysis_data())
     validate(
       need(nrow(df)>0,
            "Upload file")
     )
     
-    req(input$clonotype_index,input$variable_one_diversity_stat,input$variable_two_diversity_stat)
+    req(input$index_type,input$clonotype_index,input$variable_one_diversity_stat,input$variable_two_diversity_stat,input$d_threshold)
     
     variable_one_diversity_stat  <- input$variable_one_diversity_stat
     variable_two_diversity_stat <- input$variable_two_diversity_stat
@@ -6639,7 +6615,7 @@ server  <- function(input, output, session) {
     }
     
     m <- as.data.frame(m)
-    
+    # Dname <-  paste0("D",as.integer(input$d_threshold * 100))
     # ==============================
     # Prepare result storage
     # ==============================
@@ -6659,6 +6635,7 @@ server  <- function(input, output, session) {
       clonality = NA,
       chao1 = NA,
       gini = NA,
+      Dx = NA,
       D50 = NA,
       top1_freq = NA,
       top10_freq = NA
@@ -6717,6 +6694,13 @@ server  <- function(input, output, session) {
       results$top10_freq[i] <- sum(sorted[1:min(10, length(sorted))]) /
         total_counts
       
+      # Dthreshold
+      threshold <- input$d_threshold
+      cum_prop <- cumsum(sorted) / total_counts
+      
+      print(cum_prop)
+      
+      results$Dx[i] <- which(cum_prop >= threshold)[1] / length(sorted)
       # D50
       cum_prop <- cumsum(sorted) / total_counts
       results$D50[i] <- which(cum_prop >= 0.5)[1] / length(sorted)
@@ -6730,6 +6714,10 @@ server  <- function(input, output, session) {
     results[[variable_one_diversity_stat]]  <- sapply(split_names, `[`, 1)
     results[[variable_two_diversity_stat]] <- sapply(split_names, `[`, 2)
     
+    
+    dx_label <- paste0("D", as.integer(input$d_threshold * 100))
+    names(results)[names(results) == "Dx"] <- dx_label
+    results <- results[order(results$sample,decreasing = TRUE),]
     results
     
   })
@@ -6776,8 +6764,6 @@ server  <- function(input, output, session) {
     selected.col <- dat[names(dat) %in% input$group2.index]
     names(selected.col) <- "V1"
     dat[names(dat) %in% input$group2.index] <- factor(selected.col$V1, levels = unique(selected.col$V1),labels = unique(selected.col$V1))
-    print(dat)
-    
     num <- unique(dat[names(dat) %in% input$group2.index])
     col.gg <- gg_fill_hue(dim(num)[1])
     
@@ -6788,6 +6774,7 @@ server  <- function(input, output, session) {
       })
     }
     else if (input$colour_panels_available == "random") {
+      set.seed(123)
       palette1 <- distinctColorPalette(dim(num)[1])
       lapply(1:dim(num)[1], function(i) {
        colourpicker::colourInput(paste("col.inv.simpson", i, sep="_"), paste(num[i,]), palette1[i])
@@ -6843,11 +6830,7 @@ server  <- function(input, output, session) {
     df$both <-  df$selected.groups <- paste(df[[input$variable_one_diversity_stat]],
                                              df[[input$variable_two_diversity_stat]],
                                              sep=" ")
-    
-      
-    print(head(df))
-    
-     list_of_x_axis <- df[[input$group.index]]
+    list_of_x_axis <- df[[input$group.index]]
     
      list_of_x_axis <- list_of_x_axis[order(list_of_x_axis)]
      
@@ -7062,7 +7045,7 @@ server  <- function(input, output, session) {
 
   output$downloadTABLE_simpson.inv <- downloadHandler(
     filename = function(){
-      paste("inv.simpson.index",gsub("-", ".", Sys.Date()),".csv", sep = "")
+      paste(input$index_type,"_diversity.csv", sep = "")
     },
     content = function(file){
       write.csv(table.inv.simpson(),file, row.names = FALSE)
@@ -7071,7 +7054,7 @@ server  <- function(input, output, session) {
   output$downloadPlot_simpson.inv <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
-      paste("inv.simpson.index.",gsub("/", "-", x), ".pdf", sep = "")
+      paste(input$index_type,"_diversity.pdf", sep = "")
     }, content = function(file) {
       pdf(file, width=input$width_simpson.inv,height=input$height_simpson.inv, onefile = FALSE) # open the pdf device
       print(group.diversity1())
@@ -7081,7 +7064,7 @@ server  <- function(input, output, session) {
   output$downloadPlotPNG_simpson.inv <- downloadHandler(
     filename = function() {
       x <- gsub(":", ".", Sys.time())
-      paste("inv.simpson.index.", gsub("/", "-", x), ".png", sep = "")
+      paste(input$index_type,"_diversity.png", sep = "")
     },
     content = function(file) {
       
