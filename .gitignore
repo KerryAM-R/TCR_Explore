@@ -1,8 +1,13 @@
 # RStudio files
+.Rproj.user/*
 .Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
 
+.pper
+
 # macOS files
+.DS_Store
+.DS_Store
 .DS_Store
