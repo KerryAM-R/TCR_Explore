@@ -981,23 +981,23 @@ tabPanel("TCR analysis",
                       tabsetPanel(id = "overview_panels",
 # UI Summary table -----
                            tabPanel("Summary table",value  = "over_sum_tab",
-                                    div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                                     fluidRow(
                                       column(3,selectInput("type_chain","Alpha-beta or gamma-delta",choices = c("ab","gd","NGS_immunoseq"))),
                                       column(3,selectInput("type_of_graph", "Summary table output",choices = c("general summary","TCRdist3")))
                                     ),
                                     fluidRow(column(12, selectInput("string_to_summary_table","column names for summary","",multiple = T, width = "1200px") )),
                                     tags$head(tags$style("#TCR_Explore_summary_table  {white-space: nowrap;  }")),
+                                    div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                                     div(DT::dataTableOutput("TCR_Explore_summary_table")),
                                     downloadButton('downloadTABLE.QC3','Download table')
                                     
                            ),
             tabPanel("Filtered table", value = "over_filter_tab",
+                     div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                      div(DT::dataTableOutput("Test_table")),
          ),
 # UI Treemap -----
                tabPanel("Treemap",value = "treemap_tab",
-                        div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                         column(12, selectInput("string_data_tree_order","Order of group in graph",choices = "",multiple = T, width = "1200px")),
                         
                         div(
@@ -1008,6 +1008,7 @@ tabPanel("TCR analysis",
                                         wellPanel(id = "tPanel21",style = "overflow-y:scroll; max-height: 600px",
                                                   uiOutput('myPanel'))),
                                  column(9,plotOutput("Treemap2", height="600px"))),
+                        div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                         fluidRow(
                           column(3,numericInput("width_tree", "Width of PDF", value=10)),
                           column(3,numericInput("height_tree", "Height of PDF", value=8)),
@@ -1027,17 +1028,20 @@ tabPanel("TCR analysis",
                         h5("If you see this error: 'not enough space for cells at track index '1'. 
                                            Adjust Text size (cex)"),
                         
-                        div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
+
                         div(
                           style = "text-align: center; margin: 20px 0;",  # center & vertical spacing
                           actionButton("update_circ_plot", "Update Circular Plot")
                         ),
 
-                        # plotOutput("colour.trans.test"),
+
                         fluidRow(column(3,
                                         wellPanel(id = "tPanel22",style = "overflow-y:scroll; max-height: 600px",
+
                                                   uiOutput('myPanel_circ'))),
+                                 
                                  column(9,plotOutput("Circular",height="600px"))),
+                        div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                         h4("Exporting the Circular plot"),
                         fluidRow(
                           column(3,numericInput("width_circ", "Width of PDF", value=10)),
@@ -1055,7 +1059,6 @@ tabPanel("TCR analysis",
                ),
 # UI Pie ----
                tabPanel("Pie chart",value = "over_pie_tab",
-                        div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                         div(
                           style = "text-align: center; margin: 20px 0;",  # center & vertical spacing
                           actionButton("update_pie", "Update Pie Chart")
@@ -1064,6 +1067,7 @@ tabPanel("TCR analysis",
                                         wellPanel(id = "tPanel23",style = "overflow-y:scroll; max-height: 600px",
                                                   uiOutput('myPanel_pie'))),
                                  column(9, plotOutput("pie_out",height="600px"))),
+                        div(id = "spinner-container",class = "centered-spinner",add_busy_spinner(spin = "fading-circle",height = "200px",width = "200px",color = "#6F00B0")),
                         fluidRow(
                           column(3,numericInput("width_pie", "Width of PDF", value=10)),
                           column(3,numericInput("height_pie", "Height of PDF", value=8)),
@@ -1526,6 +1530,7 @@ tabPanel("Paired TCR with Index data",
          )
 )
 )
+
 ##### 
 # Server 
 #####
@@ -1591,7 +1596,8 @@ server  <- function(input, output, session) {
   vals22 <- reactiveValues(Treemap22=NULL)
   vals33 <- reactiveValues(geom_comp=NULL)
   vals44 <- reactiveValues(plot.ggseq.2=NULL)
-  
+  val_circ <- reactiveValues(printchord=NULL)
+
   options(shiny.sanitize.errors = F)
   output$sessionInfo <- renderPrint({
     print(sessionInfo())
@@ -3995,7 +4001,6 @@ server  <- function(input, output, session) {
     
   }) # group 
   
-  
   select_group <- reactive({
     df <- analysis_data();
     
@@ -4010,7 +4015,7 @@ server  <- function(input, output, session) {
     as.list(df2)
   })
   
-  selected_chain_1 <- function () {
+  selected_chain_1 <- reactive({
     df <- analysis_data();
     
     validate(
@@ -4022,8 +4027,7 @@ server  <- function(input, output, session) {
     df2 <- as.data.frame(df2)
     #names(df2) <- "V1"
     df2
-  }
-  
+  })
   
   observe({
     req(select_group())
@@ -4141,7 +4145,6 @@ server  <- function(input, output, session) {
       selected = c("AV4","AV22","AV19")) 
   }) 
   
-  
   colors_cir <- reactive({
     dat <- input.data2()
     validate(
@@ -4152,7 +4155,6 @@ server  <- function(input, output, session) {
     req(input$chain1,input$chain2)
     
     dat <- as.data.frame(dat)
-    # dat <- subset(dat, get(input$category_column)==input$selected_for_chord)
     hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     hierarchy <- hierarchy %>%
@@ -4171,7 +4173,7 @@ server  <- function(input, output, session) {
   })
   
   col.table1 <- reactive({
-    dat <- input.data2();
+    dat <- input.data2()
     validate(
       need(nrow(dat)>0,
            error_message_val1)
@@ -4180,12 +4182,12 @@ server  <- function(input, output, session) {
     hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
     hierarchy <- hierarchy %>%
       select(input$chain1, everything())
+    
     df.col1 <- as.data.frame(unique(hierarchy[,1]))
     names(df.col1) <- "V1"
     df.col.j <- as.data.frame(unique(hierarchy[,2]))
     names(df.col.j) <- "V1"
     df.col.2 <- rbind(df.col1,df.col.j)
-    length(t(df.col.2))
     col2 <- unlist(colors_cir())
     
     if (input$circ_lab =="colour selected clone/s (label)"|input$circ_lab =="colour selected clone/s (no label)") {
@@ -4213,269 +4215,138 @@ server  <- function(input, output, session) {
     }
   })
   
-  
-  output$colour.trans.test <- renderPlot({
+  # -- Step 1: filter to the selected category, order chain1 first
+  filtered_hierarchy <- reactive({
     dat <- input.data2()
-    validate(
-      need(nrow(dat)>0,
-           error_message_val1)
-    )
-    hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy %>%
-      select(input$chain1, everything())
-    
-    df.col1 <- as.data.frame(unique(hierarchy[,1]))
-    names(df.col1) <- "V1"
-    df.col.j <- as.data.frame(unique(hierarchy[,2]))
-    names(df.col.j) <- "V1"
-    df.col.2 <- rbind(df.col1,df.col.j)
-    length(t(df.col.2))
-    col2 <- unlist(colors_cir())
-    
-    if (input$circ_lab =="colour selected clone/s (label)" |input$circ_lab =="colour selected clone/s (no label)" ) {
-      my_col_alpha_all <- col2
-
-      for(i in 1:length(col2)) {
-        my_col_alpha_all[i] <- ifelse(df.col.2[i,1] %in% c(input$string_data_circ_order),
-                                      adjustcolor(col2[i], alpha.f =input$selected.chord.transparacy),
-                                      adjustcolor(col2[i], alpha.f =input$unselected.chord.transparacy))
-      }
-
-
-      show_col(my_col_alpha_all)
-
-    }
-
-    else {
-    show_col(col2)
-    }
-  })
-
-  
-  
-  Circular_plot2 <- eventReactive(input$update_circ_plot,{
-    
-    dat <- input.data2();
-    validate(
-      need(nrow(dat)>0,
-           error_message_val1)
-    )
+    validate(need(nrow(dat) > 0, error_message_val1))
     dat <- as.data.frame(dat)
+    req(input$chain1, input$chain2, input$selected_for_chord)
     
+    dat <- subset(dat, get(input$category_column) == input$selected_for_chord)
     
-    req(input$chain1,input$chain2,input$selected_for_chord)
-    
-    dat <- subset(dat, get(input$category_column)==input$selected_for_chord)
-    hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy %>%
-      select(input$chain1, everything())
+    hierarchy <- dat[, c(input$chain1, input$chain2)]
+    hierarchy %>% select(input$chain1, everything())
+  })
+  
+  # -- Step 2: per-chain frequency counts, sorted descending
+  chain_counts <- reactive({
+    hierarchy <- filtered_hierarchy()
     hierarchy$cloneCount <- 1
-    chain1 <- as.data.frame(ddply(hierarchy,names(hierarchy)[-c(2,3)],numcolwise(sum)))
-    chain1 <- chain1[order(chain1$cloneCount, decreasing = T),]
     
-    chain2 <- as.data.frame(ddply(hierarchy,names(hierarchy)[-c(1,3)],numcolwise(sum)))
-    chain2 <- chain2[order(chain2$cloneCount, decreasing = T),]
+    chain1 <- ddply(hierarchy, names(hierarchy)[-c(2, 3)], numcolwise(sum))
+    chain1 <- chain1[order(chain1$cloneCount, decreasing = TRUE), ]
     
-    df.col1 <- as.data.frame(chain1[,1])
-    names(df.col1) <- "V1"
-    df.col.j <- as.data.frame(chain2[,1])
-    names(df.col.j) <- "V1"
-    df.col.2 <- rbind(df.col1,df.col.j)
+    chain2 <- ddply(hierarchy, names(hierarchy)[-c(1, 3)], numcolwise(sum))
+    chain2 <- chain2[order(chain2$cloneCount, decreasing = TRUE), ]
     
+    list(chain1 = chain1, chain2 = chain2)
+  })
+  
+  # -- Step 3: combined sector order vector (drives `order =` in chordDiagram)
+  sector_order <- reactive({
+    counts <- chain_counts()
+    df.col1 <- setNames(as.data.frame(counts$chain1[, 1]), "V1")
+    df.col2 <- setNames(as.data.frame(counts$chain2[, 1]), "V1")
+    rbind(df.col1, df.col2)$V1
+  })
+  
+  # -- Step 4: the actual contingency matrix chordDiagram() draws from
+  chord_matrix <- reactive({
+    hierarchy <- filtered_hierarchy()
+    as.matrix(table(hierarchy[, 1], hierarchy[, 2]))
+  })
+  
+  # -- Step 5: colour lookup restricted to sectors actually present
+  grid_colours <- reactive({
+    order_vec <- sector_order()
     grid.col1 <- as.data.frame(col.table1())
-    grid.col2 <- grid.col1[,names(grid.col1) %in% df.col.2$V1]
-    grid.col2 <-grid.col2[,order(names(grid.col2))]
+    grid.col2 <- grid.col1[, names(grid.col1) %in% order_vec]
+    grid.col2 <- grid.col2[, order(names(grid.col2))]
     grid.col3 <- as.matrix(grid.col2)
     names(grid.col3) <- names(grid.col2)
-    
-    hierarchy <- dat[names(dat) %in% c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy[,c(input$chain1,input$chain2)]
-    hierarchy <- hierarchy %>%
-      select(input$chain1, everything())
-    hierarchy <- as.matrix(table(hierarchy[,1], hierarchy[,2]))
-    
-    par(mar = rep(0, 4), cex=input$CHORD.cex, family = input$font_type)
-    
-    if (input$circ_lab=="Label") {
-      circos.clear()
-      #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   transparency = input$chord.transparancy,
-                   # transparency = 0.5,
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      # we go back to the first track and customize sector labels
-      circos.track(track.index = 1, panel.fun = function(x, y) {
-        circos.par(track.margin=c(0,0)) 
-        xlim = get.cell.meta.data("xlim")
-        sector.index = get.cell.meta.data("sector.index")
-        #text direction (dd) and adjusmtents (aa)
-        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
-        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
-        aa = c(1, 0.5)
-        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
-        circos.text(x = mean(xlim), y = 0.1, labels = sector.index, facing = dd, adj = aa)
-        
-      }, bg.border = NA)
-      
-    }
-    # 'colour selected clone/s (label)' || 'colour selected clone/s (no label)''
-    else if (input$circ_lab =="colour selected clone/s (label)") {
-      lwd_mat = hierarchy
-      
-      # line thickness
-      lwd_mat = hierarchy
-      lwd_mat[lwd_mat>0] <- "x"
-      lwd_mat[rownames(lwd_mat) %in% input$string_data_circ_order & lwd_mat=="x"] <- input$thickness.chord.line
-      lwd_mat[!rownames(lwd_mat) %in% input$string_data_circ_order & lwd_mat=="x"] <- 0
-      lwd_mat[lwd_mat==0] <- 1
-      
-      
-      # boarder colour
-      border_mat <- hierarchy
-      border_mat[border_mat>0] <- 1
-      border_mat[rownames(border_mat) %in% input$string_data_circ_order & border_mat==1] <- input$colour.chord.line
-      border_mat[!rownames(border_mat) %in% input$string_data_circ_order & border_mat==1] <- 0
-      border_mat[border_mat==0] <- NA
-      border_mat
-      
-      # line type 
-      lty_mat = hierarchy
-      lty_mat[lty_mat>0] <- input$line.chord.type
-      
-      # transparancy 
-      alpha_mat <- hierarchy
-      alpha_mat[alpha_mat>0] <- 1
-      alpha_mat[rownames(alpha_mat) %in% input$string_data_circ_order & alpha_mat==1] <- input$selected.chord.transparacy
-      alpha_mat[!rownames(alpha_mat) %in% input$string_data_circ_order & alpha_mat==1] <- input$unselected.chord.transparacy
-      alpha_mat
-
-      
-      
-      
-      circos.clear()
-      #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   link.lty = lty_mat,
-                   link.lwd = lwd_mat,
-                   link.border = border_mat,
-                   # transparency = alpha_mat,
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      # we go back to the first track and customize sector labels
-      circos.track(track.index = 1, panel.fun = function(x, y) {
-        circos.par(track.margin=c(0,0)) 
-        xlim = get.cell.meta.data("xlim")
-        sector.index = get.cell.meta.data("sector.index")
-        #text direction (dd) and adjusmtents (aa)
-        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
-        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
-        aa = c(1, 0.5)
-        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
-        circos.text(x = mean(xlim), y = 0.1, labels = sector.index, facing = dd, adj = aa)
-      }, bg.border = NA)
-      
-    }
-    
-    else if (input$circ_lab =="colour selected clone/s (no label)") {
-      lwd_mat = hierarchy
-      
-      # line thickness
-      lwd_mat = hierarchy
-      lwd_mat[lwd_mat>0] <- "x"
-      lwd_mat[rownames(lwd_mat) %in% input$string_data_circ_order & lwd_mat=="x"] <- input$thickness.chord.line
-      lwd_mat[!rownames(lwd_mat) %in% input$string_data_circ_order & lwd_mat=="x"] <- 0
-      lwd_mat[lwd_mat==0] <- 1
-      
-      
-      # boarder colour
-      border_mat <- hierarchy
-      border_mat[border_mat>0] <- 1
-      border_mat[rownames(border_mat) %in% input$string_data_circ_order & border_mat==1] <- input$colour.chord.line
-      border_mat[!rownames(border_mat) %in% input$string_data_circ_order & border_mat==1] <- 0
-      border_mat[border_mat==0] <- NA
-      border_mat
-      
-      # line type 
-      lty_mat = hierarchy
-      lty_mat[lty_mat>0] <- input$line.chord.type
-      
-      # transparancy 
-      alpha_mat <- hierarchy
-      alpha_mat[alpha_mat>0] <- 1
-      alpha_mat[rownames(alpha_mat) %in% input$string_data_circ_order & alpha_mat==1] <- input$selected.chord.transparacy
-      alpha_mat[!rownames(alpha_mat) %in% input$string_data_circ_order & alpha_mat==1] <- input$unselected.chord.transparacy
-      alpha_mat
-      
-      circos.clear()
-      #par(new = TRUE) # <- magic
-      circos.par("canvas.xlim" = c(-1, 1), "canvas.ylim" = c(-1, 1))
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   link.lty = lty_mat,
-                   link.lwd = lwd_mat,
-                   link.border = border_mat,
-                   # transparency = alpha_mat,
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      # we go back to the first track and customize sector labels
-      circos.track(track.index = 1, panel.fun = function(x, y) {
-        circos.par(track.margin=c(0,0))
-        xlim = get.cell.meta.data("xlim")
-        sector.index = get.cell.meta.data("sector.index")
-        #text direction (dd) and adjusmtents (aa)
-        theta = circlize(mean(xlim), 1.3)[1, 1] %% 360
-        dd <- ifelse(theta < 90 || theta > 270, "clockwise", "reverse.clockwise")
-        aa = c(1, 0.5)
-        if(theta < 90 || theta > 270)  aa =c(0, 0.5)
-        
-      }, bg.border = NA)
-      
-      
-    }
-    
-    else {
-      
-      
-      chordDiagram(hierarchy, annotationTrack = "grid", grid.col = grid.col3,
-                   order = df.col.2$V1,
-                   
-                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(hierarchy))))))
-      
-    }
-    
+    grid.col3
   })
   
-  output$Circular <- renderPlot({
-    withProgress(message = 'Figure is being generated...',
-                 detail = '', value = 0, {
-                   test_fun()
-                 })
-    Circular_plot2()
+  
+  # ---------------------------------------------------------
+  # 3) DISPATCH REACTIVE — this replaces the original Circular_plot2
+  # ---------------------------------------------------------
+  
+  Circular_plot2 <- eventReactive(input$update_circ_plot,{
+    mat      <- chord_matrix()
+    grid.col <- grid_colours()
+    order    <- sector_order()
+    
+    par(mar = rep(0, 4), cex = input$CHORD.cex, family = input$font_type)
+    
+    switch(
+      input$circ_lab,
+      
+      "Label" = plot_chord_labelled(
+        mat, grid.col, order, input$chord.transparancy
+      ),
+      
+      "colour selected clone/s (label)" = plot_chord_highlighted(
+        mat, grid.col, order,
+        style = build_link_style(
+          mat, input$string_data_circ_order,
+          input$thickness.chord.line, input$colour.chord.line,
+          input$line.chord.type,
+          input$selected.chord.transparacy, input$unselected.chord.transparacy
+        ),
+        show_labels = TRUE
+      ),
+      
+      "colour selected clone/s (no label)" = plot_chord_highlighted(
+        mat, grid.col, order,
+        style = build_link_style(
+          mat, input$string_data_circ_order,
+          input$thickness.chord.line, input$colour.chord.line,
+          input$line.chord.type,
+          input$selected.chord.transparacy, input$unselected.chord.transparacy
+        ),
+        show_labels = FALSE
+      ),
+      
+      "no labels" = plot_chord_plain(mat, grid.col, order),
+      
+      # fallback so an unmatched input$circ_lab still produces *something*
+      # rather than silently drawing nothing (see earlier bug note)
+      plot_chord_plain(mat, grid.col, order)
+    )
   })
+
+  # 1. A place to store the snapshot of whatever's currently on screen
+  plot_snapshot <- reactiveVal(NULL)
+  
+  # 2. Draw once, and record it right after drawing
+  output$Circular <- renderPlot({
+    Circular_plot2()
+    plot_snapshot(recordPlot())
+  })
+  
+  # 3. Downloads just replay the recording — they don't redraw
   output$downloadPlot_circ <- downloadHandler(
-    filename = function() {
-      x <- gsub(":", ".", Sys.time())
-      paste("TCR_Explore_circular_plot_",gsub("/", "-", x), ".pdf", sep = "")
-    }, content = function(file) {
-      pdf(file, width=input$width_circ,height=input$height_circ, onefile = FALSE) # open the pdf device
-      print(Circular_plot2())
-      dev.off()}, contentType = "application/pdf" )
+    filename = function() paste0(input$selected_for_chord,"_",input$chain1,"_",input$chain2,"_TCR_Explore_circular_plot.pdf"),
+    content = function(file) {
+      req(plot_snapshot())
+      pdf(file, width = input$width_circ, height = input$height_circ)
+      replayPlot(plot_snapshot())
+      dev.off()
+    }
+  )
   
   output$downloadPlotPNG_circ <- downloadHandler(
-    filename = function() {
-      x <- gsub(":", ".", Sys.time())
-      paste("TCR_Explore_circular_plot_", gsub("/", "-", x), ".png", sep = "")
-    },
+    filename = function() paste0(input$selected_for_chord,"_",input$chain1,"_",input$chain2,"_TCR_Explore_circular_plot.png"),
     content = function(file) {
-      
-      png(file, width = input$width_png_circ, height = input$height_png_circ, res = input$resolution_PNG_circ)
-      print(Circular_plot2())
-      dev.off()}, contentType = "application/png" # MIME type of the image
+      req(plot_snapshot())
+      png(file, width = input$width_png_circ, height = input$height_png_circ,
+          res = input$resolution_PNG_circ)
+      replayPlot(plot_snapshot())
+      dev.off()
+    }
   )
+
   
   # CDR3 distribution =====
   observe({
@@ -4518,8 +4389,7 @@ server  <- function(input, output, session) {
     } else if ("vj_gene_AG" %in% names(analysis_data())) {
       chain_selected <- "vj_gene_AG"
     } 
-    print(chain_selected)
-    
+
     updateSelectInput(
       session,
       "chain_hist_col",
@@ -5319,7 +5189,6 @@ server  <- function(input, output, session) {
       "group_selected_motif",
       choices=select_group(),
       selected = "IFN") })
-  
   observe({
     updateSelectInput(
       session,
@@ -5328,8 +5197,6 @@ server  <- function(input, output, session) {
       selected = "CD8") 
     
     })
-  
-  
   observe({
     df <- analysis_data()
     
@@ -5378,8 +5245,6 @@ server  <- function(input, output, session) {
     cat(input$group_selected_motif,"dataset contains CDR3 lengths of:",  df_len)
   })
   
-  
-  
   motif_data <- reactive({
     
     df <- analysis_data()
@@ -5411,9 +5276,6 @@ server  <- function(input, output, session) {
     
     motif
   })
-  
-  
-  
   output$Motif <- DT::renderDataTable(escape = FALSE, options = list(lengthMenu = c(2,5,10,20,50,100), pageLength = 2, scrollX = TRUE), {
     df <- analysis_data();
     validate(
@@ -6288,17 +6150,12 @@ server  <- function(input, output, session) {
     df3 <- df3 %>%
       dplyr::arrange(dplyr::desc(percent)) %>%
       dplyr::mutate(slice_order = dplyr::row_number())
-    
-    print(tail(df3,n=20))
-    
-    print(unique(df3[[input$pie_chain]]))
-    
+
     df3[[input$pie_chain]] <- factor(df3[[input$pie_chain]], levels = unique(df3[[input$pie_chain]]))
   
     df_colour <- df3[,names(df3) %in% c(input$pie_chain,"palette")]
     df_colour <- unique(df_colour)
-    print(df_colour)
-    
+
     # ------------------------------
     # Generate ggplot pie chart
     # ------------------------------
@@ -6697,9 +6554,6 @@ server  <- function(input, output, session) {
       # Dthreshold
       threshold <- input$d_threshold
       cum_prop <- cumsum(sorted) / total_counts
-      
-      print(cum_prop)
-      
       results$Dx[i] <- which(cum_prop >= threshold)[1] / length(sorted)
       # D50
       cum_prop <- cumsum(sorted) / total_counts
