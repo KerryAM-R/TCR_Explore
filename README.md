@@ -1,4 +1,4 @@
-<img src="www/Logo.png" width="200">
+<img src="Logo.png" width="200">
 
 ### TCR_Explore Shiny R application
 

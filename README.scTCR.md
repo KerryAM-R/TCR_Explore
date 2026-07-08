@@ -25,8 +25,8 @@ The other features in the side panel are
 - 'Type of font' 
   + Specify the font for the figures. the R default fonts are serif, sans and mono. Additional fonts were found on https://fonts.google.com (email Kerry if there is a specific font you would like to use.)
 
-<img src="www/upload.TCR.analysis.png" width="300">
-<img src="www/side.panel.png" width="300">
+<img src="upload.TCR.analysis.png" width="300">
+<img src="side.panel.png" width="300">
 
 ## TCR analysis section
 <a href="#summary table">summary table</a><br>
@@ -42,13 +42,13 @@ The user can specify the type of summary table to download.
 
 They can either select their own columns (general summary) or downlaod as TCRdist3 .csv output.
 
-<img src="www/general.summary.png" width="600">
+<img src="general.summary.png" width="600">
 
 For the TCRdist3, there is a need to use our QC process as it matches the IMGT column names. 
 
 There is also a need to select if the input data is either alpha-beta (ab) or gamma-delta (gd) for the TCRdist3 column selection.
 
-<img src="www/TCRdist3.summary.png" width="600">
+<img src="TCRdist3.summary.png" width="600">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -62,7 +62,7 @@ There is also a need to select if the input data is either alpha-beta (ab) or ga
 - Column to colour as well as column to separate the panel
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/treemap.png" width="800">
+<img src="treemap.png" width="800">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -79,7 +79,7 @@ There is also a need to select if the input data is either alpha-beta (ab) or ga
 - Legend is not displayed for any of the graphs
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/chord.png" width="800">
+<img src="chord.png" width="800">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -93,7 +93,7 @@ There is also a need to select if the input data is either alpha-beta (ab) or ga
 - Colour choices: default, random or one colour (specified in side panel) 
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/pie.png" width="800">
+<img src="pie.png" width="800">
 
 <a href="#TCR analysis section">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -117,7 +117,7 @@ The length distribution presented is by the unique CDR3 sequences.
 - The user can also download the summarised table with the lengths or colours that were used 
 - This plot can be downloaded as a PNG or PDF
 
-<img src="www/Length.colour.png" width="800">
+<img src="Length.colour.png" width="800">
 
 <a href="#Motif analysis section">Motif analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -130,8 +130,8 @@ These are displayed as 'Motif (amino acid)' and 'Motif (nucleotide)'
 
 The 'Motif (amino acid)' can also compare two groups of the same sequence. 
 
-<img src="www/aa.png" width="600">
-<img src="www/nt.png" width="600">
+<img src="aa.png" width="600">
+<img src="nt.png" width="600">
 
 <a href="#Motif analysis section">Motif analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -140,7 +140,7 @@ The 'Motif (amino acid)' can also compare two groups of the same sequence.
 
 This section can align the sequences using 'muscle' package. 
 
-<img src="www/aa.aligned.png" width="800">
+<img src="aa.aligned.png" width="800">
 
 <a href="#Motif analysis section">Motif analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -155,9 +155,9 @@ This section can align the sequences using 'muscle' package.
 
 - there are three types of graphs available in chain bar graph section:
 
-<img src="www/Chain.bar.png" width="600">
-<img src="www/frequency.in.rep.png" width="600">
-<img src="www/stack.bar.chart.png" width="600">
+<img src="Chain.bar.png" width="600">
+<img src="frequency.in.rep.png" width="600">
+<img src="stack.bar.chart.png" width="600">
 
 <a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -166,11 +166,11 @@ This section can align the sequences using 'muscle' package.
 
 The top panel showcases the Inverse Simpson Diversity index (SDI) table. This table can be downloaded, which may be needed with more complex designs (ANOVA).
 
-<img src="www/Index.table.png" width="800">
+<img src="Index.table.png" width="800">
 
 The bottom panel showcases the graphical outputs and simple t-test. 
 
-<img src="www/iSDI.graph.png" width="800">
+<img src="iSDI.graph.png" width="800">
 
 <a href="#Diversity and chain interrogation">Diversity and chain interrogation</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -185,7 +185,7 @@ The Heatmap plot can display data of a specific group/individual (Select specifi
 
 If 'Select specific groups=no', the user can showcase the multiple individuals on either the x or y axis (see image below)
 
-<img src="www/heatmap.png" width="800">
+<img src="heatmap.png" width="800">
 
 <a href="#Group overlap analysis">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
@@ -194,7 +194,7 @@ If 'Select specific groups=no', the user can showcase the multiple individuals o
 
 The upset plot can highlight if the specific clonotypes overlap.  
 
-<img src="www/upset.png" width="800">
+<img src="upset.png" width="800">
 
 <a href="#Group overlap analysis">TCR analysis section</a><br>
 <a href="#TCR repertoire analysis">Go to top</a><br>
