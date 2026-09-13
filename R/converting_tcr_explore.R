@@ -125,7 +125,127 @@ ui <- fluidPage(
               "TCR_Explore · File format converter")
   ),
   
-  
+  sidebarLayout(
+    
+    # ── Sidebar ───────────────────────────────────────────────────────────────
+    sidebarPanel(
+      width = 3,
+      style = "overflow-y:auto; max-height:92vh; position:sticky; top:10px;",
+      
+      tags$div(class = "sidebar-title", "Import settings"),
+      
+      # 1. Input type
+      sb_label("Input type"),
+      selectInput("datasource", NULL,
+                  choices = c("ImmunoSEQ", "MiXCR", "10x_scSeq",
+                              "TIRDLE-seq", "Other"),
+                  width = "100%"),
+      
+      # 2. File upload (always shown — no demo default)
+      sb_label("Upload file (.tsv · .csv · .txt)"),
+      fileInput("file_TSV.Immunoseq", NULL,
+                accept = c(".tsv", ".csv", ".txt"),
+                width  = "100%"),
+      
+      fluidRow(
+        column(6,
+               sb_label("Separator"),
+               selectInput("sep.imm", NULL,
+                           choices  = c(Tab = "\t", Comma = ",", Semicolon = ";"),
+                           selected = "\t", width = "100%")
+        ),
+        column(6,
+               sb_label("Quote"),
+               selectInput("quote.imm", NULL,
+                           choices  = c(`"` = '"', `'` = "'", None = ""),
+                           selected = '"', width = "100%")
+        )
+      ),
+      
+      tags$hr(style="margin:10px 0;"),
+      
+      # 3. Sample metadata
+      fluidRow(
+        column(6,
+               sb_label("Group ID"),
+               textInput("group.imm", NULL, "Group", width = "100%")
+        ),
+        column(6,
+               sb_label("Individual ID"),
+               textInput("indiv.imm", NULL, "ID", width = "100%")
+        )
+      ),
+      
+      tags$hr(style="margin:10px 0;"),
+      
+      # 4. Column mapping — collapsible
+      section("Column mapping",
+              
+              sb_label("Count column"),
+              selectInput("countcolumn", NULL, choices = "", width = "100%"),
+              
+              conditionalPanel(
+                condition = "input.datasource == 'ImmunoSEQ' || input.datasource == 'Other'",
+                sb_label("In-frame column"),
+                selectInput("inframe_immseq", NULL, choices = "", width = "100%")
+              ),
+              
+              sb_label("CDR3 amino acid"),
+              selectInput("CDR3.gene.clean", NULL, choices = "", width = "100%"),
+              
+              sb_label("V gene"),
+              selectInput("V.GENE.clean", NULL, choices = "", width = "100%"),
+              
+              conditionalPanel(
+                condition = "input.D_chain_present == 'yes'",
+                sb_label("D gene"),
+                selectInput("D.GENE.clean", NULL, choices = "", width = "100%")
+              ),
+              
+              sb_label("J gene"),
+              selectInput("J.GENE.clean", NULL, choices = "", width = "100%"),
+              
+              sb_label("D chain present?"),
+              selectInput("D_chain_present", NULL,
+                          choices = c("no", "yes"), selected = "no", width = "100%")
+      ),
+      
+      # 5. Columns to remove — collapsible
+      section("Columns to remove",
+              selectInput("col.to.remove", NULL, choices = "",
+                          multiple = TRUE, width = "100%",
+                          selectize = FALSE, size = 6)
+      ),
+      
+      downloadButton("downloadTABLE.Immunoseq", "Download CSV")
+    ),
+    
+    # ── Main panel ────────────────────────────────────────────────────────────
+    mainPanel(
+      width = 9,
+      
+      tabsetPanel(
+        
+        tabPanel("Converted output",
+                 tags$br(),
+                 tags$div(class = "main-card",
+                          
+                          # Status bar
+                          uiOutput("status_bar"),
+                          
+                          # Table
+                          tags$p(class = "main-section-head", "Preview — converted file"),
+                          DT::dataTableOutput("ImmunoSeq.table")
+                 )
+        ),
+        
+        tabPanel("Video walkthrough",
+                 tags$br(),
+                 uiOutput("video7")
+        )
+      )
+    )
+  )
 )
 
 # ── Server ────────────────────────────────────────────────────────────────────

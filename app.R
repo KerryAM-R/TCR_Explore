@@ -521,7 +521,7 @@ tabPanel("TCR analysis",
          sidebarLayout(
            sidebarPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 800px; position:relative;", width=3,
                         conditionalPanel(condition = "input.analysis_panel == 'uploaded_data'",
-                                         selectInput("datatype_input","Origin",choices = c("TCR_Explore","STEGO","Other"),selected = "TCR_Explore"),
+                                         selectInput("datatype_input","Origin",choices = c("TCR_Explore","STEGO","TIRTL","Other"),selected = "TCR_Explore"),
                                          tags$head(tags$style(HTML('.progress-bar {background-color: purple;}'))),
                                          selectInput("dataset", "Choose a dataset:", choices = c("test" = "analysis_example_data",
                                                                                                  # "ImmunoSEQ-test-data", 
@@ -3801,6 +3801,8 @@ server  <- function(input, output, session) {
     
     if(input$datatype_input == "TCR_Explore") {
       VDJ_name <- "AVJ_aCDR3_BVJ_bCDR3"
+    } else if (input$datatype_input == "TIRTL") {
+      VDJ_name <- "vj_gene_cdr3_AG_BD"
     } else {
       VDJ_name <- "vj_gene_cdr3_AG_BD"
     }
@@ -5751,11 +5753,21 @@ server  <- function(input, output, session) {
   
   # motif aligned ------
   observe({
+    if(input$datatype_input == "TCR_Explore") {
+      junction_aa <- "JUNCTION..AA._A"
+    } else if (input$datatype_input == "TIRTL") {
+      junction_aa <- "cdr3_AG"
+    } else {
+      junction_aa <- "vj_gene_cdr3_AG_BD"
+    }
+    
+    
+    
     updateSelectInput(
       session,
       "aa_or_nt4",
       choices=names(analysis_data()),
-      selected = "JUNCTION..AA._A")
+      selected = junction_aa)
   })
   observe({
     updateSelectInput(
@@ -6390,20 +6402,39 @@ server  <- function(input, output, session) {
   
   # y.axis heatmap
   observe({
+    
+    if(input$datatype_input == "TCR_Explore") {
+      y_axis <- "AVJ"
+    } else if (input$datatype_input == "TIRTL") {
+      y_axis <- "v_gene_AG"
+    } else {
+      y_axis <- "v_gene_AG"
+    }
+    
     updateSelectInput(
       session,
       "group.heatmap",
       choices=names(analysis_data()),
-      selected = "AVJ")
+      selected = y_axis)
     
   })
   # x-axis heatmap
   observe({
+    
+    if(input$datatype_input == "TCR_Explore") {
+      x_axis <- "BVJ"
+    } else if (input$datatype_input == "TIRTL") {
+      x_axis <- "v_gene_BD"
+    } else {
+      x_axis <- "v_gene_BD"
+    }
+    
+    
     updateSelectInput(
       session,
       "heatmap_2",
       choices=names(analysis_data()),
-      selected = "BVJ")
+      selected = x_axis)
     
   })
   # group 
